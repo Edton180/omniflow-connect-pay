@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { 
   Zap, 
   MessageSquare, 
@@ -13,43 +13,19 @@ import {
   BarChart3,
   Workflow
 } from "lucide-react";
-import { Session } from "@supabase/supabase-js";
 
 const Dashboard = () => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, session, loading, signOut, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      
-      if (!session) {
-        navigate("/auth");
-      }
-    });
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session) {
-        navigate("/auth");
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [navigate]);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({
-      title: "Logout realizado",
-      description: "Até logo!",
-    });
-    navigate("/");
+  const handleSignOut = () => {
+    signOut();
   };
 
   if (loading) {
@@ -63,6 +39,14 @@ const Dashboard = () => {
     );
   }
 
+  if (!user) return null;
+
+  // Show Super Admin Dashboard if user is super admin
+  if (isSuperAdmin) {
+    return <SuperAdminDashboard />;
+  }
+
+  // Regular tenant dashboard
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
