@@ -91,7 +91,11 @@ export const SuperAdminDashboard = () => {
             <CardDescription>Gerencie sua plataforma multi-tenant</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2">
-            <Button className="h-20 text-lg hover-scale" variant="outline">
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
+              onClick={() => navigate('/admin/tenants')}
+            >
               <Building2 className="mr-2 h-5 w-5" />
               Gerenciar Tenants
             </Button>
