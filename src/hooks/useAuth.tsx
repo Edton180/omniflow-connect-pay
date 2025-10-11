@@ -1,8 +1,6 @@
-import { useEffect, useState } from "react";
-import { User, Session } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { toast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import type { User, Session } from '@supabase/supabase-js';
 
 export type UserRole = 'super_admin' | 'tenant_admin' | 'manager' | 'agent' | 'user';
 
@@ -14,47 +12,38 @@ export interface UserProfile {
   phone: string | null;
 }
 
-export interface UserWithProfile {
-  user: User;
-  profile: UserProfile | null;
-  roles: UserRole[];
-  session: Session;
-}
-
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [roles, setRoles] = useState<UserRole[]>([]);
+  const [roles, setRoles] = useState<{ role: string; tenant_id: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Fetch profile
       const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
 
       if (profileError) throw profileError;
-      setProfile(profileData);
-    } catch (error: any) {
-      console.error("Error fetching profile:", error);
-    }
-  };
 
-  const fetchRoles = async (userId: string) => {
-    try {
+      // Fetch roles
       const { data: rolesData, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId);
+        .from('user_roles')
+        .select('role, tenant_id')
+        .eq('user_id', userId);
 
       if (rolesError) throw rolesError;
-      setRoles(rolesData?.map(r => r.role as UserRole) || []);
-    } catch (error: any) {
-      console.error("Error fetching roles:", error);
+
+      setProfile(profileData);
+      setRoles(rolesData || []);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null);
+      setRoles([]);
     }
   };
 
@@ -64,12 +53,9 @@ export const useAuth = () => {
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-
+        
         if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-            fetchRoles(session.user.id);
-          }, 0);
+          await fetchProfile(session.user.id);
         } else {
           setProfile(null);
           setRoles([]);
@@ -82,112 +68,51 @@ export const useAuth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
       if (session?.user) {
         fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {
-    try {
-      const redirectUrl = `${window.location.origin}/`;
-      
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: redirectUrl,
-          data: {
-            full_name: fullName
-          }
-        }
-      });
-
-      if (error) throw error;
-
-      // Create profile
-      if (data.user) {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: data.user.id,
-            full_name: fullName,
-            tenant_id: null
-          });
-
-        if (profileError) throw profileError;
-
-        toast({
-          title: "Success!",
-          description: "Account created successfully.",
-        });
-      }
-
-      return { data, error: null };
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return { data: null, error };
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          full_name: fullName,
+        },
+      },
+    });
+    return { data, error };
   };
 
   const signIn = async (email: string, password: string) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully signed in.",
-      });
-
-      return { data, error: null };
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-      return { data: null, error };
-    }
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    return { data, error };
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-
-      setUser(null);
-      setSession(null);
-      setProfile(null);
-      setRoles([]);
-      navigate("/auth");
-
-      toast({
-        title: "Signed out",
-        description: "You've been successfully signed out.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
   };
 
-  const hasRole = (role: UserRole) => roles.includes(role);
+  const hasRole = (role: UserRole) => {
+    return roles.some(r => r.role === role);
+  };
+
   const isSuperAdmin = hasRole('super_admin');
 
   return {
@@ -201,5 +126,6 @@ export const useAuth = () => {
     signOut,
     hasRole,
     isSuperAdmin,
+    refetchProfile: user ? () => fetchProfile(user.id) : () => Promise.resolve(),
   };
 };
