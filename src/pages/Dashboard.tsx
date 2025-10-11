@@ -85,54 +85,54 @@ const Dashboard = () => {
 
         {/* Quick Stats */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="gradient-card hover-scale cursor-pointer" onClick={() => navigate("/tickets")}>
             <CardHeader className="pb-3">
-              <CardDescription>Conversas Hoje</CardDescription>
+              <CardDescription>Tickets Abertos</CardDescription>
               <CardTitle className="text-3xl">0</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MessageSquare className="w-4 h-4" />
-                <span>Nenhuma conversa ainda</span>
+                <span>Nenhum ticket ainda</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card hover-scale cursor-pointer" onClick={() => navigate("/contacts")}>
             <CardHeader className="pb-3">
-              <CardDescription>Canais Conectados</CardDescription>
+              <CardDescription>Contatos</CardDescription>
               <CardTitle className="text-3xl">0</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Zap className="w-4 h-4" />
-                <span>Configure seus canais</span>
+                <Users className="w-4 h-4" />
+                <span>Adicione contatos</span>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="gradient-card hover-scale">
             <CardHeader className="pb-3">
-              <CardDescription>Fluxos Ativos</CardDescription>
+              <CardDescription>Tempo Médio</CardDescription>
+              <CardTitle className="text-3xl">-</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <BarChart3 className="w-4 h-4" />
+                <span>Sem dados ainda</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="gradient-card hover-scale">
+            <CardHeader className="pb-3">
+              <CardDescription>Filas Ativas</CardDescription>
               <CardTitle className="text-3xl">0</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Workflow className="w-4 h-4" />
-                <span>Crie seu primeiro fluxo</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardDescription>Equipe</CardDescription>
-              <CardTitle className="text-3xl">1</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="w-4 h-4" />
-                <span>Convide sua equipe</span>
+                <span>Configure filas</span>
               </div>
             </CardContent>
           </Card>
@@ -148,49 +148,57 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
-              <Button variant="outline" className="justify-start h-auto py-4 px-6">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/tickets")}
+              >
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <MessageSquare className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Conectar Canal</div>
+                    <div className="font-semibold mb-1">Gerenciar Tickets</div>
                     <div className="text-sm text-muted-foreground">
-                      Integre WhatsApp, Instagram ou outros
+                      Visualize e gerencie atendimentos
                     </div>
                   </div>
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-4 px-6">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/contacts")}
+              >
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                    <Workflow className="w-5 h-5 text-secondary" />
+                    <Users className="w-5 h-5 text-secondary" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Criar Fluxo</div>
+                    <div className="font-semibold mb-1">Gerenciar Contatos</div>
                     <div className="text-sm text-muted-foreground">
-                      Automatize atendimentos com IA
+                      Adicione e organize seus contatos
                     </div>
                   </div>
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-4 px-6">
+              <Button variant="outline" className="justify-start h-auto py-4 px-6 hover-scale">
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                    <Users className="w-5 h-5 text-accent" />
+                    <Workflow className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Adicionar Equipe</div>
+                    <div className="font-semibold mb-1">Configurar Filas</div>
                     <div className="text-sm text-muted-foreground">
-                      Convide atendentes e gestores
+                      Organize o fluxo de atendimento
                     </div>
                   </div>
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-4 px-6">
+              <Button variant="outline" className="justify-start h-auto py-4 px-6 hover-scale">
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <BarChart3 className="w-5 h-5 text-primary" />
