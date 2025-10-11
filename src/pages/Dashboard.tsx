@@ -184,7 +184,11 @@ const Dashboard = () => {
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-4 px-6 hover-scale">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/queues")}
+              >
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
                     <Workflow className="w-5 h-5 text-accent" />
@@ -198,15 +202,19 @@ const Dashboard = () => {
                 </div>
               </Button>
 
-              <Button variant="outline" className="justify-start h-auto py-4 px-6 hover-scale">
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/channels")}
+              >
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <BarChart3 className="w-5 h-5 text-primary" />
+                    <MessageSquare className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Ver Relatórios</div>
+                    <div className="font-semibold mb-1">Conectar Canais</div>
                     <div className="text-sm text-muted-foreground">
-                      Acompanhe métricas e performance
+                      WhatsApp, Instagram e mais
                     </div>
                   </div>
                 </div>
