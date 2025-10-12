@@ -12,6 +12,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('Create tenant function called');
+    
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
@@ -24,26 +26,38 @@ serve(async (req) => {
     );
 
     // Verify caller is super_admin
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Missing authorization header');
+    }
+    
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
+    console.log('User from token:', user?.id);
+    
     if (userError || !user) {
-      throw new Error('Unauthorized');
+      console.error('User error:', userError);
+      throw new Error('Unauthorized - Invalid token');
     }
 
     // Check if user is super_admin
-    const { data: roles } = await supabaseAdmin
+    const { data: roles, error: rolesError } = await supabaseAdmin
       .from('user_roles')
       .select('role')
       .eq('user_id', user.id)
       .eq('role', 'super_admin')
       .maybeSingle();
 
+    console.log('User roles:', roles, 'Error:', rolesError);
+
     if (!roles) {
       throw new Error('Only super admins can create tenants');
     }
 
+    const body = await req.json();
+    console.log('Request body received');
+    
     const { 
       name, 
       slug, 
@@ -57,7 +71,9 @@ serve(async (req) => {
       admin_name,
       admin_email,
       admin_password
-    } = await req.json();
+    } = body;
+
+    console.log('Creating admin user:', admin_email);
 
     // Create admin user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -69,8 +85,13 @@ serve(async (req) => {
       },
     });
 
-    if (authError) throw authError;
+    if (authError) {
+      console.error('Auth error:', authError);
+      throw authError;
+    }
     if (!authData.user) throw new Error('Failed to create user');
+
+    console.log('Admin user created:', authData.user.id);
 
     // Create tenant
     const { data: tenantData, error: tenantError } = await supabaseAdmin
@@ -89,7 +110,12 @@ serve(async (req) => {
       .select()
       .single();
 
-    if (tenantError) throw tenantError;
+    if (tenantError) {
+      console.error('Tenant error:', tenantError);
+      throw tenantError;
+    }
+
+    console.log('Tenant created:', tenantData.id);
 
     // Create profile for admin user
     const { error: profileError } = await supabaseAdmin
@@ -100,7 +126,12 @@ serve(async (req) => {
         tenant_id: tenantData.id,
       });
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('Profile error:', profileError);
+      throw profileError;
+    }
+
+    console.log('Profile created');
 
     // Assign tenant_admin role
     const { error: roleError } = await supabaseAdmin
@@ -111,7 +142,12 @@ serve(async (req) => {
         role: 'tenant_admin',
       });
 
-    if (roleError) throw roleError;
+    if (roleError) {
+      console.error('Role error:', roleError);
+      throw roleError;
+    }
+
+    console.log('Role assigned');
 
     return new Response(
       JSON.stringify({ 
@@ -122,6 +158,7 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error: any) {
+    console.error('Function error:', error);
     return new Response(
       JSON.stringify({ error: error.message || 'An error occurred' }),
       { 

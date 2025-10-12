@@ -157,7 +157,12 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
           },
         });
 
-        if (error) throw error;
+        console.log('Edge function response:', data, error);
+
+        if (error) {
+          console.error('Edge function error:', error);
+          throw new Error(data?.error || error.message || 'Erro ao criar empresa');
+        }
 
         toast({
           title: "Empresa criada",
