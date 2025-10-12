@@ -149,4 +149,12 @@ All colors MUST be HSL.
     @apply bg-clip-text text-transparent;
     background-image: var(--gradient-primary);
   }
+
+  .hover-scale {
+    @apply transition-transform duration-200 ease-in-out;
+  }
+
+  .hover-scale:hover {
+    @apply scale-105;
+  }
 }

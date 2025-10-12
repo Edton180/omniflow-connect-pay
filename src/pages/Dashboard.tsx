@@ -14,6 +14,9 @@ import {
   Workflow,
   CreditCard
 } from "lucide-react";
+import { DashboardStats } from "@/components/dashboard/DashboardStats";
+import { TicketsChart } from "@/components/dashboard/TicketsChart";
+import { ChannelStats } from "@/components/dashboard/ChannelStats";
 
 const Dashboard = () => {
   const { user, session, loading, signOut, isSuperAdmin } = useAuth();
@@ -85,58 +88,14 @@ const Dashboard = () => {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="gradient-card hover-scale cursor-pointer" onClick={() => navigate("/tickets")}>
-            <CardHeader className="pb-3">
-              <CardDescription>Tickets Abertos</CardDescription>
-              <CardTitle className="text-3xl">0</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MessageSquare className="w-4 h-4" />
-                <span>Nenhum ticket ainda</span>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="mb-8">
+          <DashboardStats />
+        </div>
 
-          <Card className="gradient-card hover-scale cursor-pointer" onClick={() => navigate("/contacts")}>
-            <CardHeader className="pb-3">
-              <CardDescription>Contatos</CardDescription>
-              <CardTitle className="text-3xl">0</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Users className="w-4 h-4" />
-                <span>Adicione contatos</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card hover-scale">
-            <CardHeader className="pb-3">
-              <CardDescription>Tempo Médio</CardDescription>
-              <CardTitle className="text-3xl">-</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <BarChart3 className="w-4 h-4" />
-                <span>Sem dados ainda</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card hover-scale">
-            <CardHeader className="pb-3">
-              <CardDescription>Filas Ativas</CardDescription>
-              <CardTitle className="text-3xl">0</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Workflow className="w-4 h-4" />
-                <span>Configure filas</span>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Charts */}
+        <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <TicketsChart />
+          <ChannelStats />
         </div>
 
         {/* Quick Actions */}
