@@ -16,8 +16,10 @@ import Payments from "./pages/Payments";
 import Branding from "./pages/Branding";
 import BaileysTest from "./pages/BaileysTest";
 import NotFound from "./pages/NotFound";
-import { SetupWizard } from "./components/SetupWizard";
 import { TenantManagement } from "./components/admin/TenantManagement";
+import Profile from "./pages/Profile";
+import Users from "./pages/Users";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +42,9 @@ const App = () => (
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Payments /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Branding /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
+          <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
+          <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
+          <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

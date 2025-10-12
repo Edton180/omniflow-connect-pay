@@ -27,9 +27,14 @@ export const SuperAdminDashboard = () => {
               <p className="text-xs text-muted-foreground">Super Admin Panel</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => navigate('/profile')}>
+              Meu Perfil
+            </Button>
+            <Button variant="outline" size="icon" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
