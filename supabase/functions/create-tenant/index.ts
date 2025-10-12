@@ -87,6 +87,9 @@ serve(async (req) => {
 
     if (authError) {
       console.error('Auth error:', authError);
+      if (authError.message.includes('already been registered') || authError.code === 'email_exists') {
+        throw new Error(`O email ${admin_email} já está cadastrado no sistema. Use outro email para o administrador da empresa.`);
+      }
       throw authError;
     }
     if (!authData.user) throw new Error('Failed to create user');
