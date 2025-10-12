@@ -6,15 +6,25 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
 import { Zap } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
+  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres").optional(),
+});
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -25,25 +35,95 @@ const Auth = () => {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
 
-    const { error } = await signUp(email, password, fullName);
-    if (!error) {
-      navigate("/dashboard");
+    try {
+      // Validate input
+      const validatedData = authSchema.parse({ email, password, fullName });
+
+      const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName || "");
+      
+      if (error) {
+        if (error.message.includes("already registered")) {
+          toast({
+            title: "Email já cadastrado",
+            description: "Este email já está em uso. Tente fazer login.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro ao criar conta",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Conta criada com sucesso!",
+          description: "Você foi autenticado automaticamente.",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
 
-    const { error } = await signIn(email, password);
-    if (!error) {
-      navigate("/dashboard");
+    try {
+      // Validate input
+      const validatedData = authSchema.omit({ fullName: true }).parse({ email, password });
+
+      const { error } = await signIn(validatedData.email, validatedData.password);
+      
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast({
+            title: "Credenciais inválidas",
+            description: "Email ou senha incorretos.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Erro ao fazer login",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
+      } else {
+        toast({
+          title: "Login realizado!",
+          description: "Bem-vindo de volta.",
+        });
+        navigate("/dashboard");
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(fieldErrors);
+      }
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
@@ -84,6 +164,9 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
+                    {errors.email && (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signin-password">Senha</Label>
@@ -95,6 +178,9 @@ const Auth = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                     />
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password}</p>
+                    )}
                   </div>
                   <Button
                     type="submit"
@@ -118,6 +204,9 @@ const Auth = () => {
                       onChange={(e) => setFullName(e.target.value)}
                       required
                     />
+                    {errors.fullName && (
+                      <p className="text-sm text-destructive">{errors.fullName}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
@@ -129,6 +218,9 @@ const Auth = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                     />
+                    {errors.email && (
+                      <p className="text-sm text-destructive">{errors.email}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Senha</Label>
@@ -141,6 +233,9 @@ const Auth = () => {
                       required
                       minLength={6}
                     />
+                    {errors.password && (
+                      <p className="text-sm text-destructive">{errors.password}</p>
+                    )}
                   </div>
                   <Button
                     type="submit"

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/lib/logger';
 import type { User, Session } from '@supabase/supabase-js';
 
 export type UserRole = 'super_admin' | 'tenant_admin' | 'manager' | 'agent' | 'user';
@@ -41,7 +42,7 @@ export const useAuth = () => {
       setProfile(profileData);
       setRoles(rolesData || []);
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      logger.error('Error fetching profile:', error);
       setProfile(null);
       setRoles([]);
     }
@@ -50,12 +51,15 @@ export const useAuth = () => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Use setTimeout to defer Supabase calls and prevent deadlock
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
           setRoles([]);
