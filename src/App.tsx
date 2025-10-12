@@ -20,6 +20,7 @@ import { TenantManagement } from "./components/admin/TenantManagement";
 import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
+import SystemReset from "./pages/SystemReset";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
           <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />

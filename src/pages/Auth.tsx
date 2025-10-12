@@ -176,6 +176,14 @@ const Auth = () => {
           {deleting ? "Deletando..." : "Deletar Todos os Usuários"}
         </Button>
 
+        <Button
+          onClick={() => window.location.href = '/system-reset'}
+          variant="outline"
+          className="w-full"
+        >
+          🔧 Página de Reset Completo do Sistema
+        </Button>
+
         <Card className="border-border/50 shadow-xl">
           <CardHeader>
             <CardTitle>Bem-vindo</CardTitle>
