@@ -139,24 +139,9 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
           description: "A empresa foi atualizada com sucesso.",
         });
       } else {
-        // Create admin user first
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: formData.admin_email,
-          password: formData.admin_password,
-          options: {
-            data: {
-              full_name: formData.admin_name,
-            },
-          },
-        });
-
-        if (authError) throw authError;
-        if (!authData.user) throw new Error("Falha ao criar usuário");
-
-        // Create tenant
-        const { data: tenantData, error: tenantError } = await supabase
-          .from("tenants")
-          .insert({
+        // Use Edge Function to create tenant with admin user
+        const { data, error } = await supabase.functions.invoke('create-tenant', {
+          body: {
             name: formData.name,
             slug: formData.slug,
             logo_url: formData.logo_url,
@@ -166,33 +151,13 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
             max_tickets: formData.max_tickets,
             subscription_status: formData.subscription_status,
             is_active: formData.is_active,
-          })
-          .select()
-          .single();
+            admin_name: formData.admin_name,
+            admin_email: formData.admin_email,
+            admin_password: formData.admin_password,
+          },
+        });
 
-        if (tenantError) throw tenantError;
-
-        // Create profile for admin user
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            full_name: formData.admin_name,
-            tenant_id: tenantData.id,
-          });
-
-        if (profileError) throw profileError;
-
-        // Assign tenant_admin role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: authData.user.id,
-            tenant_id: tenantData.id,
-            role: "tenant_admin",
-          });
-
-        if (roleError) throw roleError;
+        if (error) throw error;
 
         toast({
           title: "Empresa criada",
