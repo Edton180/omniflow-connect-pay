@@ -23,6 +23,7 @@ import Settings from "./pages/Settings";
 import SystemReset from "./pages/SystemReset";
 import ForceLogout from "./pages/ForceLogout";
 import TenantSettings from "./pages/TenantSettings";
+import LandingPageEditor from "./pages/LandingPageEditor";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/baileys-test" element={<AuthGuard requireAuth><BaileysTest /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
+          <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
           <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />

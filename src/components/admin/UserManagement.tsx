@@ -48,7 +48,9 @@ export const UserManagement = () => {
     password: "",
     tenant_id: "",
     role: "agent",
+    queue_ids: [] as string[],
   });
+  const [queues, setQueues] = useState<any[]>([]);
 
   const fetchTenants = async () => {
     try {
@@ -63,6 +65,25 @@ export const UserManagement = () => {
     } catch (error: any) {
       toast({
         title: "Erro ao carregar empresas",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchQueues = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("queues")
+        .select("id, name, color")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setQueues(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar filas",
         description: error.message,
         variant: "destructive",
       });
@@ -114,6 +135,7 @@ export const UserManagement = () => {
   useEffect(() => {
     fetchUsers();
     fetchTenants();
+    fetchQueues();
   }, []);
 
   const handleCreate = () => {
@@ -125,6 +147,7 @@ export const UserManagement = () => {
       password: "",
       tenant_id: "",
       role: "agent",
+      queue_ids: [],
     });
     setDialogOpen(true);
   };
@@ -138,6 +161,7 @@ export const UserManagement = () => {
       password: "",
       tenant_id: user.tenant_id || "",
       role: user.roles[0]?.role || "agent",
+      queue_ids: [],
     });
     setDialogOpen(true);
   };
@@ -175,18 +199,49 @@ export const UserManagement = () => {
 
         if (roleError) throw roleError;
 
+        // Update queue assignments
+        await supabase
+          .from("user_queues")
+          .delete()
+          .eq("user_id", selectedUser.id);
+
+        if (formData.queue_ids.length > 0) {
+          const queueAssignments = formData.queue_ids.map(queue_id => ({
+            user_id: selectedUser.id,
+            queue_id: queue_id,
+          }));
+
+          const { error: queueError } = await supabase
+            .from("user_queues")
+            .insert(queueAssignments);
+
+          if (queueError) throw queueError;
+        }
+
         toast({
           title: "Usuário atualizado",
           description: "As informações do usuário foram atualizadas com sucesso.",
         });
       } else {
-        // Create new user via edge function would be ideal
-        toast({
-          title: "Funcionalidade em desenvolvimento",
-          description: "A criação de novos usuários está sendo implementada.",
-          variant: "destructive",
+        // Create new user via edge function
+        const { data, error } = await supabase.functions.invoke('create-user', {
+          body: {
+            email: formData.email,
+            password: formData.password,
+            full_name: formData.full_name,
+            phone: formData.phone || null,
+            tenant_id: formData.tenant_id || null,
+            role: formData.role,
+            queue_ids: formData.queue_ids,
+          }
         });
-        return;
+
+        if (error) throw error;
+
+        toast({
+          title: "Usuário criado",
+          description: "O novo usuário foi criado com sucesso.",
+        });
       }
 
       setDialogOpen(false);
@@ -432,6 +487,49 @@ export const UserManagement = () => {
                   <SelectItem value="user">Usuário</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="queues">Filas de Atendimento</Label>
+              <div className="border rounded-md p-4 space-y-2 max-h-48 overflow-y-auto">
+                {queues.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhuma fila disponível</p>
+                ) : (
+                  queues.map((queue) => (
+                    <div key={queue.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`queue-${queue.id}`}
+                        checked={formData.queue_ids.includes(queue.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setFormData({
+                              ...formData,
+                              queue_ids: [...formData.queue_ids, queue.id]
+                            });
+                          } else {
+                            setFormData({
+                              ...formData,
+                              queue_ids: formData.queue_ids.filter(id => id !== queue.id)
+                            });
+                          }
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <label
+                        htmlFor={`queue-${queue.id}`}
+                        className="text-sm flex items-center gap-2 cursor-pointer"
+                      >
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: queue.color }}
+                        />
+                        {queue.name}
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2 justify-end">

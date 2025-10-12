@@ -66,6 +66,7 @@ export type Database = {
           id: string
           is_default: boolean | null
           name: string
+          queue_id: string | null
           status: string
           tenant_id: string
           type: string
@@ -78,6 +79,7 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name: string
+          queue_id?: string | null
           status?: string
           tenant_id: string
           type: string
@@ -90,12 +92,20 @@ export type Database = {
           id?: string
           is_default?: boolean | null
           name?: string
+          queue_id?: string | null
           status?: string
           tenant_id?: string
           type?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "channels_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "channels_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -151,6 +161,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      landing_page_settings: {
+        Row: {
+          created_at: string | null
+          feature_1_description: string
+          feature_1_icon: string
+          feature_1_title: string
+          feature_2_description: string
+          feature_2_icon: string
+          feature_2_title: string
+          feature_3_description: string
+          feature_3_icon: string
+          feature_3_title: string
+          footer_text: string
+          hero_cta_text: string
+          hero_image_url: string | null
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          logo_url: string | null
+          pricing_subtitle: string
+          pricing_title: string
+          primary_color: string
+          secondary_color: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_1_description?: string
+          feature_1_icon?: string
+          feature_1_title?: string
+          feature_2_description?: string
+          feature_2_icon?: string
+          feature_2_title?: string
+          feature_3_description?: string
+          feature_3_icon?: string
+          feature_3_title?: string
+          footer_text?: string
+          hero_cta_text?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          logo_url?: string | null
+          pricing_subtitle?: string
+          pricing_title?: string
+          primary_color?: string
+          secondary_color?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_1_description?: string
+          feature_1_icon?: string
+          feature_1_title?: string
+          feature_2_description?: string
+          feature_2_icon?: string
+          feature_2_title?: string
+          feature_3_description?: string
+          feature_3_icon?: string
+          feature_3_title?: string
+          footer_text?: string
+          hero_cta_text?: string
+          hero_image_url?: string | null
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          logo_url?: string | null
+          pricing_subtitle?: string
+          pricing_title?: string
+          primary_color?: string
+          secondary_color?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -617,6 +702,35 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_queues: {
+        Row: {
+          created_at: string | null
+          id: string
+          queue_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          queue_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          queue_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_queues_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
             referencedColumns: ["id"]
           },
         ]
