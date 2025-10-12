@@ -294,11 +294,14 @@ sudo systemctl start fail2ban
 ### 1. Primeiro Acesso
 
 1. Acesse `https://seu-dominio.com`
-2. Clique em **Criar Conta**
-3. Preencha seus dados
-4. Um botão aparecerá para configurar como Super Admin
+2. Clique em **Criar Conta** ou **Começar Agora**
+3. Preencha seus dados (email, senha e nome completo)
+4. Confirme seu email (se habilitado)
+5. Você será automaticamente redirecionado para a página de **Setup**
+6. Na página de setup, confirme seu nome completo
+7. Clique em **Complete Setup** para ser configurado como **Super Admin**
 
-### 2. Configure Evolution API
+### 2. Configure Evolution API (WhatsApp)
 
 1. No painel do Super Admin, vá em **Configurações do Sistema**
 2. Configure os secrets do Supabase:
@@ -311,18 +314,37 @@ sudo systemctl start fail2ban
 2. Clique em **Novo Tenant**
 3. Preencha os dados da empresa
 4. Configure o plano e limites
+5. O tenant estará ativo e pronto para uso
 
 ### 4. Crie Usuários
 
 1. Vá em **Gerenciar Usuários**
 2. Crie usuários para o tenant
-3. Atribua filas de atendimento
+3. Atribua roles (tenant_admin, manager, agent)
+4. Configure filas de atendimento
 
 ### 5. Configure Canais
 
 1. Vá em **Canais**
-2. Crie um canal **Evolution API**
-3. Conecte seu WhatsApp
+2. Crie um canal **Evolution API** (WhatsApp)
+3. Conecte seu WhatsApp escaneando o QR Code
+4. Configure outros canais conforme necessário
+
+### 6. Personalize Sua Marca
+
+1. Vá em **Branding** no Super Admin
+2. Upload seu logo
+3. Configure cores primárias e secundárias
+4. Edite a landing page em **Landing Page Editor**
+5. Configure planos e preços
+
+### 7. Acompanhe Receita e Faturamento
+
+1. Acesse **Receita e Faturamento** no Super Admin
+2. Visualize gráficos de receita em tempo real
+3. Acompanhe pagamentos pendentes e vencidos
+4. Analise histórico de pagamentos
+5. Exporte relatórios financeiros
 
 ---
 
@@ -382,16 +404,24 @@ pm2 startup
 ### Checklist Completo
 
 - [ ] Frontend acessível em `https://seu-dominio.com`
+- [ ] Landing page moderna funcionando
 - [ ] Login funciona corretamente
+- [ ] Página de setup funciona (/setup)
 - [ ] Super Admin consegue acessar painel
+- [ ] Dashboard mostra gráficos de receita e métricas
 - [ ] Evolution API responde em `https://api.seu-dominio.com/health`
 - [ ] Consegue criar tenant
 - [ ] Consegue criar usuário
 - [ ] Consegue criar canal Evolution API
 - [ ] QR Code aparece e conecta
+- [ ] Consegue criar planos e assinaturas
+- [ ] Consegue gerar faturas
+- [ ] Consegue processar pagamentos
+- [ ] Dashboard de receita mostra dados corretos
 - [ ] SSL configurado (HTTPS)
 - [ ] Firewall configurado
 - [ ] Backups automáticos configurados
+- [ ] Logout limpa cache e sessão completamente
 
 ### Testes Rápidos
 

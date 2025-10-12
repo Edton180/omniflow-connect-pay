@@ -25,6 +25,8 @@ import SystemReset from "./pages/SystemReset";
 import ForceLogout from "./pages/ForceLogout";
 import TenantSettings from "./pages/TenantSettings";
 import LandingPageEditor from "./pages/LandingPageEditor";
+import { SetupWizard } from "./components/SetupWizard";
+import Revenue from "./pages/Revenue";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +39,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/setup" element={<SetupWizard />} />
           <Route path="/force-logout" element={<ForceLogout />} />
           <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
@@ -52,6 +55,7 @@ const App = () => (
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
           <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
+          <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />

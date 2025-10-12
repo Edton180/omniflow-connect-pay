@@ -44,6 +44,7 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Sistema de planos e assinaturas
 - ✅ **Sistema de Faturas**: Geração e pagamento automático
 - ✅ **Controle de Vencimentos**: Alertas de faturas vencidas
+- ✅ **Dashboard de Receita**: Gráficos e relatórios financeiros em tempo real
 
 ### Marca Branca (White Label)
 - ✅ Upload de logo personalizado
@@ -56,6 +57,9 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Gráficos de tickets
 - ✅ Status de canais
 - ✅ Estatísticas de performance
+- ✅ **Dashboard de Receita**: Análise financeira completa
+- ✅ **Gráficos de Faturamento**: Visualização de receitas e pagamentos
+- ✅ **Relatórios Financeiros**: Exportação e análise de dados
 
 ## 🛠️ Stack Tecnológico
 
@@ -162,10 +166,17 @@ NODE_ENV=production
 ### Primeiro Acesso
 
 1. Acesse a aplicação
-2. Crie sua conta
-3. O primeiro usuário será Super Admin
-4. Configure seu tenant no painel
-5. Conecte seus canais de atendimento
+2. Clique em **Criar Conta** ou **Começar Agora**
+3. Preencha seus dados (email, senha e nome completo)
+4. O primeiro usuário será automaticamente configurado como **Super Admin**
+5. Você será redirecionado para a página de setup onde poderá configurar seu perfil
+6. Após o setup, acesse o painel Super Admin para:
+   - Configurar Evolution API (se usar WhatsApp)
+   - Criar tenants (empresas)
+   - Configurar planos e preços
+   - Personalizar a landing page
+   - Gerenciar gateways de pagamento
+   - Acompanhar receitas e faturamento
 
 ## 🚀 Deploy
 

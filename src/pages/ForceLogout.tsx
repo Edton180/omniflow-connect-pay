@@ -10,18 +10,37 @@ const ForceLogout = () => {
     const logout = async () => {
       console.log('Force logout initiated...');
       
-      // Fazer logout do Supabase
-      await supabase.auth.signOut();
-      
-      // Limpar todo o armazenamento local
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      console.log('Logout complete, redirecting to auth...');
+      try {
+        // Fazer logout do Supabase
+        await supabase.auth.signOut();
+        
+        // Limpar todo o armazenamento local
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Limpar cookies
+        document.cookie.split(";").forEach((c) => {
+          document.cookie = c
+            .replace(/^ +/, "")
+            .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+        });
+        
+        // Limpar cache do service worker se existir
+        if ('caches' in window) {
+          const cacheNames = await caches.keys();
+          await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+        }
+        
+        console.log('Logout complete, cache cleared, redirecting to auth...');
+      } catch (error) {
+        console.error('Error during logout:', error);
+      }
       
       // Redirecionar para auth após 1 segundo
       setTimeout(() => {
         navigate('/auth', { replace: true });
+        // Forçar reload para garantir limpeza completa
+        window.location.href = '/auth';
       }, 1000);
     };
     

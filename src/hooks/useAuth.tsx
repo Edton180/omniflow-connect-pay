@@ -132,11 +132,8 @@ export const useAuth = () => {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setProfile(null);
-    setRoles([]);
+    // Redireciona para a página de force logout que fará a limpeza completa
+    window.location.href = '/force-logout';
   };
 
   const hasRole = (role: UserRole) => {
