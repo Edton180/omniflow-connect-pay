@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send } from "lucide-react";
 
 interface ChannelCardProps {
   channel: {
@@ -19,6 +19,8 @@ interface ChannelCardProps {
 const getIcon = (type: string) => {
   const icons: Record<string, any> = {
     whatsapp: MessageCircle,
+    email: Mail,
+    telegram: Send,
     instagram: Instagram,
     facebook: Facebook,
     webchat: Globe,
@@ -29,8 +31,10 @@ const getIcon = (type: string) => {
 const getColor = (type: string) => {
   const colors: Record<string, string> = {
     whatsapp: "bg-green-500",
+    email: "bg-red-500",
+    telegram: "bg-blue-400",
     instagram: "bg-pink-500",
-    facebook: "bg-blue-500",
+    facebook: "bg-blue-600",
     webchat: "bg-purple-500",
   };
   return colors[type] || "bg-gray-500";

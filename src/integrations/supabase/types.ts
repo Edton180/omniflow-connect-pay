@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      channels: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          credentials_encrypted: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          status?: string
+          tenant_id: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          credentials_encrypted?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channels_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           avatar_url: string | null
