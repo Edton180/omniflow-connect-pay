@@ -92,7 +92,13 @@ export const ChannelList = () => {
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setChannels(data || []);
+        
+        // Map whatsapp_baileys back to baileys-qr for display
+        const mappedChannels = (data || []).map(channel => ({
+          ...channel,
+          type: channel.type === 'whatsapp_baileys' ? 'baileys-qr' : channel.type
+        }));
+        setChannels(mappedChannels);
       }
     } catch (error: any) {
       console.error("Error loading channels:", error);
@@ -212,7 +218,7 @@ export const ChannelList = () => {
 
       const channelData = {
         name: formData.name,
-        type: formData.type,
+        type: formData.type === 'baileys-qr' ? 'whatsapp_baileys' : formData.type,
         config: formData.config,
         tenant_id: tenantId,
         status: "active",

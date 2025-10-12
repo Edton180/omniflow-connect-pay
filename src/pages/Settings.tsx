@@ -171,6 +171,29 @@ export default function Settings() {
             </CardContent>
           </Card>
 
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+              <CardDescription>Ações irreversíveis do sistema</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Reset Completo do Sistema</Label>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Remove todos os dados do sistema incluindo usuários, tenants e configurações.
+                  Esta ação não pode ser desfeita!
+                </p>
+                <Button
+                  variant="destructive"
+                  onClick={() => navigate('/system-reset')}
+                  className="w-full"
+                >
+                  🔧 Reset Completo do Sistema
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Button onClick={handleSaveSettings} disabled={loading} className="w-full">
             <Save className="mr-2 h-4 w-4" />
             {loading ? 'Salvando...' : 'Salvar Configurações'}

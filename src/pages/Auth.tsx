@@ -174,15 +174,6 @@ const Auth = () => {
           >
             🔄 Limpar Sessão e Fazer Logout
           </Button>
-
-          <Button
-            onClick={() => window.location.href = '/system-reset'}
-            variant="destructive"
-            className="w-full"
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            🔧 Reset Completo do Sistema
-          </Button>
         </div>
 
         <Card className="border-border/50 shadow-xl">
