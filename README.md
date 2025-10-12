@@ -42,6 +42,8 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ **Stripe**: Pagamentos internacionais
 - ✅ **InfinitePay**: Gateway moderno
 - ✅ Sistema de planos e assinaturas
+- ✅ **Sistema de Faturas**: Geração e pagamento automático
+- ✅ **Controle de Vencimentos**: Alertas de faturas vencidas
 
 ### Marca Branca (White Label)
 - ✅ Upload de logo personalizado
@@ -203,6 +205,7 @@ docker-compose down
 - **[EVOLUTION_API_SETUP.md](EVOLUTION_API_SETUP.md)** - Setup WhatsApp Evolution API
 - **[BAILEYS_INTEGRATION.md](BAILEYS_INTEGRATION.md)** - Integração Baileys
 - **[SUPER_ADMIN_SETUP.md](SUPER_ADMIN_SETUP.md)** - Configuração Super Admin
+- **[BILLING_SYSTEM.md](BILLING_SYSTEM.md)** - Sistema de Faturamento
 
 ### Guias Técnicos
 - **[BRANDING_GUIDE.md](BRANDING_GUIDE.md)** - Customização de marca

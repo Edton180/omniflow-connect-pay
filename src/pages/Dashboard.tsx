@@ -13,7 +13,8 @@ import {
   BarChart3,
   Workflow,
   CreditCard,
-  Palette
+  Palette,
+  FileText
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
@@ -219,23 +220,43 @@ const Dashboard = () => {
               </Button>
 
               {hasRole('tenant_admin') && !hasRole('super_admin') && (
-                <Button 
-                  variant="outline" 
-                  className="justify-start h-auto py-4 px-6 hover-scale"
-                  onClick={() => navigate("/tenant/settings")}
-                >
-                  <div className="flex items-start gap-4 text-left">
-                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                      <Settings className="w-5 h-5 text-orange-600" />
-                    </div>
-                    <div>
-                      <div className="font-semibold mb-1">Configurações da Empresa</div>
-                      <div className="text-sm text-muted-foreground">
-                        Gerencie sua empresa e usuários
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start h-auto py-4 px-6 hover-scale"
+                    onClick={() => navigate("/tenant/settings")}
+                  >
+                    <div className="flex items-start gap-4 text-left">
+                      <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                        <Settings className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Configurações da Empresa</div>
+                        <div className="text-sm text-muted-foreground">
+                          Gerencie sua empresa e usuários
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </Button>
+                  </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="justify-start h-auto py-4 px-6 hover-scale"
+                    onClick={() => navigate("/tenant/invoices")}
+                  >
+                    <div className="flex items-start gap-4 text-left">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Faturas</div>
+                        <div className="text-sm text-muted-foreground">
+                          Visualize e pague suas faturas
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                </>
               )}
 
               {hasRole('super_admin') && (

@@ -15,6 +15,7 @@ import Channels from "./pages/Channels";
 import Payments from "./pages/Payments";
 import Branding from "./pages/Branding";
 import BaileysTest from "./pages/BaileysTest";
+import Invoices from "./pages/Invoices";
 import NotFound from "./pages/NotFound";
 import { TenantManagement } from "./components/admin/TenantManagement";
 import Profile from "./pages/Profile";
@@ -52,6 +53,7 @@ const App = () => (
           <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
+          <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

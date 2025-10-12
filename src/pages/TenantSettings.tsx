@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import Invoices from './Invoices';
 
 export default function TenantSettings() {
   const navigate = useNavigate();
@@ -123,6 +124,7 @@ export default function TenantSettings() {
           <TabsList>
             <TabsTrigger value="company">Empresa</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="company">
@@ -223,6 +225,10 @@ export default function TenantSettings() {
 
           <TabsContent value="users">
             <UserManagement />
+          </TabsContent>
+
+          <TabsContent value="invoices">
+            <Invoices />
           </TabsContent>
         </Tabs>
       </div>
