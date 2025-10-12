@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -103,13 +103,17 @@ export const SuperAdminDashboard = () => {
               <Users className="mr-2 h-5 w-5" />
               Gerenciar Usuários
             </Button>
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
+              onClick={() => navigate('/payments')}
+            >
+              <CreditCard className="mr-2 h-5 w-5" />
+              Planos e Pagamentos
+            </Button>
             <Button className="h-20 text-lg hover-scale" variant="outline">
               <Settings className="mr-2 h-5 w-5" />
               Configurações do Sistema
-            </Button>
-            <Button className="h-20 text-lg hover-scale" variant="outline">
-              <MessageSquare className="mr-2 h-5 w-5" />
-              Ver Todas as Mensagens
             </Button>
           </CardContent>
         </Card>

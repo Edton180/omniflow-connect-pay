@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   BarChart3,
-  Workflow
+  Workflow,
+  CreditCard
 } from "lucide-react";
 
 const Dashboard = () => {
@@ -215,6 +216,41 @@ const Dashboard = () => {
                     <div className="font-semibold mb-1">Conectar Canais</div>
                     <div className="text-sm text-muted-foreground">
                       WhatsApp, Instagram e mais
+                    </div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/payments")}
+              >
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">Configurar Pagamentos</div>
+                    <div className="text-sm text-muted-foreground">
+                      Gateways e assinaturas
+                    </div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+              >
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <BarChart3 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">Ver Relatórios</div>
+                    <div className="text-sm text-muted-foreground">
+                      Métricas e performance
                     </div>
                   </div>
                 </div>
