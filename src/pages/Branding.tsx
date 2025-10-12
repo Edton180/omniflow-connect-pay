@@ -28,18 +28,30 @@ export default function Branding() {
   useEffect(() => {
     if (session?.user) {
       loadTenantData();
+    } else {
+      setLoading(false);
     }
   }, [session]);
 
   const loadTenantData = async () => {
     try {
-      const { data: userRole } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", session?.user?.id)
-        .single();
+        .maybeSingle();
 
-      if (!userRole?.tenant_id) return;
+      if (roleError) throw roleError;
+
+      if (!userRole?.tenant_id) {
+        setLoading(false);
+        toast({
+          title: "Aviso",
+          description: "Você precisa estar associado a uma empresa para personalizar a marca",
+          variant: "destructive",
+        });
+        return;
+      }
 
       const { data: tenantData, error } = await supabase
         .from("tenants")
@@ -64,6 +76,8 @@ export default function Branding() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 

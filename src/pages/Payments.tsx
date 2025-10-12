@@ -4,7 +4,7 @@ import { ArrowLeft, Zap, LogOut, CreditCard, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { PaymentGatewayList } from "@/components/payments/PaymentGatewayList";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PlansList } from "@/components/plans/PlansList";
 
 export default function Payments() {
   const { signOut } = useAuth();
@@ -55,26 +55,7 @@ export default function Payments() {
           </TabsContent>
 
           <TabsContent value="plans" className="space-y-4">
-            <Card className="gradient-card">
-              <CardHeader>
-                <CardTitle>Planos e Assinaturas</CardTitle>
-                <CardDescription>
-                  Crie e gerencie planos de assinatura para seus clientes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">Nenhum plano criado</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Crie seu primeiro plano de assinatura
-                  </p>
-                  <Button>
-                    Criar Primeiro Plano
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <PlansList />
           </TabsContent>
         </Tabs>
       </div>

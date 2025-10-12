@@ -16,40 +16,56 @@ export const SetupWizard = () => {
 
   const handleSetup = async () => {
     if (!user || !fullName.trim()) {
-      toast.error('Please enter your full name');
+      toast.error('Por favor, insira seu nome completo');
       return;
     }
 
     setLoading(true);
     try {
-      // Create profile
+      // Upsert profile to avoid duplicate key error
       const { error: profileError } = await supabase
         .from('profiles')
-        .insert({
+        .upsert({
           id: user.id,
           full_name: fullName,
           tenant_id: null
+        }, {
+          onConflict: 'id'
         });
 
       if (profileError) throw profileError;
 
-      // Create super_admin role
-      const { error: roleError } = await supabase
+      // Check if role already exists
+      const { data: existingRole } = await supabase
         .from('user_roles')
-        .insert({
-          user_id: user.id,
-          tenant_id: null,
-          role: 'super_admin'
-        });
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('role', 'super_admin')
+        .maybeSingle();
 
-      if (roleError) throw roleError;
+      if (!existingRole) {
+        // Create super_admin role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: user.id,
+            tenant_id: null,
+            role: 'super_admin'
+          });
 
-      toast.success('Account setup complete!');
-      await refetchProfile();
-      navigate('/dashboard');
+        if (roleError) throw roleError;
+      }
+
+      toast.success('Conta configurada com sucesso!');
+      
+      // Wait a bit for database to sync
+      setTimeout(async () => {
+        if (refetchProfile) await refetchProfile();
+        navigate('/dashboard');
+      }, 500);
     } catch (error: any) {
       console.error('Setup error:', error);
-      toast.error(error.message || 'Failed to setup account');
+      toast.error(error.message || 'Falha ao configurar conta');
     } finally {
       setLoading(false);
     }

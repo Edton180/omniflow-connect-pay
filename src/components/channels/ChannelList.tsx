@@ -39,18 +39,17 @@ export const ChannelList = () => {
 
   const loadChannels = async () => {
     try {
-      const { data: userRole } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", session?.user?.id)
-        .single();
+        .maybeSingle();
+
+      if (roleError) throw roleError;
 
       if (!userRole?.tenant_id) {
-        toast({
-          title: "Erro",
-          description: "Usuário não associado a nenhum tenant",
-          variant: "destructive",
-        });
+        setLoading(false);
+        setChannels([]);
         return;
       }
 
@@ -136,16 +135,18 @@ export const ChannelList = () => {
 
   const handleSave = async () => {
     try {
-      const { data: userRole } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", session?.user?.id)
-        .single();
+        .maybeSingle();
+
+      if (roleError) throw roleError;
 
       if (!userRole?.tenant_id) {
         toast({
           title: "Erro",
-          description: "Usuário não associado a nenhum tenant",
+          description: "Você precisa estar associado a uma empresa para criar canais",
           variant: "destructive",
         });
         return;

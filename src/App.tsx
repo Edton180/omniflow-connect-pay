@@ -3,6 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthGuard } from "./components/AuthGuard";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -28,17 +29,16 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/setup" element={<SetupWizard />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/tickets" element={<Tickets />} />
-          <Route path="/tickets/:id" element={<TicketDetail />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/queues" element={<Queues />} />
-          <Route path="/channels" element={<Channels />} />
-          <Route path="/payments" element={<Payments />} />
-          <Route path="/branding" element={<Branding />} />
-          <Route path="/admin/tenants" element={<TenantManagement />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/setup" element={<AuthGuard requireAuth><SetupWizard /></AuthGuard>} />
+          <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
+          <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
+          <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
+          <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
+          <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
+          <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
+          <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Payments /></AuthGuard>} />
+          <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Branding /></AuthGuard>} />
+          <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

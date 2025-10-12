@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Building2, Plus, Pencil, Trash2, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { TenantDialog } from "./TenantDialog";
+import { TenantDialogWithUser } from "./TenantDialogWithUser";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -220,7 +220,7 @@ export const TenantManagement = () => {
         )}
       </div>
 
-      <TenantDialog
+      <TenantDialogWithUser
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         tenant={selectedTenant}
