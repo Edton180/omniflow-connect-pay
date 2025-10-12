@@ -131,7 +131,7 @@ export const DashboardStats = () => {
 
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
@@ -158,7 +158,7 @@ export const DashboardStats = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
@@ -185,7 +185,7 @@ export const DashboardStats = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
@@ -205,7 +205,7 @@ export const DashboardStats = () => {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
