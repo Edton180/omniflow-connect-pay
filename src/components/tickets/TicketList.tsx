@@ -11,6 +11,17 @@ import { Loader2, Search, Plus, MessageSquare, Clock, User } from "lucide-react"
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { NewTicketDialog } from "./NewTicketDialog";
+
+export const TicketList = () => {
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dialogOpen, setDialogOpen] = useState(false);
 
 export const TicketList = () => {
   const { toast } = useToast();
@@ -115,7 +126,7 @@ export const TicketList = () => {
             <SelectItem value="closed">Fechado</SelectItem>
           </SelectContent>
         </Select>
-        <Button onClick={() => navigate("/tickets/new")}>
+        <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Ticket
         </Button>
@@ -204,6 +215,8 @@ export const TicketList = () => {
           ))}
         </div>
       )}
+
+      <NewTicketDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </div>
   );
 };
