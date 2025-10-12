@@ -55,33 +55,35 @@ const Dashboard = () => {
 
   // Regular tenant dashboard
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
       {/* Header */}
-      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
+      <header className="border-b border-border/50 bg-card/80 backdrop-blur-xl sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {branding.logo_url ? (
                 <img
                   src={branding.logo_url}
                   alt={branding.name}
-                  className="w-10 h-10 rounded-lg object-contain"
+                  className="w-10 h-10 rounded-xl object-contain"
                 />
               ) : (
-                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
                   <Zap className="w-5 h-5 text-white" />
                 </div>
               )}
-              <span className="text-xl font-bold">{branding.name}</span>
+              <span className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                {branding.name}
+              </span>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:inline">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-muted-foreground hidden sm:inline font-medium">
                 {session?.user?.email}
               </span>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="hover:bg-primary/10">
                 <Settings className="w-5 h-5" />
               </Button>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:bg-destructive/10">
                 <LogOut className="w-5 h-5" />
               </Button>
             </div>
@@ -90,12 +92,37 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
+        {/* Page Title and Date Filters */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo ao seu painel de controle OmniFlow
-          </p>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Painel de Controle</h1>
+              <p className="text-muted-foreground">
+                Bem-vindo ao seu painel de controle OmniFlow
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-muted-foreground font-medium">Data Atendimento:</label>
+                <input 
+                  type="date" 
+                  className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                />
+                <span className="text-muted-foreground">-</span>
+                <input 
+                  type="date" 
+                  className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                  defaultValue={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <Button className="shadow-md hover:shadow-lg transition-all">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                GERAR
+              </Button>
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
@@ -103,14 +130,14 @@ const Dashboard = () => {
           <DashboardStats />
         </div>
 
-        {/* Charts */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Charts Grid */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
           <TicketsChart />
           <ChannelStats />
         </div>
 
         {/* Quick Actions */}
-        <Card>
+        <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
           <CardHeader>
             <CardTitle>Primeiros Passos</CardTitle>
             <CardDescription>

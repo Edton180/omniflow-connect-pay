@@ -88,32 +88,39 @@ export const TicketsChart = () => {
   }
 
   return (
-    <Card className="gradient-card">
+    <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
       <CardHeader>
-        <CardTitle>Tickets nos Últimos 7 Dias</CardTitle>
-        <CardDescription>Visualização de abertura e fechamento</CardDescription>
+        <CardTitle className="text-xl font-bold">Atendimento por tipo de canal</CardTitle>
+        <CardDescription>Distribuição de tickets por canal nos últimos 7 dias</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+            <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
             <XAxis 
               dataKey="name" 
               className="text-xs" 
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
             />
             <YAxis 
               className="text-xs"
-              tick={{ fill: "hsl(var(--muted-foreground))" }}
+              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              axisLine={{ stroke: "hsl(var(--border))" }}
             />
             <Tooltip 
               contentStyle={{
                 backgroundColor: "hsl(var(--card))",
                 border: "1px solid hsl(var(--border))",
-                borderRadius: "var(--radius)",
+                borderRadius: "8px",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
               }}
+              cursor={{ fill: "hsl(var(--muted)/0.1)" }}
             />
-            <Legend />
+            <Legend 
+              wrapperStyle={{ paddingTop: "20px" }}
+              iconType="circle"
+            />
             <Bar dataKey="Abertos" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
             <Bar dataKey="Fechados" fill="hsl(var(--secondary))" radius={[8, 8, 0, 0]} />
           </BarChart>

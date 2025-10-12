@@ -97,10 +97,10 @@ export const ChannelStats = () => {
   }
 
   return (
-    <Card className="gradient-card">
+    <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
       <CardHeader>
-        <CardTitle>Canais Conectados</CardTitle>
-        <CardDescription>Status das integrações</CardDescription>
+        <CardTitle className="text-xl font-bold">Atendimento por fila</CardTitle>
+        <CardDescription>Status das filas de atendimento</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
@@ -109,18 +109,24 @@ export const ChannelStats = () => {
             return (
               <div
                 key={channel.id}
-                className="flex items-center justify-between p-3 bg-card border border-border rounded-lg hover:shadow-md transition-all"
+                className="flex items-center justify-between p-4 bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl hover:shadow-md hover:border-primary/20 transition-all duration-300 group"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Icon className="w-5 h-5 text-primary" />
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <Icon className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium">{channel.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize">{channel.type}</p>
+                    <p className="font-semibold text-base">{channel.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize flex items-center gap-1">
+                      <span className={`w-2 h-2 rounded-full ${channel.status === 'active' ? 'bg-green-500' : 'bg-muted'}`}></span>
+                      {channel.type}
+                    </p>
                   </div>
                 </div>
-                <Badge variant={channel.status === "active" ? "default" : "secondary"}>
+                <Badge 
+                  variant={channel.status === "active" ? "default" : "secondary"}
+                  className="px-3 py-1"
+                >
                   {channel.status === "active" ? "Ativo" : "Inativo"}
                 </Badge>
               </div>

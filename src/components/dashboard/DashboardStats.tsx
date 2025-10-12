@@ -130,77 +130,97 @@ export const DashboardStats = () => {
   }
 
   return (
-    <div className="grid md:grid-cols-4 gap-6">
-      <Card className="gradient-card hover-scale transition-all">
-        <CardHeader className="pb-3">
-          <CardDescription className="flex items-center justify-between">
-            Tickets Abertos
-            <MessageSquare className="w-4 h-4 text-primary" />
-          </CardDescription>
-          <CardTitle className="text-3xl">{stats.openTickets}</CardTitle>
+    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-start justify-between mb-2">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+              Ativo
+            </CardDescription>
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-4xl font-bold">{stats.openTickets}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm">
+        <CardContent className="relative z-10">
+          <div className="flex items-center gap-2 text-xs">
             {stats.ticketsTrend > 0 ? (
               <>
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-green-500">+{stats.ticketsTrend} esta semana</span>
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="text-green-500 font-medium">+{stats.ticketsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Nenhum ticket esta semana</span>
+              <span className="text-muted-foreground">Sem novos tickets</span>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="gradient-card hover-scale transition-all">
-        <CardHeader className="pb-3">
-          <CardDescription className="flex items-center justify-between">
-            Contatos
-            <Users className="w-4 h-4 text-secondary" />
-          </CardDescription>
-          <CardTitle className="text-3xl">{stats.totalContacts}</CardTitle>
+      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-start justify-between mb-2">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+              Novos Contatos
+            </CardDescription>
+            <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
+              <Users className="w-6 h-6 text-secondary" />
+            </div>
+          </div>
+          <CardTitle className="text-4xl font-bold">{stats.totalContacts}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm">
+        <CardContent className="relative z-10">
+          <div className="flex items-center gap-2 text-xs">
             {stats.contactsTrend > 0 ? (
               <>
-                <TrendingUp className="w-4 h-4 text-green-500" />
-                <span className="text-green-500">+{stats.contactsTrend} esta semana</span>
+                <TrendingUp className="w-3 h-3 text-green-500" />
+                <span className="text-green-500 font-medium">+{stats.contactsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Nenhum contato novo</span>
+              <span className="text-muted-foreground">Sem novos contatos</span>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="gradient-card hover-scale transition-all">
-        <CardHeader className="pb-3">
-          <CardDescription className="flex items-center justify-between">
-            Tempo Médio
-            <Clock className="w-4 h-4 text-accent" />
-          </CardDescription>
-          <CardTitle className="text-3xl">{stats.avgResponseTime}</CardTitle>
+      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-start justify-between mb-2">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+              Tempo Médio Atendimento
+            </CardDescription>
+            <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-accent" />
+            </div>
+          </div>
+          <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            Tempo de resposta médio
+        <CardContent className="relative z-10">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            Tempo médio de resposta
           </div>
         </CardContent>
       </Card>
 
-      <Card className="gradient-card hover-scale transition-all">
-        <CardHeader className="pb-3">
-          <CardDescription className="flex items-center justify-between">
-            Filas Ativas
-            <Workflow className="w-4 h-4 text-primary" />
-          </CardDescription>
-          <CardTitle className="text-3xl">{stats.activeQueues}</CardTitle>
+      <Card className="border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
+        <CardHeader className="pb-3 relative z-10">
+          <div className="flex items-start justify-between mb-2">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+              Tempo Médio 1ª Resposta
+            </CardDescription>
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Clock className="w-6 h-6 text-primary" />
+            </div>
+          </div>
+          <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            Configuradas e funcionando
+        <CardContent className="relative z-10">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            Primeira resposta média
           </div>
         </CardContent>
       </Card>
