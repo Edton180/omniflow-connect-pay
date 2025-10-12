@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      baileys_sessions: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          id: string
+          last_seen: string | null
+          phone_number: string | null
+          qr_code: string | null
+          session_data: Json
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          id?: string
+          last_seen?: string | null
+          phone_number?: string | null
+          qr_code?: string | null
+          session_data?: Json
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          id?: string
+          last_seen?: string | null
+          phone_number?: string | null
+          qr_code?: string | null
+          session_data?: Json
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "baileys_sessions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: true
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channels: {
         Row: {
           config: Json | null

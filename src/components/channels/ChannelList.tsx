@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
+import { BaileysConnection } from "./BaileysConnection";
+import { BaileysSetupGuide } from "./BaileysSetupGuide";
+import { QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -76,10 +79,17 @@ export const ChannelList = () => {
 
   const availableChannelTypes = [
     {
+      type: "baileys-qr",
+      name: "WhatsApp (Baileys QR)",
+      icon: "qr-code",
+      description: "Conexão via QR Code - Multi-dispositivo",
+      isBaileys: true,
+    },
+    {
       type: "whatsapp",
-      name: "WhatsApp",
+      name: "WhatsApp Business API",
       icon: "message-circle",
-      description: "WhatsApp Business API",
+      description: "WhatsApp Business API Oficial",
     },
     {
       type: "email",
@@ -213,38 +223,65 @@ export const ChannelList = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold">Canais de Atendimento</h2>
+          <p className="text-sm text-muted-foreground">
+            Configure suas integrações de WhatsApp e outros canais
+          </p>
+        </div>
         <Button onClick={handleNewChannel}>
           Novo Canal
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        {channels.map((channel) => (
-          <ChannelCard
-            key={channel.id}
-            channel={{
-              ...channel,
-              connected: channel.status === "active",
-              icon: channel.type,
-              description: availableChannelTypes.find((t) => t.type === channel.type)?.description || "",
-            }}
-            onConfigure={() => handleConfigure(channel)}
-          />
-        ))}
-      </div>
-
-      <Card className="gradient-card">
-        <CardContent className="pt-6">
-          <div className="text-center space-y-2">
-            <h3 className="text-lg font-semibold">Conecte seus canais de atendimento</h3>
-            <p className="text-sm text-muted-foreground">
-              Configure as integrações com WhatsApp, Instagram, Facebook e outros canais para centralizar
-              seu atendimento em um único lugar.
-            </p>
+      {/* Baileys Connections Section */}
+      {channels.some(channel => channel.type === 'baileys-qr') && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <QrCode className="w-5 h-5" />
+            WhatsApp via QR Code (Baileys)
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {channels
+              .filter(channel => channel.type === 'baileys-qr')
+              .map((channel) => (
+                <BaileysConnection
+                  key={channel.id}
+                  channel={channel}
+                  onStatusChange={(status) => {
+                    loadChannels();
+                  }}
+                />
+              ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
+
+      {/* Other Channels Section */}
+      {channels.filter(channel => channel.type !== 'baileys-qr').length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Outros Canais</h3>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            {channels
+              .filter(channel => channel.type !== 'baileys-qr')
+              .map((channel) => (
+                <ChannelCard
+                  key={channel.id}
+                  channel={{
+                    ...channel,
+                    connected: channel.status === "active",
+                    icon: channel.type,
+                    description: availableChannelTypes.find((t) => t.type === channel.type)?.description || "",
+                  }}
+                  onConfigure={() => handleConfigure(channel)}
+                />
+              ))}
+          </div>
+        </div>
+      )}
+
+      <BaileysSetupGuide />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">
@@ -291,6 +328,32 @@ export const ChannelList = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+              {formData.type === "baileys-qr" && (
+                <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <QrCode className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold">Conexão via QR Code</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Este canal utiliza a biblioteca Baileys para conectar seu WhatsApp 
+                        através de QR Code, sem necessidade de API oficial.
+                      </p>
+                      <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                        <li>Suporta multi-dispositivo</li>
+                        <li>Sem custos de API</li>
+                        <li>Conexão direta com WhatsApp</li>
+                        <li>Envio e recebimento de mensagens, mídia e áudio</li>
+                      </ul>
+                      <p className="text-xs text-amber-600 font-medium mt-2">
+                        ⚠️ Após salvar, você poderá escanear o QR Code na lista de canais
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {formData.type === "whatsapp" && (
                 <>

@@ -14,6 +14,7 @@ import Queues from "./pages/Queues";
 import Channels from "./pages/Channels";
 import Payments from "./pages/Payments";
 import Branding from "./pages/Branding";
+import BaileysTest from "./pages/BaileysTest";
 import NotFound from "./pages/NotFound";
 import { SetupWizard } from "./components/SetupWizard";
 import { TenantManagement } from "./components/admin/TenantManagement";
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
           <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
+          <Route path="/baileys-test" element={<AuthGuard requireAuth><BaileysTest /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Payments /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Branding /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
