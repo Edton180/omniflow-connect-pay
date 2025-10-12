@@ -21,6 +21,7 @@ import Profile from "./pages/Profile";
 import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import SystemReset from "./pages/SystemReset";
+import ForceLogout from "./pages/ForceLogout";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +34,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/force-logout" element={<ForceLogout />} />
           <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />

@@ -40,14 +40,23 @@ const SystemReset = () => {
         throw error;
       }
 
+      // Primeiro fazer logout
+      console.log('Signing out...');
+      await supabase.auth.signOut();
+      
+      // Limpar todo o localStorage
+      console.log('Clearing localStorage...');
+      localStorage.clear();
+      sessionStorage.clear();
+
       toast({
         title: "✅ Sistema Resetado!",
-        description: data.message || "Todos os dados foram deletados com sucesso.",
+        description: data.message || "Todos os dados foram deletados. Você será redirecionado para fazer o primeiro cadastro.",
       });
 
-      // Aguardar um pouco e redirecionar para a página de cadastro
+      // Aguardar e redirecionar
       setTimeout(() => {
-        navigate('/auth');
+        window.location.href = '/auth';
       }, 2000);
       
     } catch (error: any) {
