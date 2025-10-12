@@ -73,28 +73,43 @@ serve(async (req) => {
       admin_password
     } = body;
 
-    console.log('Creating admin user:', admin_email);
+    console.log('Creating or finding admin user:', admin_email);
 
-    // Create admin user
-    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: admin_email,
-      password: admin_password,
-      email_confirm: true,
-      user_metadata: {
-        full_name: admin_name,
-      },
-    });
+    // Check if user already exists
+    let userId: string;
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users?.find(u => u.email === admin_email);
 
-    if (authError) {
-      console.error('Auth error:', authError);
-      if (authError.message.includes('already been registered') || authError.code === 'email_exists') {
-        throw new Error(`O email ${admin_email} já está cadastrado no sistema. Use outro email para o administrador da empresa.`);
+    if (existingUser) {
+      console.log('User already exists, using existing user:', existingUser.id);
+      userId = existingUser.id;
+      
+      // Update user metadata if needed
+      await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+        user_metadata: {
+          full_name: admin_name,
+        },
+      });
+    } else {
+      // Create new admin user
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: admin_email,
+        password: admin_password,
+        email_confirm: true,
+        user_metadata: {
+          full_name: admin_name,
+        },
+      });
+
+      if (authError) {
+        console.error('Auth error:', authError);
+        throw new Error(`Erro ao criar usuário: ${authError.message}`);
       }
-      throw authError;
-    }
-    if (!authData.user) throw new Error('Failed to create user');
+      if (!authData.user) throw new Error('Failed to create user');
 
-    console.log('Admin user created:', authData.user.id);
+      userId = authData.user.id;
+      console.log('Admin user created:', userId);
+    }
 
     // Create tenant
     const { data: tenantData, error: tenantError } = await supabaseAdmin
@@ -120,37 +135,73 @@ serve(async (req) => {
 
     console.log('Tenant created:', tenantData.id);
 
-    // Create profile for admin user
-    const { error: profileError } = await supabaseAdmin
+    // Create or update profile for admin user
+    const { data: existingProfile } = await supabaseAdmin
       .from('profiles')
-      .insert({
-        id: authData.user.id,
-        full_name: admin_name,
-        tenant_id: tenantData.id,
-      });
+      .select()
+      .eq('id', userId)
+      .maybeSingle();
 
-    if (profileError) {
-      console.error('Profile error:', profileError);
-      throw profileError;
+    if (existingProfile) {
+      console.log('Updating existing profile');
+      const { error: profileUpdateError } = await supabaseAdmin
+        .from('profiles')
+        .update({
+          tenant_id: tenantData.id,
+          full_name: admin_name,
+        })
+        .eq('id', userId);
+
+      if (profileUpdateError) {
+        console.error('Profile update error:', profileUpdateError);
+        throw profileUpdateError;
+      }
+    } else {
+      console.log('Creating new profile');
+      const { error: profileError } = await supabaseAdmin
+        .from('profiles')
+        .insert({
+          id: userId,
+          full_name: admin_name,
+          tenant_id: tenantData.id,
+        });
+
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        throw profileError;
+      }
     }
 
-    console.log('Profile created');
+    console.log('Profile created/updated');
 
-    // Assign tenant_admin role
-    const { error: roleError } = await supabaseAdmin
+    // Check if user already has tenant_admin role for this tenant
+    const { data: existingRole } = await supabaseAdmin
       .from('user_roles')
-      .insert({
-        user_id: authData.user.id,
-        tenant_id: tenantData.id,
-        role: 'tenant_admin',
-      });
+      .select()
+      .eq('user_id', userId)
+      .eq('tenant_id', tenantData.id)
+      .eq('role', 'tenant_admin')
+      .maybeSingle();
 
-    if (roleError) {
-      console.error('Role error:', roleError);
-      throw roleError;
+    if (!existingRole) {
+      // Assign tenant_admin role
+      const { error: roleError } = await supabaseAdmin
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          tenant_id: tenantData.id,
+          role: 'tenant_admin',
+        });
+
+      if (roleError) {
+        console.error('Role error:', roleError);
+        throw roleError;
+      }
+
+      console.log('Role assigned');
+    } else {
+      console.log('Role already exists');
     }
-
-    console.log('Role assigned');
 
     return new Response(
       JSON.stringify({ 
