@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
 import { BaileysConnection } from "./BaileysConnection";
 import { BaileysSetupGuide } from "./BaileysSetupGuide";
+import { EvolutionConnection } from "./EvolutionConnection";
 import { QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -119,6 +120,13 @@ export const ChannelList = () => {
       icon: "qr-code",
       description: "Conexão via QR Code - Multi-dispositivo",
       isBaileys: true,
+    },
+    {
+      type: "evolution-api",
+      name: "WhatsApp (Evolution API)",
+      icon: "zap",
+      description: "Conexão profissional via Evolution API",
+      isEvolution: true,
     },
     {
       type: "whatsapp",
@@ -312,13 +320,36 @@ export const ChannelList = () => {
         </div>
       )}
 
+      {/* Evolution API Connections Section */}
+      {channels.some(channel => channel.type === 'evolution-api') && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold flex items-center gap-2">
+            <QrCode className="w-5 h-5" />
+            WhatsApp via Evolution API
+          </h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {channels
+              .filter(channel => channel.type === 'evolution-api')
+              .map((channel) => (
+                <EvolutionConnection
+                  key={channel.id}
+                  channel={channel}
+                  onStatusChange={(status) => {
+                    loadChannels();
+                  }}
+                />
+              ))}
+          </div>
+        </div>
+      )}
+
       {/* Other Channels Section */}
-      {channels.filter(channel => channel.type !== 'baileys-qr').length > 0 && (
+      {channels.filter(channel => channel.type !== 'baileys-qr' && channel.type !== 'evolution-api').length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Outros Canais</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
             {channels
-              .filter(channel => channel.type !== 'baileys-qr')
+              .filter(channel => channel.type !== 'baileys-qr' && channel.type !== 'evolution-api')
               .map((channel) => (
                 <ChannelCard
                   key={channel.id}
