@@ -12,14 +12,17 @@ import {
   LogOut,
   BarChart3,
   Workflow,
-  CreditCard
+  CreditCard,
+  Palette
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
 import { ChannelStats } from "@/components/dashboard/ChannelStats";
+import { useBranding } from "@/hooks/useBranding";
 
 const Dashboard = () => {
   const { user, session, loading, signOut, isSuperAdmin } = useAuth();
+  const { branding } = useBranding();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -58,10 +61,18 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">OmniFlow</span>
+              {branding.logo_url ? (
+                <img
+                  src={branding.logo_url}
+                  alt={branding.name}
+                  className="w-10 h-10 rounded-lg object-contain"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
+                  <Zap className="w-5 h-5 text-white" />
+                </div>
+              )}
+              <span className="text-xl font-bold">{branding.name}</span>
             </div>
             <div className="flex items-center gap-4">
               <span className="text-sm text-muted-foreground hidden sm:inline">
@@ -201,15 +212,16 @@ const Dashboard = () => {
               <Button 
                 variant="outline" 
                 className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/branding")}
               >
                 <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <BarChart3 className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                    <Palette className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Ver Relatórios</div>
+                    <div className="font-semibold mb-1">Marca Branca</div>
                     <div className="text-sm text-muted-foreground">
-                      Métricas e performance
+                      Personalize sua plataforma
                     </div>
                   </div>
                 </div>

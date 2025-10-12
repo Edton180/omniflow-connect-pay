@@ -12,6 +12,7 @@ import Contacts from "./pages/Contacts";
 import Queues from "./pages/Queues";
 import Channels from "./pages/Channels";
 import Payments from "./pages/Payments";
+import Branding from "./pages/Branding";
 import NotFound from "./pages/NotFound";
 import { SetupWizard } from "./components/SetupWizard";
 import { TenantManagement } from "./components/admin/TenantManagement";
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/queues" element={<Queues />} />
           <Route path="/channels" element={<Channels />} />
           <Route path="/payments" element={<Payments />} />
+          <Route path="/branding" element={<Branding />} />
           <Route path="/admin/tenants" element={<TenantManagement />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
