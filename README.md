@@ -1,10 +1,10 @@
-# 🚀 OmniFlow Connect & Pay
+# 🚀 OmniFlow - Plataforma Multi-Tenant de Atendimento
 
-Sistema multi-tenant de atendimento omnichannel com gestão de pagamentos integrada.
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
 
-## 🎯 Sobre o Projeto
-
-OmniFlow é uma plataforma completa de atendimento ao cliente que unifica múltiplos canais de comunicação, gestão de tickets, filas inteligentes e processamento de pagamentos em uma única solução white-label.
+Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (WhatsApp, Email, Telegram, Instagram, Facebook) e gestão de tickets.
 
 ## ✨ Features Principais
 
@@ -14,7 +14,9 @@ OmniFlow é uma plataforma completa de atendimento ao cliente que unifica múlti
 - ✅ Gestão de tenants pelo Super Admin
 
 ### Atendimento Omnichannel
-- ✅ **WhatsApp Business**: Integração completa
+- ✅ **WhatsApp via Baileys**: Conexão QR Code gratuita
+- ✅ **WhatsApp via Evolution API**: Solução profissional escalável
+- ✅ **WhatsApp Business API**: Integração oficial
 - ✅ **Email**: SMTP configurável
 - ✅ **Telegram**: Bot integration
 - ✅ **Instagram**: Direct Messages
@@ -77,6 +79,12 @@ OmniFlow é uma plataforma completa de atendimento ao cliente que unifica múlti
 - **Health checks**
 
 ## 📦 Instalação
+
+### 📚 Guias Completos de Instalação
+
+- **[INSTALLATION.md](INSTALLATION.md)** - Guia completo passo a passo
+- **[DEPLOY.md](DEPLOY.md)** - Deploy em produção (VPS, Docker, Portainer)
+- **[EVOLUTION_API_SETUP.md](EVOLUTION_API_SETUP.md)** - Configuração Evolution API
 
 ### Opção 1: Script Automático (Recomendado para Produção)
 
@@ -189,9 +197,19 @@ docker-compose down
 
 ## 📚 Documentação
 
-- **[Guia de Deploy](DEPLOYMENT.md)** - Deploy completo em produção
-- **[Guia de Marca Branca](BRANDING_GUIDE.md)** - Customização white-label
-- **[Guia de Contribuição](CONTRIBUTING.md)** - Como contribuir
+### Guias de Setup e Deploy
+- **[INSTALLATION.md](INSTALLATION.md)** - Instalação completa passo a passo
+- **[DEPLOY.md](DEPLOY.md)** - Deploy para produção em VPS/Cloud
+- **[EVOLUTION_API_SETUP.md](EVOLUTION_API_SETUP.md)** - Setup WhatsApp Evolution API
+- **[BAILEYS_INTEGRATION.md](BAILEYS_INTEGRATION.md)** - Integração Baileys
+- **[SUPER_ADMIN_SETUP.md](SUPER_ADMIN_SETUP.md)** - Configuração Super Admin
+
+### Guias Técnicos
+- **[BRANDING_GUIDE.md](BRANDING_GUIDE.md)** - Customização de marca
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Como contribuir
+- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Status do projeto
+
+---
 
 ## 🏗️ Estrutura do Projeto
 
