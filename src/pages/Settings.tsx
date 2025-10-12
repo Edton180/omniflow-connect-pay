@@ -5,12 +5,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Edit } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { roles } = useAuth();
   const [loading, setLoading] = useState(false);
+  const isSuperAdmin = roles.some(r => r.role === 'super_admin');
   const [settings, setSettings] = useState({
     siteName: 'OmniFlow',
     siteDescription: 'Plataforma de atendimento multi-tenant',
@@ -54,6 +57,25 @@ export default function Settings() {
         </div>
 
         <div className="space-y-6">
+          {isSuperAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Landing Page</CardTitle>
+                <CardDescription>Edite a página inicial customizável do sistema</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate('/landing-page-editor')}
+                  className="w-full"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Editar Landing Page
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           <Card>
             <CardHeader>
               <CardTitle>Informações Gerais</CardTitle>
@@ -171,28 +193,30 @@ export default function Settings() {
             </CardContent>
           </Card>
 
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-              <CardDescription>Ações irreversíveis do sistema</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Reset Completo do Sistema</Label>
-                <p className="text-sm text-muted-foreground mb-2">
-                  Remove todos os dados do sistema incluindo usuários, tenants e configurações.
-                  Esta ação não pode ser desfeita!
-                </p>
-                <Button
-                  variant="destructive"
-                  onClick={() => navigate('/system-reset')}
-                  className="w-full"
-                >
-                  🔧 Reset Completo do Sistema
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          {isSuperAdmin && (
+            <Card className="border-destructive">
+              <CardHeader>
+                <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
+                <CardDescription>Ações irreversíveis do sistema</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Reset Completo do Sistema</Label>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Remove todos os dados do sistema incluindo usuários, tenants e configurações.
+                    Esta ação não pode ser desfeita!
+                  </p>
+                  <Button
+                    variant="destructive"
+                    onClick={() => navigate('/system-reset')}
+                    className="w-full"
+                  >
+                    🔧 Reset Completo do Sistema
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <Button onClick={handleSaveSettings} disabled={loading} className="w-full">
             <Save className="mr-2 h-4 w-4" />

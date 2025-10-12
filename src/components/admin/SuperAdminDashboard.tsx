@@ -1,12 +1,61 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const SuperAdminDashboard = () => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
+  const [stats, setStats] = useState({
+    totalTenants: 0,
+    totalUsers: 1,
+    activeTickets: 0,
+    todayMessages: 0,
+  });
+
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch tenants count
+      const { count: tenantsCount } = await supabase
+        .from('tenants')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch users count
+      const { count: usersCount } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      // Fetch active tickets count
+      const { count: ticketsCount } = await supabase
+        .from('tickets')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'open');
+
+      // Fetch today's messages count
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const { count: messagesCount } = await supabase
+        .from('messages')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', today.toISOString());
+
+      setStats({
+        totalTenants: tenantsCount || 0,
+        totalUsers: usersCount || 0,
+        activeTickets: ticketsCount || 0,
+        todayMessages: messagesCount || 0,
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -51,8 +100,10 @@ export const SuperAdminDashboard = () => {
               <Building2 className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Nenhum tenant ainda</p>
+              <div className="text-3xl font-bold">{stats.totalTenants}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.totalTenants === 0 ? 'Nenhum tenant ainda' : `${stats.totalTenants} empresa${stats.totalTenants > 1 ? 's' : ''}`}
+              </p>
             </CardContent>
           </Card>
 
@@ -62,8 +113,10 @@ export const SuperAdminDashboard = () => {
               <Users className="h-5 w-5 text-secondary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">1</div>
-              <p className="text-xs text-muted-foreground mt-1">Você</p>
+              <div className="text-3xl font-bold">{stats.totalUsers}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.totalUsers === 1 ? 'Você' : `${stats.totalUsers} usuários`}
+              </p>
             </CardContent>
           </Card>
 
@@ -73,8 +126,10 @@ export const SuperAdminDashboard = () => {
               <Ticket className="h-5 w-5 text-accent" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Nenhum ticket ainda</p>
+              <div className="text-3xl font-bold">{stats.activeTickets}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.activeTickets === 0 ? 'Nenhum ticket ativo' : `${stats.activeTickets} aberto${stats.activeTickets > 1 ? 's' : ''}`}
+              </p>
             </CardContent>
           </Card>
 
@@ -84,8 +139,10 @@ export const SuperAdminDashboard = () => {
               <MessageSquare className="h-5 w-5 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground mt-1">Nenhuma mensagem ainda</p>
+              <div className="text-3xl font-bold">{stats.todayMessages}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {stats.todayMessages === 0 ? 'Nenhuma mensagem hoje' : `${stats.todayMessages} mensagem${stats.todayMessages > 1 ? 'ns' : ''}`}
+              </p>
             </CardContent>
           </Card>
         </div>
