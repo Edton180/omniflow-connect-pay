@@ -94,6 +94,32 @@ export const useAuth = () => {
         },
       },
     });
+
+    // If signup successful and user is confirmed, check if they should be super_admin
+    if (data.user && !error) {
+      try {
+        // Check if any super_admin exists
+        const { data: existingSuperAdmin } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('role', 'super_admin')
+          .maybeSingle();
+
+        // If no super_admin exists, make this user the super_admin
+        if (!existingSuperAdmin) {
+          await supabase.from('user_roles').insert({
+            user_id: data.user.id,
+            tenant_id: null,
+            role: 'super_admin'
+          });
+          
+          logger.info('First user registered as super_admin');
+        }
+      } catch (roleError) {
+        logger.error('Error assigning super_admin role:', roleError);
+      }
+    }
+
     return { data, error };
   };
 

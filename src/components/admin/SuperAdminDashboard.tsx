@@ -99,7 +99,11 @@ export const SuperAdminDashboard = () => {
               <Building2 className="mr-2 h-5 w-5" />
               Gerenciar Tenants
             </Button>
-            <Button className="h-20 text-lg hover-scale" variant="outline">
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
+              onClick={() => navigate('/admin/users')}
+            >
               <Users className="mr-2 h-5 w-5" />
               Gerenciar Usuários
             </Button>
@@ -111,7 +115,11 @@ export const SuperAdminDashboard = () => {
               <CreditCard className="mr-2 h-5 w-5" />
               Planos e Pagamentos
             </Button>
-            <Button className="h-20 text-lg hover-scale" variant="outline">
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
+              onClick={() => navigate('/admin/settings')}
+            >
               <Settings className="mr-2 h-5 w-5" />
               Configurações do Sistema
             </Button>
