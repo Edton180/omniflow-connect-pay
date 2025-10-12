@@ -1,73 +1,314 @@
-# Welcome to your Lovable project
+# 🚀 OmniFlow Connect & Pay
 
-## Project info
+Sistema multi-tenant de atendimento omnichannel com gestão de pagamentos integrada.
 
-**URL**: https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56
+## 🎯 Sobre o Projeto
 
-## How can I edit this code?
+OmniFlow é uma plataforma completa de atendimento ao cliente que unifica múltiplos canais de comunicação, gestão de tickets, filas inteligentes e processamento de pagamentos em uma única solução white-label.
 
-There are several ways of editing your application.
+## ✨ Features Principais
 
-**Use Lovable**
+### Multi-tenant & Roles
+- ✅ Sistema completo multi-tenant com isolamento de dados
+- ✅ Super Admin, Tenant Admin e Agent roles
+- ✅ Gestão de tenants pelo Super Admin
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56) and start prompting.
+### Atendimento Omnichannel
+- ✅ **WhatsApp Business**: Integração completa
+- ✅ **Email**: SMTP configurável
+- ✅ **Telegram**: Bot integration
+- ✅ **Instagram**: Direct Messages
+- ✅ **Facebook**: Messenger
+- ✅ **WebChat**: Widget para seu site
 
-Changes made via Lovable will be committed automatically to this repo.
+### Sistema de Tickets
+- ✅ Gestão completa de atendimentos
+- ✅ Chat em tempo real (Supabase Realtime)
+- ✅ Histórico de mensagens
+- ✅ Status e prioridades
+- ✅ Atribuição de agentes
 
-**Use your preferred IDE**
+### Filas & Distribuição
+- ✅ Filas customizáveis por tenant
+- ✅ SLA configurável
+- ✅ Cores e identificação visual
+- ✅ Distribuição inteligente
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Pagamentos Integrados
+- ✅ **ASAAS**: Gateway brasileiro
+- ✅ **Mercado Pago**: Pagamentos e cobranças
+- ✅ **Stripe**: Pagamentos internacionais
+- ✅ **InfinitePay**: Gateway moderno
+- ✅ Sistema de planos e assinaturas
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Marca Branca (White Label)
+- ✅ Upload de logo personalizado
+- ✅ Cores primárias e secundárias customizáveis
+- ✅ Domínio personalizado
+- ✅ Aplicação automática em toda plataforma
 
-Follow these steps:
+### Dashboard & Analytics
+- ✅ Métricas em tempo real
+- ✅ Gráficos de tickets
+- ✅ Status de canais
+- ✅ Estatísticas de performance
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+## 🛠️ Stack Tecnológico
+
+### Frontend
+- **React 18** + TypeScript
+- **Vite** - Build tool
+- **TailwindCSS** - Styling
+- **shadcn/ui** - Component library
+- **React Query** - Data fetching
+- **React Router** - Routing
+
+### Backend
+- **Lovable Cloud** (Supabase)
+- **PostgreSQL** - Database
+- **Row Level Security** - Security
+- **Realtime** - WebSocket subscriptions
+- **Storage** - File uploads
+
+### Infrastructure
+- **Docker** + Docker Compose
+- **Nginx** - Web server
+- **Multi-stage builds**
+- **Health checks**
+
+## 📦 Instalação
+
+### Opção 1: Script Automático (Recomendado para Produção)
+
+```bash
+# Download e execute o script de instalação
+curl -o install.sh https://raw.githubusercontent.com/seu-usuario/omniflow/main/scripts/install.sh
+chmod +x install.sh
+sudo ./install.sh
+```
+
+O script irá:
+- Instalar Docker e Docker Compose
+- Clonar o repositório
+- Configurar variáveis de ambiente
+- Build e iniciar a aplicação
+
+### Opção 2: Docker Compose Manual
+
+```bash
+# 1. Clone o repositório
+git clone https://github.com/seu-usuario/omniflow.git
+cd omniflow
+
+# 2. Configure as variáveis de ambiente
+cp .env.example .env
+nano .env
+
+# 3. Build e start
+docker-compose up -d --build
+
+# 4. Verificar status
+docker-compose ps
+```
+
+### Opção 3: Desenvolvimento Local (Lovable)
+
+**Use Lovable IDE**
+
+Acesse o projeto diretamente no Lovable:
+[https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56](https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56)
+
+**Use seu IDE preferido**
+
+```bash
+# 1. Clone o repositório
 git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
 cd <YOUR_PROJECT_NAME>
 
-# Step 3: Install the necessary dependencies.
-npm i
+# 2. Instale as dependências
+npm install
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# 3. Configure .env
+cp .env.example .env
+
+# 4. Execute em modo desenvolvimento
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Configuração
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Variáveis de Ambiente
 
-**Use GitHub Codespaces**
+```env
+# Supabase (Lovable Cloud)
+VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publica
+VITE_SUPABASE_PROJECT_ID=seu-project-id
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Produção
+NODE_ENV=production
+```
 
-## What technologies are used for this project?
+### Primeiro Acesso
 
-This project is built with:
+1. Acesse a aplicação
+2. Crie sua conta
+3. O primeiro usuário será Super Admin
+4. Configure seu tenant no painel
+5. Conecte seus canais de atendimento
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🚀 Deploy
 
-## How can I deploy this project?
+### Deploy via Lovable
 
-Simply open [Lovable](https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56) and click on Share -> Publish.
+1. Abra o projeto no Lovable
+2. Clique em **Share → Publish**
+3. Seu app estará online!
 
-## Can I connect a custom domain to my Lovable project?
+### Deploy em VPS/Cloud
 
-Yes, you can!
+Consulte o [Guia Completo de Deploy](DEPLOYMENT.md) para instruções detalhadas sobre:
+- AWS EC2
+- Google Cloud Platform
+- DigitalOcean
+- Azure
+- VPS genérico
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Docker em Produção
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+```bash
+# Build para produção
+docker-compose -f docker-compose.yml up -d --build
+
+# Ver logs
+docker-compose logs -f
+
+# Parar
+docker-compose down
+```
+
+## 📚 Documentação
+
+- **[Guia de Deploy](DEPLOYMENT.md)** - Deploy completo em produção
+- **[Guia de Marca Branca](BRANDING_GUIDE.md)** - Customização white-label
+- **[Guia de Contribuição](CONTRIBUTING.md)** - Como contribuir
+
+## 🏗️ Estrutura do Projeto
+
+```
+omniflow/
+├── src/
+│   ├── components/          # Componentes React
+│   │   ├── ui/             # shadcn/ui components
+│   │   ├── admin/          # Administração
+│   │   ├── channels/       # Canais de comunicação
+│   │   ├── contacts/       # Gestão de contatos
+│   │   ├── dashboard/      # Dashboard e métricas
+│   │   ├── payments/       # Pagamentos
+│   │   ├── queues/         # Filas
+│   │   └── tickets/        # Tickets
+│   ├── pages/              # Páginas/Rotas
+│   ├── hooks/              # Custom hooks
+│   ├── integrations/       # Integrações (Supabase)
+│   └── lib/                # Utilitários
+├── scripts/                # Scripts de deploy/manutenção
+├── supabase/               # Configuração Supabase
+│   └── migrations/         # Migrações SQL
+├── Dockerfile              # Docker image
+├── docker-compose.yml      # Orquestração
+├── nginx.conf              # Nginx config
+└── DEPLOYMENT.md           # Documentação de deploy
+```
+
+## 🔐 Segurança
+
+- **Row Level Security (RLS)** em todas as tabelas
+- **Isolamento completo** entre tenants
+- **Autenticação** via Supabase Auth
+- **Storage seguro** com RLS policies
+- **HTTPS** obrigatório em produção
+- **Rate limiting** configurado no Nginx
+
+## 📈 Performance
+
+- Build otimizado com **Vite**
+- **Code splitting** automático
+- **Lazy loading** de componentes
+- Compressão **Gzip/Brotli**
+- Cache de assets estáticos
+- **Realtime** otimizado
+
+## 🛠️ Comandos Úteis
+
+```bash
+# Desenvolvimento
+npm run dev              # Dev server com hot reload
+npm run build            # Build para produção
+npm run preview          # Preview do build local
+
+# Docker
+docker-compose up -d     # Iniciar em background
+docker-compose down      # Parar e remover containers
+docker-compose logs -f   # Ver logs em tempo real
+docker-compose restart   # Reiniciar serviços
+
+# Manutenção (Produção)
+./scripts/update.sh      # Atualizar aplicação
+./scripts/backup.sh      # Criar backup
+```
+
+## 🤝 Contribuindo
+
+Contribuições são bem-vindas! Por favor, leia nosso [Guia de Contribuição](CONTRIBUTING.md).
+
+1. Fork o projeto
+2. Crie uma branch (`git checkout -b feature/NovaFeature`)
+3. Commit suas mudanças (`git commit -m 'feat: adiciona NovaFeature'`)
+4. Push para a branch (`git push origin feature/NovaFeature`)
+5. Abra um Pull Request
+
+## 🗺️ Roadmap
+
+- [ ] **Automações**: Chatbots e respostas automáticas
+- [ ] **CRM Integration**: HubSpot, Salesforce, Pipedrive
+- [ ] **App Mobile**: React Native para iOS e Android
+- [ ] **API Pública**: REST API documentada
+- [ ] **Webhooks**: Webhooks customizáveis
+- [ ] **Templates**: Templates de mensagens
+- [ ] **Reports**: Relatórios avançados e exportação
+- [ ] **ERP Integration**: Integração com ERPs
+
+## 🆘 Suporte
+
+- 📚 [Documentação Completa](DEPLOYMENT.md)
+- 🐛 [Reportar Bug](https://github.com/seu-usuario/omniflow/issues)
+- 💡 [Solicitar Feature](https://github.com/seu-usuario/omniflow/issues)
+- 💬 Discord: [Em breve]
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+## 🙏 Agradecimentos
+
+- [Lovable](https://lovable.dev) - Plataforma de desenvolvimento
+- [Supabase](https://supabase.com) - Backend as a Service
+- [shadcn/ui](https://ui.shadcn.com) - Component library
+- [Tailwind CSS](https://tailwindcss.com) - CSS framework
+
+## 📞 Contato
+
+Para questões comerciais e parcerias, entre em contato através de [seu-email@empresa.com]
+
+---
+
+**Desenvolvido com ❤️ para revolucionar o atendimento ao cliente**
+
+**Status do Projeto**: ✅ Todas as 6 fases implementadas
+
+- ✅ Fase 1: Fundação Multi-tenant
+- ✅ Fase 2: Sistema de Atendimento
+- ✅ Fase 3: Integrações de Canais
+- ✅ Fase 4: Pagamentos
+- ✅ Fase 5: Marca Branca
+- ✅ Fase 6: Deploy e Infraestrutura
