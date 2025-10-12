@@ -21,7 +21,7 @@ import { ChannelStats } from "@/components/dashboard/ChannelStats";
 import { useBranding } from "@/hooks/useBranding";
 
 const Dashboard = () => {
-  const { user, session, loading, signOut, isSuperAdmin } = useAuth();
+  const { user, session, loading, signOut, isSuperAdmin, hasRole } = useAuth();
   const { branding } = useBranding();
   const navigate = useNavigate();
 
@@ -218,41 +218,65 @@ const Dashboard = () => {
                 </div>
               </Button>
 
-              <Button 
-                variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
-                onClick={() => navigate("/payments")}
-              >
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                    <CreditCard className="w-5 h-5 text-green-600" />
-                  </div>
-                  <div>
-                    <div className="font-semibold mb-1">Configurar Pagamentos</div>
-                    <div className="text-sm text-muted-foreground">
-                      Gateways e assinaturas
+              {hasRole('tenant_admin') && !hasRole('super_admin') && (
+                <Button 
+                  variant="outline" 
+                  className="justify-start h-auto py-4 px-6 hover-scale"
+                  onClick={() => navigate("/tenant/settings")}
+                >
+                  <div className="flex items-start gap-4 text-left">
+                    <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                      <Settings className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <div className="font-semibold mb-1">Configurações da Empresa</div>
+                      <div className="text-sm text-muted-foreground">
+                        Gerencie sua empresa e usuários
+                      </div>
                     </div>
                   </div>
-                </div>
-              </Button>
+                </Button>
+              )}
 
-              <Button 
-                variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
-                onClick={() => navigate("/branding")}
-              >
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                    <Palette className="w-5 h-5 text-purple-600" />
-                  </div>
-                  <div>
-                    <div className="font-semibold mb-1">Marca Branca</div>
-                    <div className="text-sm text-muted-foreground">
-                      Personalize sua plataforma
+              {hasRole('super_admin') && (
+                <>
+                  <Button 
+                    variant="outline" 
+                    className="justify-start h-auto py-4 px-6 hover-scale"
+                    onClick={() => navigate("/payments")}
+                  >
+                    <div className="flex items-start gap-4 text-left">
+                      <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Configurar Pagamentos</div>
+                        <div className="text-sm text-muted-foreground">
+                          Gateways e assinaturas
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </Button>
+                  </Button>
+
+                  <Button 
+                    variant="outline" 
+                    className="justify-start h-auto py-4 px-6 hover-scale"
+                    onClick={() => navigate("/branding")}
+                  >
+                    <div className="flex items-start gap-4 text-left">
+                      <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
+                        <Palette className="w-5 h-5 text-purple-600" />
+                      </div>
+                      <div>
+                        <div className="font-semibold mb-1">Marca Branca</div>
+                        <div className="text-sm text-muted-foreground">
+                          Personalize sua plataforma
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>

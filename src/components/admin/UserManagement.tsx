@@ -1,0 +1,466 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Users, Plus, Pencil, Trash2, Mail, Shield, Loader2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+interface UserWithProfile {
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string | null;
+  tenant_id: string | null;
+  roles: Array<{ role: string; tenant_id: string | null }>;
+}
+
+export const UserManagement = () => {
+  const { toast } = useToast();
+  const { user: currentUser, isSuperAdmin } = useAuth();
+  const [users, setUsers] = useState<UserWithProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithProfile | null>(null);
+  const [tenants, setTenants] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    password: "",
+    tenant_id: "",
+    role: "agent",
+  });
+
+  const fetchTenants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setTenants(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar empresas",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      // Fetch profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from("profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (profileError) throw profileError;
+
+      // Fetch roles for each user
+      const usersWithRoles = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: rolesData } = await supabase
+            .from("user_roles")
+            .select("role, tenant_id")
+            .eq("user_id", profile.id);
+
+          return {
+            id: profile.id,
+            email: `user_${profile.id.substring(0, 8)}@system.local`,
+            full_name: profile.full_name,
+            phone: profile.phone,
+            tenant_id: profile.tenant_id,
+            roles: rolesData || [],
+          };
+        })
+      );
+
+      setUsers(usersWithRoles);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar usuários",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+    fetchTenants();
+  }, []);
+
+  const handleCreate = () => {
+    setSelectedUser(null);
+    setFormData({
+      full_name: "",
+      email: "",
+      phone: "",
+      password: "",
+      tenant_id: "",
+      role: "agent",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleEdit = (user: UserWithProfile) => {
+    setSelectedUser(user);
+    setFormData({
+      full_name: user.full_name,
+      email: user.email,
+      phone: user.phone || "",
+      password: "",
+      tenant_id: user.tenant_id || "",
+      role: user.roles[0]?.role || "agent",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (selectedUser) {
+        // Update existing user
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({
+            full_name: formData.full_name,
+            phone: formData.phone || null,
+            tenant_id: formData.tenant_id || null,
+          })
+          .eq("id", selectedUser.id);
+
+        if (profileError) throw profileError;
+
+        // Update role
+        await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", selectedUser.id);
+
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: selectedUser.id,
+            tenant_id: formData.tenant_id || null,
+            role: formData.role,
+          });
+
+        if (roleError) throw roleError;
+
+        toast({
+          title: "Usuário atualizado",
+          description: "As informações do usuário foram atualizadas com sucesso.",
+        });
+      } else {
+        // Create new user via edge function would be ideal
+        toast({
+          title: "Funcionalidade em desenvolvimento",
+          description: "A criação de novos usuários está sendo implementada.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setDialogOpen(false);
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteClick = (user: UserWithProfile) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .delete()
+        .eq("id", userToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Usuário excluído",
+        description: "O usuário foi excluído com sucesso.",
+      });
+
+      fetchUsers();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir usuário",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const getRoleBadge = (role: string) => {
+    const variants: Record<string, 'default' | 'secondary' | 'destructive'> = {
+      super_admin: 'destructive',
+      tenant_admin: 'default',
+      manager: 'secondary',
+      agent: 'secondary',
+      user: 'secondary',
+    };
+
+    return (
+      <Badge variant={variants[role] || 'secondary'}>
+        {role.replace('_', ' ').toUpperCase()}
+      </Badge>
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Gerenciar Usuários</h2>
+          <p className="text-muted-foreground">
+            {isSuperAdmin ? "Todos os usuários do sistema" : "Usuários da sua empresa"}
+          </p>
+        </div>
+        <Button onClick={handleCreate}>
+          <Plus className="mr-2 h-4 w-4" />
+          Novo Usuário
+        </Button>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {users.map((user) => (
+          <Card key={user.id} className="gradient-card hover-scale">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Shield className="h-5 w-5 text-primary" />
+                    {user.full_name}
+                  </CardTitle>
+                  <CardDescription className="flex items-center gap-2 mt-1">
+                    <Mail className="h-4 w-4" />
+                    {user.email}
+                  </CardDescription>
+                </div>
+                <div className="flex gap-1">
+                  <Button size="icon" variant="ghost" onClick={() => handleEdit(user)}>
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  {user.id !== currentUser?.id && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleDeleteClick(user)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {user.phone && (
+                <p className="text-sm text-muted-foreground">
+                  📱 {user.phone}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2">
+                {user.roles.map((roleData, idx) => (
+                  <div key={idx}>{getRoleBadge(roleData.role)}</div>
+                ))}
+                {user.roles.length === 0 && (
+                  <Badge variant="secondary">SEM ROLE</Badge>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {users.length === 0 && (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center h-64">
+            <Users className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium mb-2">Nenhum usuário encontrado</p>
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Criar Primeiro Usuário
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedUser ? "Editar Usuário" : "Novo Usuário"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedUser
+                ? "Atualize as informações do usuário"
+                : "Adicione um novo usuário ao sistema"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Nome Completo</Label>
+              <Input
+                id="full_name"
+                value={formData.full_name}
+                onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                required
+              />
+            </div>
+
+            {!selectedUser && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password">Senha</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(00) 00000-0000"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tenant_id">Empresa</Label>
+              <Select
+                value={formData.tenant_id}
+                onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma empresa" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tenants.map((tenant) => (
+                    <SelectItem key={tenant.id} value={tenant.id}>
+                      {tenant.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="role">Função</Label>
+              <Select
+                value={formData.role}
+                onValueChange={(value) => setFormData({ ...formData, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
+                  <SelectItem value="tenant_admin">Admin da Empresa</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
+                  <SelectItem value="agent">Agente</SelectItem>
+                  <SelectItem value="user">Usuário</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {selectedUser ? "Atualizar" : "Criar"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong>{userToDelete?.full_name}</strong>?
+              Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};

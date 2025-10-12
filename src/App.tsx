@@ -22,6 +22,7 @@ import Users from "./pages/Users";
 import Settings from "./pages/Settings";
 import SystemReset from "./pages/SystemReset";
 import ForceLogout from "./pages/ForceLogout";
+import TenantSettings from "./pages/TenantSettings";
 
 const queryClient = new QueryClient();
 
@@ -43,11 +44,12 @@ const App = () => (
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
           <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
           <Route path="/baileys-test" element={<AuthGuard requireAuth><BaileysTest /></AuthGuard>} />
-          <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Payments /></AuthGuard>} />
-          <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Branding /></AuthGuard>} />
+          <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
+          <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
           <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
+          <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
