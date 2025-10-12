@@ -23,15 +23,6 @@ export const TicketList = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-export const TicketList = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [tickets, setTickets] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
   const fetchTickets = async () => {
     setLoading(true);
     try {
