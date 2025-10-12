@@ -23,48 +23,77 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export const ChannelList = () => {
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { session, isSuperAdmin } = useAuth();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState<any>(null);
   const [channels, setChannels] = useState<any[]>([]);
+  const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
     type: "whatsapp",
+    tenant_id: "",
     config: {} as Record<string, string>,
   });
 
   useEffect(() => {
     if (session?.user) {
       loadChannels();
+      if (isSuperAdmin) {
+        loadTenants();
+      }
     }
-  }, [session]);
+  }, [session, isSuperAdmin]);
+
+  const loadTenants = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("id, name")
+        .order("name", { ascending: true });
+
+      if (error) throw error;
+      setTenants(data || []);
+    } catch (error: any) {
+      console.error("Error loading tenants:", error);
+    }
+  };
 
   const loadChannels = async () => {
     try {
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", session?.user?.id)
-        .maybeSingle();
+      // Se for super_admin, carrega todos os canais
+      if (isSuperAdmin) {
+        const { data, error } = await supabase
+          .from("channels")
+          .select("*, tenants(name)")
+          .order("created_at", { ascending: false });
 
-      if (roleError) throw roleError;
+        if (error) throw error;
+        setChannels(data || []);
+      } else {
+        const { data: userRole, error: roleError } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", session?.user?.id)
+          .maybeSingle();
 
-      if (!userRole?.tenant_id) {
-        setLoading(false);
-        setChannels([]);
-        return;
+        if (roleError) throw roleError;
+
+        if (!userRole?.tenant_id) {
+          setLoading(false);
+          setChannels([]);
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("channels")
+          .select("*")
+          .eq("tenant_id", userRole.tenant_id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setChannels(data || []);
       }
-
-      const { data, error } = await supabase
-        .from("channels")
-        .select("*")
-        .eq("tenant_id", userRole.tenant_id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      setChannels(data || []);
     } catch (error: any) {
       console.error("Error loading channels:", error);
       toast({
@@ -128,6 +157,7 @@ export const ChannelList = () => {
     setFormData({
       name: channel.name || "",
       type: channel.type || "whatsapp",
+      tenant_id: channel.tenant_id || "",
       config: channel.config || {},
     });
     setDialogOpen(true);
@@ -138,6 +168,7 @@ export const ChannelList = () => {
     setFormData({
       name: "",
       type: "whatsapp",
+      tenant_id: "",
       config: {},
     });
     setDialogOpen(true);
@@ -145,28 +176,45 @@ export const ChannelList = () => {
 
   const handleSave = async () => {
     try {
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", session?.user?.id)
-        .maybeSingle();
+      let tenantId: string;
 
-      if (roleError) throw roleError;
+      // Se for super_admin, usa o tenant_id selecionado
+      if (isSuperAdmin) {
+        if (!formData.tenant_id) {
+          toast({
+            title: "Erro",
+            description: "Selecione uma empresa para criar o canal",
+            variant: "destructive",
+          });
+          return;
+        }
+        tenantId = formData.tenant_id;
+      } else {
+        // Usuários normais usam seu tenant_id
+        const { data: userRole, error: roleError } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", session?.user?.id)
+          .maybeSingle();
 
-      if (!userRole?.tenant_id) {
-        toast({
-          title: "Erro",
-          description: "Você precisa estar associado a uma empresa para criar canais",
-          variant: "destructive",
-        });
-        return;
+        if (roleError) throw roleError;
+
+        if (!userRole?.tenant_id) {
+          toast({
+            title: "Erro",
+            description: "Você precisa estar associado a uma empresa para criar canais",
+            variant: "destructive",
+          });
+          return;
+        }
+        tenantId = userRole.tenant_id;
       }
 
       const channelData = {
         name: formData.name,
         type: formData.type,
         config: formData.config,
-        tenant_id: userRole.tenant_id,
+        tenant_id: tenantId,
         status: "active",
       };
 
@@ -308,6 +356,28 @@ export const ChannelList = () => {
                   placeholder="Ex: WhatsApp Principal"
                 />
               </div>
+
+              {isSuperAdmin && (
+                <div className="space-y-2">
+                  <Label htmlFor="tenant_select">Empresa *</Label>
+                  <Select
+                    value={formData.tenant_id}
+                    onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
+                    disabled={!!selectedChannel}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a empresa" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tenants.map((tenant) => (
+                        <SelectItem key={tenant.id} value={tenant.id}>
+                          {tenant.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="channel_type">Tipo de Canal</Label>
