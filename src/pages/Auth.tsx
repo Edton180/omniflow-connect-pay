@@ -7,8 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Zap } from "lucide-react";
+import { Zap, Trash2 } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const authSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
@@ -21,6 +22,7 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
@@ -126,10 +128,36 @@ const Auth = () => {
     }
   };
 
+  const handleDeleteAllUsers = async () => {
+    if (!confirm("Tem certeza que deseja deletar TODOS os usuários? Esta ação não pode ser desfeita!")) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('delete-all-users');
+      
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: data.message || "Todos os usuários foram deletados",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar usuários",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
+      <div className="w-full max-w-md space-y-4">
+        <div className="text-center">
           <div className="inline-flex items-center gap-2 mb-4">
             <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
               <Zap className="w-6 h-6 text-white" />
@@ -137,6 +165,16 @@ const Auth = () => {
             <span className="text-2xl font-bold">OmniFlow</span>
           </div>
         </div>
+
+        <Button
+          onClick={handleDeleteAllUsers}
+          disabled={deleting}
+          variant="destructive"
+          className="w-full"
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          {deleting ? "Deletando..." : "Deletar Todos os Usuários"}
+        </Button>
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader>
