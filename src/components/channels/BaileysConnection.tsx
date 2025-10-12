@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, CheckCircle2, XCircle, Loader2, RefreshCw } from "lucide-react";
+import { QrCode, CheckCircle2, XCircle, Loader2, RefreshCw, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import QRCodeReact from "react-qr-code";
@@ -73,6 +73,34 @@ export function BaileysConnection({ channel, onStatusChange }: BaileysConnection
     } catch (error: any) {
       console.error('Error starting connection:', error);
       toast.error('Erro ao iniciar conexão: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.functions.invoke('baileys-whatsapp', {
+        body: {
+          action: 'delete',
+          channelId: channel.id,
+        },
+      });
+
+      if (error) throw error;
+
+      setStatus('disconnected');
+      setQrCode('');
+      setPhoneNumber('');
+      
+      toast.success('Sessão deletada com sucesso!');
+      
+      // Recarregar a lista de canais
+      window.location.reload();
+    } catch (error: any) {
+      console.error('Error deleting session:', error);
+      toast.error('Erro ao deletar sessão: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -184,9 +212,10 @@ export function BaileysConnection({ channel, onStatusChange }: BaileysConnection
                 variant="outline"
                 onClick={loadStatus}
                 disabled={loading}
+                className="flex-1"
               >
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Atualizar Status
+                Atualizar
               </Button>
               <Button
                 variant="destructive"
@@ -199,6 +228,15 @@ export function BaileysConnection({ channel, onStatusChange }: BaileysConnection
                 ) : (
                   <><XCircle className="mr-2 h-4 w-4" />Desconectar</>
                 )}
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={loading}
+                size="icon"
+                title="Deletar sessão"
+              >
+                <Trash2 className="h-4 w-4" />
               </Button>
             </>
           )}
