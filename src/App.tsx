@@ -33,6 +33,9 @@ import InternalChat from "./pages/InternalChat";
 import SuperAdminTickets from "./pages/SuperAdminTickets";
 import ViewTickets from "./pages/ViewTickets";
 import SuperAdminInvoices from "./pages/SuperAdminInvoices";
+import Catalog from "./pages/Catalog";
+import Withdrawals from "./pages/Withdrawals";
+import AdminWithdrawals from "./pages/AdminWithdrawals";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +73,9 @@ const App = () => (
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
+          <Route path="/catalog" element={<AuthGuard requireAuth><Catalog /></AuthGuard>} />
+          <Route path="/withdrawals" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Withdrawals /></AuthGuard>} />
+          <Route path="/admin/withdrawals" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AdminWithdrawals /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

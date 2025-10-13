@@ -58,6 +58,196 @@ export type Database = {
           },
         ]
       }
+      catalog_orders: {
+        Row: {
+          created_at: string | null
+          currency: string
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          gateway_payment_id: string | null
+          gateway_response: Json | null
+          id: string
+          paid_at: string | null
+          payment_gateway: string | null
+          platform_commission_amount: number
+          platform_commission_percent: number
+          product_id: string
+          quantity: number
+          status: string
+          tenant_amount: number
+          tenant_id: string
+          total_amount: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          id?: string
+          paid_at?: string | null
+          payment_gateway?: string | null
+          platform_commission_amount?: number
+          platform_commission_percent?: number
+          product_id: string
+          quantity: number
+          status?: string
+          tenant_amount: number
+          tenant_id: string
+          total_amount: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          gateway_payment_id?: string | null
+          gateway_response?: Json | null
+          id?: string
+          paid_at?: string | null
+          payment_gateway?: string | null
+          platform_commission_amount?: number
+          platform_commission_percent?: number
+          product_id?: string
+          quantity?: number
+          status?: string
+          tenant_amount?: number
+          tenant_id?: string
+          total_amount?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_orders_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_orders_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_products: {
+        Row: {
+          created_at: string | null
+          currency: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          metadata: Json | null
+          name: string
+          price: number
+          stock_quantity: number | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          name: string
+          price: number
+          stock_quantity?: number | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          metadata?: Json | null
+          name?: string
+          price?: number
+          stock_quantity?: number | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_products_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_settings: {
+        Row: {
+          created_at: string | null
+          custom_css: Json | null
+          footer_text: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_css?: Json | null
+          footer_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_css?: Json | null
+          footer_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_queues: {
         Row: {
           channel_id: string
@@ -312,6 +502,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      global_catalog_settings: {
+        Row: {
+          commission_percent: number
+          created_at: string | null
+          hero_subtitle: string | null
+          hero_title: string | null
+          id: string
+          is_enabled: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          commission_percent?: number
+          created_at?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          commission_percent?: number
+          created_at?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       internal_messages: {
         Row: {
@@ -919,6 +1139,50 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_balances: {
+        Row: {
+          available_balance: number
+          created_at: string | null
+          currency: string
+          id: string
+          pending_balance: number
+          tenant_id: string
+          total_earned: number
+          total_withdrawn: number
+          updated_at: string | null
+        }
+        Insert: {
+          available_balance?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          pending_balance?: number
+          tenant_id: string
+          total_earned?: number
+          total_withdrawn?: number
+          updated_at?: string | null
+        }
+        Update: {
+          available_balance?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          pending_balance?: number
+          tenant_id?: string
+          total_earned?: number
+          total_withdrawn?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_balances_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string | null
@@ -1122,6 +1386,65 @@ export type Database = {
           },
         ]
       }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          bank_info: Json
+          created_at: string | null
+          currency: string
+          id: string
+          notes: string | null
+          processed_at: string | null
+          rejection_reason: string | null
+          requested_by: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          bank_info: Json
+          created_at?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          bank_info?: Json
+          created_at?: string | null
+          currency?: string
+          id?: string
+          notes?: string | null
+          processed_at?: string | null
+          rejection_reason?: string | null
+          requested_by?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -1138,6 +1461,10 @@ export type Database = {
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
+      }
+      process_catalog_order_payment: {
+        Args: { order_id_param: string }
+        Returns: Json
       }
       process_invoice_payment: {
         Args: { invoice_id_param: string }
