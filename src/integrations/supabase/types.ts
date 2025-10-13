@@ -1127,6 +1127,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_and_generate_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       has_role: {
         Args: { _role: string; _user_id: string }
         Returns: boolean
@@ -1134,6 +1138,10 @@ export type Database = {
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
+      }
+      process_invoice_payment: {
+        Args: { invoice_id_param: string }
+        Returns: Json
       }
     }
     Enums: {
