@@ -25,7 +25,6 @@ import Settings from "./pages/Settings";
 import SystemReset from "./pages/SystemReset";
 import ForceLogout from "./pages/ForceLogout";
 import TenantSettings from "./pages/TenantSettings";
-import LandingPageEditor from "./pages/LandingPageEditor";
 import { SetupWizard } from "./components/SetupWizard";
 import Revenue from "./pages/Revenue";
 import CRM from "./pages/CRM";
@@ -36,6 +35,8 @@ import SuperAdminInvoices from "./pages/SuperAdminInvoices";
 import Catalog from "./pages/Catalog";
 import Withdrawals from "./pages/Withdrawals";
 import AdminWithdrawals from "./pages/AdminWithdrawals";
+import CatalogLandingEditor from "./pages/CatalogLandingEditor";
+import LandingPageEditor from "./pages/LandingPageEditor";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/catalog" element={<AuthGuard requireAuth><Catalog /></AuthGuard>} />
+          <Route path="/catalog-landing-editor" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><CatalogLandingEditor /></AuthGuard>} />
           <Route path="/withdrawals" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Withdrawals /></AuthGuard>} />
           <Route path="/admin/withdrawals" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AdminWithdrawals /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />

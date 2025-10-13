@@ -58,6 +58,71 @@ export type Database = {
           },
         ]
       }
+      catalog_landing_settings: {
+        Row: {
+          created_at: string | null
+          custom_css: Json | null
+          footer_text: string | null
+          hero_image_url: string | null
+          hero_subtitle: string | null
+          hero_title: string
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          primary_color: string
+          secondary_color: string
+          seo_description: string | null
+          seo_keywords: string[] | null
+          seo_title: string | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          custom_css?: Json | null
+          footer_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          custom_css?: Json | null
+          footer_text?: string | null
+          hero_image_url?: string | null
+          hero_subtitle?: string | null
+          hero_title?: string
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          primary_color?: string
+          secondary_color?: string
+          seo_description?: string | null
+          seo_keywords?: string[] | null
+          seo_title?: string | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_landing_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_orders: {
         Row: {
           created_at: string | null
