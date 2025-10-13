@@ -57,18 +57,40 @@ export default function CRM() {
 
   const loadData = async () => {
     try {
-      const { data: userRole } = await supabase
+      if (!user?.id) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!userRole?.tenant_id) return;
-      setTenantId(userRole.tenant_id);
+      if (roleError) {
+        console.error("Error loading user role:", roleError);
+        throw roleError;
+      }
 
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Tenant não encontrado. Recarregue a página.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      setTenantId(userRole.tenant_id);
       await loadColumns(userRole.tenant_id);
       await loadLeads(userRole.tenant_id);
     } catch (error: any) {
+      console.error("Error in loadData:", error);
       toast({
         title: "Erro",
         description: error.message,

@@ -21,6 +21,7 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
     name: "",
     description: "",
     price: "",
+    billing_period: "monthly",
     max_users: "",
     max_tickets: "",
     features: {
@@ -38,6 +39,7 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         name: plan.name || "",
         description: plan.description || "",
         price: plan.price?.toString() || "",
+        billing_period: plan.billing_period || "monthly",
         max_users: plan.max_users?.toString() || "",
         max_tickets: plan.max_tickets?.toString() || "",
         features: typeof plan.features === 'object' ? plan.features : {
@@ -53,6 +55,7 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         name: "",
         description: "",
         price: "",
+        billing_period: "monthly",
         max_users: "",
         max_tickets: "",
         features: {
@@ -75,11 +78,11 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
+        billing_period: formData.billing_period,
         max_users: parseInt(formData.max_users) || null,
         max_tickets: parseInt(formData.max_tickets) || null,
         features: formData.features,
         tenant_id: null, // Global plans
-        billing_period: "monthly",
         currency: "BRL",
         is_active: true
       };
@@ -156,17 +159,34 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="price">Valor</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                placeholder="0.00"
-                required
-              />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="price">Valor</Label>
+                <Input
+                  id="price"
+                  type="number"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="billing_period">Período de Cobrança</Label>
+                <select
+                  id="billing_period"
+                  value={formData.billing_period}
+                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="monthly">Mensal</option>
+                  <option value="quarterly">Trimestral</option>
+                  <option value="semiannual">Semestral</option>
+                  <option value="yearly">Anual</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-3">

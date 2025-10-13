@@ -237,7 +237,13 @@ export const PaymentGatewayList = () => {
 
       console.log("Gateway data to save:", gatewayData);
 
-      const { error } = await supabase.from("payment_gateways").upsert(gatewayData);
+      // Use upsert with proper conflict handling
+      const { error } = await supabase
+        .from("payment_gateways")
+        .upsert(gatewayData, {
+          onConflict: tenantId ? 'tenant_id,gateway_name' : 'gateway_name',
+          ignoreDuplicates: false
+        });
 
       if (error) {
         console.error("Error saving gateway:", error);
