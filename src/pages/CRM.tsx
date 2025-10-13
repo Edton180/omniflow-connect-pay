@@ -131,6 +131,8 @@ export default function CRM() {
         title: "Lead adicionado",
         description: "O lead foi adicionado com sucesso.",
       });
+      
+      await loadLeads();
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -161,6 +163,8 @@ export default function CRM() {
         title: "Coluna adicionada",
         description: "A coluna foi adicionada com sucesso.",
       });
+      
+      await loadColumns();
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -188,6 +192,8 @@ export default function CRM() {
         .eq("id", draggedLead.id);
 
       if (error) throw error;
+      
+      await loadLeads();
       setDraggedLead(null);
     } catch (error: any) {
       toast({
@@ -211,6 +217,9 @@ export default function CRM() {
         title: "Coluna removida",
         description: "A coluna foi removida com sucesso.",
       });
+      
+      await loadColumns();
+      await loadLeads();
     } catch (error: any) {
       toast({
         title: "Erro",

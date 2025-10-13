@@ -48,11 +48,18 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
 
   useEffect(() => {
     if (tenant) {
+      // Format expiry_date for datetime-local input
+      let formattedExpiry = "";
+      if (tenant.expiry_date) {
+        const date = new Date(tenant.expiry_date);
+        formattedExpiry = date.toISOString().slice(0, 16);
+      }
+      
       setFormData({
         name: tenant.name || "",
         slug: tenant.slug || "",
         whatsapp: tenant.whatsapp || "",
-        expiry_date: tenant.expiry_date || "",
+        expiry_date: formattedExpiry,
         plan_id: tenant.plan_id || "",
         logo_url: tenant.logo_url || "",
         primary_color: tenant.primary_color || "#8B5CF6",

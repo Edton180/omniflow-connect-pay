@@ -12,6 +12,8 @@ import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOu
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
+import { StickerPicker } from "@/components/chat/StickerPicker";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -394,6 +396,11 @@ export default function TicketsImproved() {
                     setMediaType(type);
                   }}
                 />
+                <StickerPicker onStickerSelect={(sticker) => setMessageText(messageText + sticker)} />
+                <AudioRecorder onAudioRecorded={(url) => {
+                  setMediaUrl(url);
+                  setMediaType("audio");
+                }} />
                 <Textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}

@@ -31,10 +31,18 @@ export default function InternalChat() {
   const [showTeamSettings, setShowTeamSettings] = useState(false);
 
   useEffect(() => {
-    loadUsers();
-    loadTeams();
-    setupRealtimeSubscription();
+    const init = async () => {
+      await loadUsers();
+      setupRealtimeSubscription();
+    };
+    init();
   }, []);
+
+  useEffect(() => {
+    if (tenantId) {
+      loadTeams();
+    }
+  }, [tenantId]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -61,10 +69,27 @@ export default function InternalChat() {
           table: 'internal_messages'
         },
         (payload) => {
+          // Update messages if it's for the current conversation
           if (selectedUser && 
               ((payload.new.sender_id === selectedUser.id && payload.new.recipient_id === user?.id) ||
                (payload.new.sender_id === user?.id && payload.new.recipient_id === selectedUser.id))) {
             setMessages((prev) => [...prev, payload.new]);
+          }
+          
+          // Update messages if it's for the current team
+          if (selectedTeam && payload.new.team_id === selectedTeam.id) {
+            // Fetch sender info for team message
+            supabase
+              .from("profiles")
+              .select("full_name, avatar_url")
+              .eq("id", payload.new.sender_id)
+              .single()
+              .then(({ data }) => {
+                setMessages((prev) => [...prev, {
+                  ...payload.new,
+                  sender: data
+                }]);
+              });
           }
         }
       )
@@ -76,27 +101,40 @@ export default function InternalChat() {
   };
 
   const loadUsers = async () => {
+    if (!user) return;
+    
     try {
-      const { data: userRole } = await supabase
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!userRole?.tenant_id) return;
+      if (roleError) throw roleError;
+
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Aviso",
+          description: "Você precisa estar associado a uma empresa",
+          variant: "destructive",
+        });
+        return;
+      }
+      
       setTenantId(userRole.tenant_id);
 
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("tenant_id", userRole.tenant_id)
-        .neq("id", user?.id);
+        .neq("id", user.id);
 
       if (error) throw error;
       setUsers(data || []);
     } catch (error: any) {
+      console.error("Error loading users:", error);
       toast({
-        title: "Erro",
+        title: "Erro ao carregar usuários",
         description: error.message,
         variant: "destructive",
       });
@@ -185,6 +223,8 @@ export default function InternalChat() {
         messageData.recipient_id = selectedUser.id;
       } else if (selectedTeam) {
         messageData.team_id = selectedTeam.id;
+        // For team messages, set recipient_id to sender_id to pass RLS
+        messageData.recipient_id = user.id;
       }
 
       if (mediaUrl) {
@@ -197,7 +237,13 @@ export default function InternalChat() {
         .insert(messageData);
 
       if (error) throw error;
+      
       setMessageText("");
+      
+      // Reload messages to get the new one with sender info for teams
+      if (selectedTeam) {
+        await loadTeamMessages();
+      }
     } catch (error: any) {
       toast({
         title: "Erro ao enviar mensagem",
@@ -253,7 +299,13 @@ export default function InternalChat() {
               />
             </div>
 
-            <Tabs defaultValue="users" className="w-full">
+            <Tabs defaultValue="users" className="w-full" onValueChange={(v) => {
+              if (v === "settings" && tenantId) {
+                setShowTeamSettings(true);
+              } else {
+                setShowTeamSettings(false);
+              }
+            }}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="users" className="text-xs">
                   <UsersIcon className="h-3 w-3 mr-1" />
@@ -268,74 +320,78 @@ export default function InternalChat() {
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="settings" className="mt-4">
-                {tenantId && <TeamManagement tenantId={tenantId} />}
-              </TabsContent>
+              {showTeamSettings && (
+                <div className="mt-4">
+                  {tenantId && <TeamManagement tenantId={tenantId} />}
+                </div>
+              )}
             </Tabs>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            <Tabs defaultValue="users" className="h-full">
-              <TabsContent value="users" className="h-full mt-0">
-                {filteredUsers.map((u) => (
-                  <div
-                    key={u.id}
-                    onClick={() => setSelectedUser(u)}
-                    className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedUser?.id === u.id ? 'bg-muted' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={u.avatar_url} />
-                          <AvatarFallback>
-                            <User className="h-5 w-5" />
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm truncate block">
-                          {u.full_name || 'Sem nome'}
-                        </span>
-                        <span className="text-xs text-muted-foreground truncate block">
-                          {u.phone || 'Sem telefone'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </TabsContent>
-              
-              <TabsContent value="teams" className="h-full mt-0">
-                {teams.map((team) => (
-                  <div
-                    key={team.id}
-                    onClick={() => setSelectedTeam(team)}
-                    className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedTeam?.id === team.id ? 'bg-muted' : ''
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                        <UsersIcon className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm truncate block">
-                          {team.name}
-                        </span>
-                        {team.description && (
-                          <span className="text-xs text-muted-foreground truncate block">
-                            {team.description}
+            {!showTeamSettings && (
+              <Tabs defaultValue="users" className="h-full">
+                <TabsContent value="users" className="h-full mt-0">
+                  {filteredUsers.map((u) => (
+                    <div
+                      key={u.id}
+                      onClick={() => setSelectedUser(u)}
+                      className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                        selectedUser?.id === u.id ? 'bg-muted' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative">
+                          <Avatar className="h-10 w-10">
+                            <AvatarImage src={u.avatar_url} />
+                            <AvatarFallback>
+                              <User className="h-5 w-5" />
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-sm truncate block">
+                            {u.full_name || 'Sem nome'}
                           </span>
-                        )}
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {u.phone || 'Sem telefone'}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </TabsContent>
-            </Tabs>
+                  ))}
+                </TabsContent>
+                
+                <TabsContent value="teams" className="h-full mt-0">
+                  {teams.map((team) => (
+                    <div
+                      key={team.id}
+                      onClick={() => setSelectedTeam(team)}
+                      className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                        selectedTeam?.id === team.id ? 'bg-muted' : ''
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <UsersIcon className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-sm truncate block">
+                            {team.name}
+                          </span>
+                          {team.description && (
+                            <span className="text-xs text-muted-foreground truncate block">
+                              {team.description}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </TabsContent>
+              </Tabs>
+            )}
           </div>
         </div>
 

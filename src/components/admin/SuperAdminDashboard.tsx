@@ -5,6 +5,7 @@ import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditC
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const SuperAdminDashboard = () => {
   const { signOut } = useAuth();
@@ -95,6 +96,7 @@ export const SuperAdminDashboard = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Button variant="outline" onClick={() => navigate('/profile')}>
               Meu Perfil
             </Button>

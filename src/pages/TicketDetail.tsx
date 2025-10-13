@@ -12,6 +12,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MediaUpload } from "@/components/tickets/MediaUpload";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
+import { StickerPicker } from "@/components/chat/StickerPicker";
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -23,6 +26,8 @@ export default function TicketDetail() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [messageText, setMessageText] = useState("");
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -103,9 +108,9 @@ export default function TicketDetail() {
     };
   }, [id]);
 
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim() || !user) return;
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if ((!messageText.trim() && !mediaUrl) || !user) return;
 
     setSending(true);
     try {
@@ -113,8 +118,10 @@ export default function TicketDetail() {
         {
           ticket_id: id,
           sender_id: user.id,
-          content: messageText.trim(),
+          content: messageText.trim() || "[Mídia]",
           is_from_contact: false,
+          media_url: mediaUrl,
+          media_type: mediaType,
         },
       ]);
 
@@ -123,10 +130,12 @@ export default function TicketDetail() {
       // Update ticket's last_message
       await supabase
         .from("tickets")
-        .update({ last_message: messageText.trim() })
+        .update({ last_message: messageText.trim() || "[Mídia enviada]" })
         .eq("id", id);
 
       setMessageText("");
+      setMediaUrl(null);
+      setMediaType(null);
     } catch (error: any) {
       toast({
         title: "Erro ao enviar mensagem",
@@ -267,17 +276,29 @@ export default function TicketDetail() {
               {/* Input */}
               <div className="border-t p-4">
                 <form onSubmit={handleSendMessage} className="flex gap-2">
-                  <Button type="button" variant="ghost" size="icon">
-                    <Paperclip className="h-5 w-5" />
-                  </Button>
+                  <MediaUpload onMediaSelect={(url, type) => {
+                    setMediaUrl(url);
+                    setMediaType(type);
+                  }} />
+                  <StickerPicker onStickerSelect={(sticker) => setMessageText(messageText + sticker)} />
+                  <AudioRecorder onAudioRecorded={(url) => {
+                    setMediaUrl(url);
+                    setMediaType("audio");
+                  }} />
                   <Input
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}
                     placeholder="Digite sua mensagem..."
                     disabled={sending || ticket.status === "closed"}
                     className="flex-1"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                   />
-                  <Button type="submit" disabled={sending || !messageText.trim() || ticket.status === "closed"}>
+                  <Button type="submit" disabled={sending || (!messageText.trim() && !mediaUrl) || ticket.status === "closed"}>
                     {sending ? (
                       <Loader2 className="h-5 w-5 animate-spin" />
                     ) : (
