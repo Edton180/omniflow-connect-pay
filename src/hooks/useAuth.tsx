@@ -49,27 +49,46 @@ export const useAuth = () => {
   };
 
   useEffect(() => {
+    let mounted = true;
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
+        if (!mounted) return;
+        
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Use setTimeout to defer Supabase calls and prevent deadlock
-        if (session?.user) {
-          setTimeout(() => {
-            fetchProfile(session.user.id);
-          }, 0);
-        } else {
+        // Handle session events
+        if (event === 'SIGNED_OUT') {
           setProfile(null);
           setRoles([]);
+          setLoading(false);
+        } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            setTimeout(() => {
+              fetchProfile(session.user.id);
+            }, 0);
+          }
+          setLoading(false);
+        } else {
+          if (session?.user) {
+            setTimeout(() => {
+              fetchProfile(session.user.id);
+            }, 0);
+          } else {
+            setProfile(null);
+            setRoles([]);
+          }
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
     // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -80,7 +99,10 @@ export const useAuth = () => {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, fullName: string) => {

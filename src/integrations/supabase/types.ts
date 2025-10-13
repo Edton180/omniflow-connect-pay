@@ -478,10 +478,12 @@ export type Database = {
           currency: string
           description: string | null
           has_variations: boolean | null
+          height_cm: number | null
           highlight: boolean | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          length_cm: number | null
           max_quantity_per_order: number | null
           metadata: Json | null
           name: string
@@ -490,6 +492,8 @@ export type Database = {
           stock_quantity: number | null
           tenant_id: string
           updated_at: string | null
+          weight_kg: number | null
+          width_cm: number | null
         }
         Insert: {
           category_id?: string | null
@@ -497,10 +501,12 @@ export type Database = {
           currency?: string
           description?: string | null
           has_variations?: boolean | null
+          height_cm?: number | null
           highlight?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          length_cm?: number | null
           max_quantity_per_order?: number | null
           metadata?: Json | null
           name: string
@@ -509,6 +515,8 @@ export type Database = {
           stock_quantity?: number | null
           tenant_id: string
           updated_at?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Update: {
           category_id?: string | null
@@ -516,10 +524,12 @@ export type Database = {
           currency?: string
           description?: string | null
           has_variations?: boolean | null
+          height_cm?: number | null
           highlight?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          length_cm?: number | null
           max_quantity_per_order?: number | null
           metadata?: Json | null
           name?: string
@@ -528,6 +538,8 @@ export type Database = {
           stock_quantity?: number | null
           tenant_id?: string
           updated_at?: string | null
+          weight_kg?: number | null
+          width_cm?: number | null
         }
         Relationships: [
           {
@@ -595,6 +607,68 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "catalog_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_shipping_settings: {
+        Row: {
+          created_at: string | null
+          default_height_cm: number | null
+          default_length_cm: number | null
+          default_weight_kg: number | null
+          default_width_cm: number | null
+          enable_correios_pac: boolean | null
+          enable_correios_sedex: boolean | null
+          enable_local_delivery: boolean | null
+          handling_fee: number | null
+          id: string
+          local_delivery_fee: number | null
+          local_delivery_zipcodes: string[] | null
+          origin_zipcode: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_height_cm?: number | null
+          default_length_cm?: number | null
+          default_weight_kg?: number | null
+          default_width_cm?: number | null
+          enable_correios_pac?: boolean | null
+          enable_correios_sedex?: boolean | null
+          enable_local_delivery?: boolean | null
+          handling_fee?: number | null
+          id?: string
+          local_delivery_fee?: number | null
+          local_delivery_zipcodes?: string[] | null
+          origin_zipcode: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_height_cm?: number | null
+          default_length_cm?: number | null
+          default_weight_kg?: number | null
+          default_width_cm?: number | null
+          enable_correios_pac?: boolean | null
+          enable_correios_sedex?: boolean | null
+          enable_local_delivery?: boolean | null
+          handling_fee?: number | null
+          id?: string
+          local_delivery_fee?: number | null
+          local_delivery_zipcodes?: string[] | null
+          origin_zipcode?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_shipping_settings_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: true
             referencedRelation: "tenants"
@@ -1308,6 +1382,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
+          setup_completed: boolean | null
           tenant_id: string | null
           updated_at: string | null
         }
@@ -1317,6 +1392,7 @@ export type Database = {
           full_name: string
           id: string
           phone?: string | null
+          setup_completed?: boolean | null
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -1326,6 +1402,7 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
+          setup_completed?: boolean | null
           tenant_id?: string | null
           updated_at?: string | null
         }
@@ -1804,6 +1881,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_assign_tenant: {
+        Args: { _company_name?: string; _user_id: string }
+        Returns: string
+      }
       check_and_generate_invoices: {
         Args: Record<PropertyKey, never>
         Returns: undefined

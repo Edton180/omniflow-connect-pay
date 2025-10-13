@@ -40,37 +40,54 @@ export default function Withdrawals() {
   const loadData = async () => {
     try {
       if (!user?.id) {
-        toast({
-          title: "Erro",
-          description: "Usuário não autenticado",
-          variant: "destructive",
-        });
         return;
       }
 
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
+      // Tentar obter tenant_id do perfil primeiro
+      const { data: profile } = await supabase
+        .from("profiles")
         .select("tenant_id")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (roleError) throw roleError;
+      let currentTenantId = profile?.tenant_id;
 
-      if (!userRole?.tenant_id) {
-        toast({
-          title: "Erro",
-          description: "Você precisa estar associado a uma empresa",
-          variant: "destructive",
-        });
-        return;
+      // Se não tiver tenant, tentar obter de user_roles
+      if (!currentTenantId) {
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        currentTenantId = userRole?.tenant_id;
       }
 
-      setTenantId(userRole.tenant_id);
-      await Promise.all([
-        loadBalance(userRole.tenant_id),
-        loadWithdrawals(userRole.tenant_id)
-      ]);
+      // Se ainda não tiver tenant, criar automaticamente
+      if (!currentTenantId) {
+        const { data: newTenantId, error: tenantError } = await supabase.rpc('auto_assign_tenant', {
+          _user_id: user.id,
+          _company_name: 'Minha Empresa'
+        });
+
+        if (tenantError) throw tenantError;
+        currentTenantId = newTenantId;
+
+        toast({
+          title: "Empresa criada",
+          description: "Uma empresa foi criada automaticamente para você",
+        });
+      }
+
+      if (currentTenantId) {
+        setTenantId(currentTenantId);
+        await Promise.all([
+          loadBalance(currentTenantId),
+          loadWithdrawals(currentTenantId)
+        ]);
+      }
     } catch (error: any) {
+      console.error('Error loading data:', error);
       toast({
         title: "Erro",
         description: error.message,
