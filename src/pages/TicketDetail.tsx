@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -226,6 +227,7 @@ export default function TicketDetail() {
                 </SelectContent>
               </Select>
               {getStatusBadge(ticket.status)}
+              <ThemeToggle />
             </div>
           </div>
         </div>

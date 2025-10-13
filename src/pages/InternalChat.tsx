@@ -14,6 +14,7 @@ import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { TeamManagement } from "@/components/chat/TeamManagement";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function InternalChat() {
   const navigate = useNavigate();
@@ -280,9 +281,12 @@ export default function InternalChat() {
           </Button>
           <h1 className="text-lg font-bold">Chat Interno</h1>
         </div>
-        <Button variant="outline" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button variant="outline" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

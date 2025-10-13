@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function CRM() {
   const navigate = useNavigate();
@@ -246,6 +247,7 @@ export default function CRM() {
             </div>
           </div>
           <div className="flex gap-2">
+            <ThemeToggle />
             <Button variant="outline" onClick={() => setColumnDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nova Coluna

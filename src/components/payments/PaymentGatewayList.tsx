@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PaymentGatewayCard } from "./PaymentGatewayCard";
 import { useToast } from "@/hooks/use-toast";
@@ -21,33 +21,69 @@ export const PaymentGatewayList = () => {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedGateway, setSelectedGateway] = useState<any>(null);
+  const [connectedGateways, setConnectedGateways] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
-  const gateways = [
+  const baseGateways = [
     {
       id: "asaas",
       name: "ASAAS",
       description: "Pagamentos via Pix, Boleto e Cartão",
-      connected: false,
     },
     {
       id: "mercadopago",
       name: "Mercado Pago",
       description: "Gateway completo de pagamentos",
-      connected: false,
     },
     {
       id: "stripe",
       name: "Stripe",
       description: "Pagamentos internacionais",
-      connected: false,
     },
     {
       id: "infinitepay",
       name: "InfinitePay",
       description: "Soluções de pagamento digital",
-      connected: false,
     },
   ];
+
+  const gateways = baseGateways.map(gateway => ({
+    ...gateway,
+    connected: connectedGateways.has(gateway.id)
+  }));
+
+  useEffect(() => {
+    loadGateways();
+  }, []);
+
+  const loadGateways = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) return;
+
+      const { data: savedGateways } = await supabase
+        .from("payment_gateways")
+        .select("gateway_name, is_active")
+        .eq("tenant_id", userRole.tenant_id)
+        .eq("is_active", true);
+
+      if (savedGateways) {
+        setConnectedGateways(new Set(savedGateways.map(g => g.gateway_name)));
+      }
+    } catch (error) {
+      console.error("Error loading gateways:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleConfigure = (gateway: any) => {
     setSelectedGateway(gateway);
@@ -116,6 +152,7 @@ export const PaymentGatewayList = () => {
         description: `Gateway ${selectedGateway?.name} configurado com sucesso.`,
       });
       setDialogOpen(false);
+      await loadGateways();
     } catch (error: any) {
       toast({
         title: "Erro ao salvar",

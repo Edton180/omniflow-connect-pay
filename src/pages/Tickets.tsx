@@ -3,6 +3,7 @@ import { ArrowLeft, Zap, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { TicketList } from "@/components/tickets/TicketList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Tickets() {
   const { signOut } = useAuth();
@@ -29,9 +30,12 @@ export default function Tickets() {
               <p className="text-xs text-muted-foreground">Gerencie todos os atendimentos</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="icon" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 

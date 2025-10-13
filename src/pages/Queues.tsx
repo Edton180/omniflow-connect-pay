@@ -3,6 +3,7 @@ import { ArrowLeft, Zap, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { QueueList } from "@/components/queues/QueueList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Queues() {
   const { signOut } = useAuth();
@@ -29,9 +30,12 @@ export default function Queues() {
               <p className="text-xs text-muted-foreground">Organize o fluxo de tickets</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="icon" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 

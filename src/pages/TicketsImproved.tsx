@@ -16,6 +16,7 @@ import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function TicketsImproved() {
   const navigate = useNavigate();
@@ -185,9 +186,12 @@ export default function TicketsImproved() {
           </Button>
           <h1 className="text-lg font-bold">Atendimentos</h1>
         </div>
-        <Button variant="outline" size="icon" onClick={handleSignOut}>
-          <LogOut className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Button variant="outline" size="icon" onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

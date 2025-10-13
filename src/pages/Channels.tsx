@@ -3,6 +3,7 @@ import { ArrowLeft, Zap, LogOut } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { ChannelList } from "@/components/channels/ChannelList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Channels() {
   const { signOut } = useAuth();
@@ -30,6 +31,7 @@ export default function Channels() {
             </div>
           </div>
           <div className="flex gap-2">
+            <ThemeToggle />
             <Link to="/tickets-improved">
               <Button variant="outline" size="sm">
                 Ver Atendimentos

@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { PaymentGatewayList } from "@/components/payments/PaymentGatewayList";
 import { PlansList } from "@/components/plans/PlansList";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Payments() {
   const { signOut } = useAuth();
@@ -31,9 +32,12 @@ export default function Payments() {
               <p className="text-xs text-muted-foreground">Gerencie gateways e planos</p>
             </div>
           </div>
-          <Button variant="outline" size="icon" onClick={handleSignOut}>
-            <LogOut className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="outline" size="icon" onClick={handleSignOut}>
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </header>
 
