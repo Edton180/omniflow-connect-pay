@@ -61,19 +61,32 @@ export const PaymentGatewayList = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: userRole } = await supabase
+      // Verificar se é super admin
+      const { data: isSuperAdmin } = await supabase
         .from("user_roles")
-        .select("tenant_id")
+        .select("role")
         .eq("user_id", user.id)
+        .eq("role", "super_admin")
         .maybeSingle();
 
-      if (!userRole?.tenant_id) return;
-
-      const { data: savedGateways } = await supabase
+      let query = supabase
         .from("payment_gateways")
         .select("gateway_name, is_active")
-        .eq("tenant_id", userRole.tenant_id)
         .eq("is_active", true);
+
+      // Se não for super admin, filtrar por tenant
+      if (!isSuperAdmin) {
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!userRole?.tenant_id) return;
+        query = query.eq("tenant_id", userRole.tenant_id);
+      }
+
+      const { data: savedGateways } = await query;
 
       if (savedGateways) {
         setConnectedGateways(new Set(savedGateways.map(g => g.gateway_name)));
@@ -104,36 +117,36 @@ export const PaymentGatewayList = () => {
         return;
       }
 
-      console.log("Loading user role for user:", user.id);
-      const { data: userRole, error: roleError } = await supabase
+      // Verificar se é super admin
+      const { data: isSuperAdmin } = await supabase
         .from("user_roles")
-        .select("tenant_id")
+        .select("role")
         .eq("user_id", user.id)
+        .eq("role", "super_admin")
         .maybeSingle();
 
-      console.log("User role data:", userRole, "Error:", roleError);
+      let tenantId = null;
 
-      if (roleError) {
-        console.error("Role error:", roleError);
-        toast({
-          title: "Erro ao buscar tenant",
-          description: roleError.message,
-          variant: "destructive",
-        });
-        return;
+      // Se não for super admin, buscar tenant_id
+      if (!isSuperAdmin) {
+        const { data: userRole, error: roleError } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (roleError || !userRole?.tenant_id) {
+          toast({
+            title: "Erro",
+            description: "Você não está associado a nenhuma empresa.",
+            variant: "destructive",
+          });
+          return;
+        }
+        tenantId = userRole.tenant_id;
       }
 
-      if (!userRole || !userRole.tenant_id) {
-        console.error("No tenant found for user");
-        toast({
-          title: "Erro",
-          description: "Você não está associado a nenhuma empresa. Entre em contato com o administrador.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      console.log("Saving payment gateway for tenant:", userRole.tenant_id);
+      console.log("Saving payment gateway. Tenant:", tenantId, "IsSuperAdmin:", !!isSuperAdmin);
 
       // Get form values
       const apiKey = (document.getElementById(`${selectedGateway.id}_api_key`) as HTMLInputElement)?.value;
@@ -153,7 +166,7 @@ export const PaymentGatewayList = () => {
       }
 
       const gatewayData = {
-        tenant_id: userRole.tenant_id,
+        tenant_id: tenantId,
         gateway_name: selectedGateway.id,
         api_key_encrypted: apiKey || "",
         config: config,
@@ -162,9 +175,7 @@ export const PaymentGatewayList = () => {
 
       console.log("Gateway data to save:", gatewayData);
 
-      const { error } = await supabase.from("payment_gateways").upsert(gatewayData, {
-        onConflict: "tenant_id,gateway_name",
-      });
+      const { error } = await supabase.from("payment_gateways").upsert(gatewayData);
 
       if (error) {
         console.error("Error saving gateway:", error);

@@ -145,8 +145,29 @@ const Dashboard = () => {
 
         {/* Charts Grid */}
         <div className="grid lg:grid-cols-2 gap-6 mb-8">
-          <TicketsChart />
-          <ChannelStats />
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5 text-primary" />
+                Métricas Semanais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TicketsChart />
+            </CardContent>
+          </Card>
+          
+          <Card className="border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                Canais Conectados
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ChannelStats />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}

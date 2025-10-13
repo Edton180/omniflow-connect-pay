@@ -111,58 +111,71 @@ export default function CRM() {
   };
 
   const handleAddLead = async () => {
-    if (!formData.name || !tenantId || columns.length === 0) {
+    if (!formData.name?.trim()) {
       toast({
         title: "Erro",
-        description: "Preencha o nome do lead e certifique-se de ter pelo menos uma coluna criada.",
+        description: "Preencha o nome do lead.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!tenantId) {
+      toast({
+        title: "Erro",
+        description: "Tenant não encontrado. Recarregue a página.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (columns.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Crie pelo menos uma coluna antes de adicionar leads.",
         variant: "destructive",
       });
       return;
     }
 
     try {
-      console.log("Adding lead with tenant_id:", tenantId);
       const leadData = {
-        name: formData.name,
-        email: formData.email || null,
-        phone: formData.phone || null,
+        name: formData.name.trim(),
+        email: formData.email?.trim() || null,
+        phone: formData.phone?.trim() || null,
         tenant_id: tenantId,
         column_id: columns[0].id,
         position: leads.filter(l => l.column_id === columns[0].id).length,
       };
       
-      console.log("Lead data:", leadData);
-      
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("crm_leads")
-        .insert(leadData);
+        .insert(leadData)
+        .select()
+        .single();
 
-      if (error) {
-        console.error("Error inserting lead:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       setFormData({ name: "", email: "", phone: "" });
       setDialogOpen(false);
       
       toast({
-        title: "Lead adicionado",
-        description: "O lead foi adicionado com sucesso.",
+        title: "Sucesso",
+        description: "Lead adicionado com sucesso!",
       });
       
       await loadLeads();
     } catch (error: any) {
-      console.error("Error adding lead:", error);
       toast({
         title: "Erro ao adicionar lead",
-        description: error.message,
+        description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
     }
   };
 
   const handleAddColumn = async () => {
-    if (!columnFormData.name || !tenantId) {
+    if (!columnFormData.name?.trim()) {
       toast({
         title: "Erro",
         description: "Preencha o nome da coluna.",
@@ -171,40 +184,44 @@ export default function CRM() {
       return;
     }
 
+    if (!tenantId) {
+      toast({
+        title: "Erro",
+        description: "Tenant não encontrado. Recarregue a página.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log("Adding column with tenant_id:", tenantId);
       const columnData = {
-        name: columnFormData.name,
+        name: columnFormData.name.trim(),
         color: columnFormData.color,
         tenant_id: tenantId,
         position: columns.length,
       };
       
-      console.log("Column data:", columnData);
-      
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("crm_columns")
-        .insert(columnData);
+        .insert(columnData)
+        .select()
+        .single();
 
-      if (error) {
-        console.error("Error inserting column:", error);
-        throw error;
-      }
+      if (error) throw error;
 
       setColumnFormData({ name: "", color: "#8B5CF6" });
       setColumnDialogOpen(false);
       
       toast({
-        title: "Coluna adicionada",
-        description: "A coluna foi adicionada com sucesso.",
+        title: "Sucesso",
+        description: "Coluna adicionada com sucesso!",
       });
       
       await loadColumns();
     } catch (error: any) {
-      console.error("Error adding column:", error);
       toast({
         title: "Erro ao adicionar coluna",
-        description: error.message,
+        description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
     }
