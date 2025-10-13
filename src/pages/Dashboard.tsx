@@ -127,7 +127,10 @@ const Dashboard = () => {
                   defaultValue={new Date().toISOString().split('T')[0]}
                 />
               </div>
-              <Button className="shadow-md hover:shadow-lg transition-all">
+              <Button 
+                className="shadow-md hover:shadow-lg transition-all"
+                onClick={() => window.location.reload()}
+              >
                 <BarChart3 className="w-4 h-4 mr-2" />
                 GERAR
               </Button>
@@ -157,18 +160,18 @@ const Dashboard = () => {
           <CardContent>
             <div className="grid md:grid-cols-2 gap-4">
               <Button 
-                variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
-                onClick={() => navigate("/tickets")}
+                variant="default" 
+                className="justify-start h-auto py-4 px-6 hover-scale bg-gradient-primary shadow-glow hover:shadow-lg border-2 border-primary/20"
+                onClick={() => navigate("/view-tickets")}
               >
                 <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-5 h-5 text-primary" />
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
+                    <MessageSquare className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Gerenciar Tickets</div>
-                    <div className="text-sm text-muted-foreground">
-                      Visualize e gerencie atendimentos
+                    <div className="font-semibold mb-1 text-white">📞 Ver Atendimentos</div>
+                    <div className="text-sm text-white/90">
+                      Visualize e gerencie atendimentos em destaque
                     </div>
                   </div>
                 </div>

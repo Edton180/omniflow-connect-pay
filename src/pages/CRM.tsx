@@ -111,19 +111,36 @@ export default function CRM() {
   };
 
   const handleAddLead = async () => {
-    if (!formData.name || !tenantId || columns.length === 0) return;
+    if (!formData.name || !tenantId || columns.length === 0) {
+      toast({
+        title: "Erro",
+        description: "Preencha o nome do lead e certifique-se de ter pelo menos uma coluna criada.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log("Adding lead with tenant_id:", tenantId);
+      const leadData = {
+        name: formData.name,
+        email: formData.email || null,
+        phone: formData.phone || null,
+        tenant_id: tenantId,
+        column_id: columns[0].id,
+        position: leads.filter(l => l.column_id === columns[0].id).length,
+      };
+      
+      console.log("Lead data:", leadData);
+      
       const { error } = await supabase
         .from("crm_leads")
-        .insert({
-          ...formData,
-          tenant_id: tenantId,
-          column_id: columns[0].id,
-          position: leads.filter(l => l.column_id === columns[0].id).length,
-        });
+        .insert(leadData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting lead:", error);
+        throw error;
+      }
 
       setFormData({ name: "", email: "", phone: "" });
       setDialogOpen(false);
@@ -135,8 +152,9 @@ export default function CRM() {
       
       await loadLeads();
     } catch (error: any) {
+      console.error("Error adding lead:", error);
       toast({
-        title: "Erro",
+        title: "Erro ao adicionar lead",
         description: error.message,
         variant: "destructive",
       });
@@ -144,18 +162,34 @@ export default function CRM() {
   };
 
   const handleAddColumn = async () => {
-    if (!columnFormData.name || !tenantId) return;
+    if (!columnFormData.name || !tenantId) {
+      toast({
+        title: "Erro",
+        description: "Preencha o nome da coluna.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
+      console.log("Adding column with tenant_id:", tenantId);
+      const columnData = {
+        name: columnFormData.name,
+        color: columnFormData.color,
+        tenant_id: tenantId,
+        position: columns.length,
+      };
+      
+      console.log("Column data:", columnData);
+      
       const { error } = await supabase
         .from("crm_columns")
-        .insert({
-          ...columnFormData,
-          tenant_id: tenantId,
-          position: columns.length,
-        });
+        .insert(columnData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error inserting column:", error);
+        throw error;
+      }
 
       setColumnFormData({ name: "", color: "#8B5CF6" });
       setColumnDialogOpen(false);
@@ -167,8 +201,9 @@ export default function CRM() {
       
       await loadColumns();
     } catch (error: any) {
+      console.error("Error adding column:", error);
       toast({
-        title: "Erro",
+        title: "Erro ao adicionar coluna",
         description: error.message,
         variant: "destructive",
       });

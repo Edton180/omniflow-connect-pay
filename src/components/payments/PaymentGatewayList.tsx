@@ -95,6 +95,7 @@ export const PaymentGatewayList = () => {
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
       if (authError || !user) {
+        console.error("Auth error:", authError);
         toast({
           title: "Erro",
           description: "Usuário não autenticado",
@@ -103,20 +104,36 @@ export const PaymentGatewayList = () => {
         return;
       }
 
+      console.log("Loading user role for user:", user.id);
       const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (roleError || !userRole?.tenant_id) {
+      console.log("User role data:", userRole, "Error:", roleError);
+
+      if (roleError) {
+        console.error("Role error:", roleError);
         toast({
-          title: "Erro",
-          description: "Tenant não encontrado. Entre em contato com o administrador.",
+          title: "Erro ao buscar tenant",
+          description: roleError.message,
           variant: "destructive",
         });
         return;
       }
+
+      if (!userRole || !userRole.tenant_id) {
+        console.error("No tenant found for user");
+        toast({
+          title: "Erro",
+          description: "Você não está associado a nenhuma empresa. Entre em contato com o administrador.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Saving payment gateway for tenant:", userRole.tenant_id);
 
       // Get form values
       const apiKey = (document.getElementById(`${selectedGateway.id}_api_key`) as HTMLInputElement)?.value;
@@ -135,17 +152,24 @@ export const PaymentGatewayList = () => {
         config.api_key = apiKey;
       }
 
-      const { error } = await supabase.from("payment_gateways").upsert({
+      const gatewayData = {
         tenant_id: userRole.tenant_id,
         gateway_name: selectedGateway.id,
-        api_key_encrypted: apiKey,
+        api_key_encrypted: apiKey || "",
         config: config,
         is_active: true,
-      }, {
+      };
+
+      console.log("Gateway data to save:", gatewayData);
+
+      const { error } = await supabase.from("payment_gateways").upsert(gatewayData, {
         onConflict: "tenant_id,gateway_name",
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error saving gateway:", error);
+        throw error;
+      }
 
       toast({
         title: "Configuração salva",
@@ -154,6 +178,7 @@ export const PaymentGatewayList = () => {
       setDialogOpen(false);
       await loadGateways();
     } catch (error: any) {
+      console.error("Error in handleSave:", error);
       toast({
         title: "Erro ao salvar",
         description: error.message,

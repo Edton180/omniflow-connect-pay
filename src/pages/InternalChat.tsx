@@ -102,7 +102,10 @@ export default function InternalChat() {
   };
 
   const loadUsers = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log("No user found, cannot load users");
+      return;
+    }
     
     try {
       const { data: userRole, error: roleError } = await supabase
@@ -111,9 +114,13 @@ export default function InternalChat() {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (roleError) throw roleError;
+      if (roleError) {
+        console.error("Error loading user role:", roleError);
+        throw roleError;
+      }
 
       if (!userRole?.tenant_id) {
+        console.warn("User has no tenant_id");
         toast({
           title: "Aviso",
           description: "Você precisa estar associado a uma empresa",
@@ -122,6 +129,7 @@ export default function InternalChat() {
         return;
       }
       
+      console.log("Setting tenant_id:", userRole.tenant_id);
       setTenantId(userRole.tenant_id);
 
       const { data, error } = await supabase
@@ -130,7 +138,12 @@ export default function InternalChat() {
         .eq("tenant_id", userRole.tenant_id)
         .neq("id", user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error loading profiles:", error);
+        throw error;
+      }
+      
+      console.log("Loaded users:", data);
       setUsers(data || []);
     } catch (error: any) {
       console.error("Error loading users:", error);

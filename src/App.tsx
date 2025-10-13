@@ -31,6 +31,7 @@ import Revenue from "./pages/Revenue";
 import CRM from "./pages/CRM";
 import InternalChat from "./pages/InternalChat";
 import SuperAdminTickets from "./pages/SuperAdminTickets";
+import ViewTickets from "./pages/ViewTickets";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +48,7 @@ const App = () => (
           <Route path="/force-logout" element={<ForceLogout />} />
           <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
+          <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
           <Route path="/tickets-improved" element={<AuthGuard requireAuth><TicketsImproved /></AuthGuard>} />
           <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
