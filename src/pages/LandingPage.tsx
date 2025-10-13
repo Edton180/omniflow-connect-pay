@@ -122,7 +122,7 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             <Card className="gradient-card hover-scale border-2 hover:border-primary/50 transition-all duration-300">
               <CardHeader className="text-center pb-4">
                 <div 
@@ -185,6 +185,28 @@ const Index = () => {
               <CardContent className="text-center">
                 <CardDescription className="text-base leading-relaxed">
                   {settings.feature_3_description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+
+            <Card className="gradient-card hover-scale border-2 hover:border-secondary/50 transition-all duration-300">
+              <CardHeader className="text-center pb-4">
+                <div 
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${settings.secondary_color}20, ${settings.secondary_color}10)`
+                  }}
+                >
+                  <MessageSquare 
+                    className="w-8 h-8"
+                    style={{ color: settings.secondary_color }}
+                  />
+                </div>
+                <CardTitle className="text-2xl mb-3">Catálogo Online Integrado</CardTitle>
+              </CardHeader>
+              <CardContent className="text-center">
+                <CardDescription className="text-base leading-relaxed">
+                  Cadastre produtos, gerencie vendas e processe pagamentos diretamente na plataforma
                 </CardDescription>
               </CardContent>
             </Card>

@@ -24,6 +24,7 @@ export default function CRM() {
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
   const [columnFormData, setColumnFormData] = useState({ name: "", color: "#8B5CF6" });
   const [draggedLead, setDraggedLead] = useState<any>(null);
+  const [editingLead, setEditingLead] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -168,35 +169,55 @@ export default function CRM() {
     }
 
     try {
-      const leadData = {
-        name: formData.name.trim(),
-        email: formData.email?.trim() || null,
-        phone: formData.phone?.trim() || null,
-        tenant_id: tenantId,
-        column_id: columns[0].id,
-        position: leads.filter(l => l.column_id === columns[0].id).length,
-      };
-      
-      const { data, error } = await supabase
-        .from("crm_leads")
-        .insert(leadData)
-        .select()
-        .single();
+      if (editingLead) {
+        // Update existing lead
+        const { error } = await supabase
+          .from("crm_leads")
+          .update({
+            name: formData.name.trim(),
+            email: formData.email?.trim() || null,
+            phone: formData.phone?.trim() || null,
+          })
+          .eq("id", editingLead);
 
-      if (error) throw error;
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Lead atualizado com sucesso!",
+        });
+      } else {
+        // Create new lead
+        const leadData = {
+          name: formData.name.trim(),
+          email: formData.email?.trim() || null,
+          phone: formData.phone?.trim() || null,
+          tenant_id: tenantId,
+          column_id: columns[0].id,
+          position: leads.filter(l => l.column_id === columns[0].id).length,
+        };
+        
+        const { error } = await supabase
+          .from("crm_leads")
+          .insert(leadData)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Lead adicionado com sucesso!",
+        });
+      }
 
       setFormData({ name: "", email: "", phone: "" });
+      setEditingLead(null);
       setDialogOpen(false);
-      
-      toast({
-        title: "Sucesso",
-        description: "Lead adicionado com sucesso!",
-      });
-      
       await loadLeads();
     } catch (error: any) {
       toast({
-        title: "Erro ao adicionar lead",
+        title: editingLead ? "Erro ao atualizar lead" : "Erro ao adicionar lead",
         description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
@@ -379,15 +400,32 @@ export default function CRM() {
                 {leads
                   .filter(lead => lead.column_id === column.id)
                   .map(lead => (
-                    <Card 
+                     <Card 
                       key={lead.id} 
-                      className="p-3 cursor-move hover:shadow-lg transition-shadow"
+                      className="p-3 cursor-move hover:shadow-lg transition-shadow group"
                       draggable
                       onDragStart={() => handleDragStart(lead)}
                     >
-                      <h4 className="font-semibold text-sm">{lead.name}</h4>
-                      {lead.email && <p className="text-xs text-muted-foreground">{lead.email}</p>}
-                      {lead.phone && <p className="text-xs text-muted-foreground">{lead.phone}</p>}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm">{lead.name}</h4>
+                          {lead.email && <p className="text-xs text-muted-foreground">{lead.email}</p>}
+                          {lead.phone && <p className="text-xs text-muted-foreground">{lead.phone}</p>}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormData({ name: lead.name, email: lead.email || "", phone: lead.phone || "" });
+                            setEditingLead(lead.id);
+                            setDialogOpen(true);
+                          }}
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      </div>
                     </Card>
                   ))}
                 <Button 
@@ -404,10 +442,16 @@ export default function CRM() {
         </div>
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={dialogOpen} onOpenChange={(open) => {
+        setDialogOpen(open);
+        if (!open) {
+          setEditingLead(null);
+          setFormData({ name: "", email: "", phone: "" });
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Novo Lead</DialogTitle>
+            <DialogTitle>{editingLead ? "Editar Lead" : "Novo Lead"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -435,7 +479,9 @@ export default function CRM() {
                 placeholder="(00) 00000-0000"
               />
             </div>
-            <Button onClick={handleAddLead} className="w-full">Adicionar Lead</Button>
+            <Button onClick={handleAddLead} className="w-full">
+              {editingLead ? "Salvar Alterações" : "Adicionar Lead"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
