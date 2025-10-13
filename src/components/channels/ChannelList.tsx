@@ -188,6 +188,31 @@ export const ChannelList = () => {
     setDialogOpen(true);
   };
 
+  const handleDelete = async (channelId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este canal?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("channels")
+        .delete()
+        .eq("id", channelId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Canal excluído",
+        description: "Canal removido com sucesso.",
+      });
+      loadChannels();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir canal",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = async () => {
     try {
       let tenantId: string;
@@ -360,6 +385,7 @@ export const ChannelList = () => {
                     description: availableChannelTypes.find((t) => t.type === channel.type)?.description || "",
                   }}
                   onConfigure={() => handleConfigure(channel)}
+                  onDelete={() => handleDelete(channel.id)}
                 />
               ))}
           </div>

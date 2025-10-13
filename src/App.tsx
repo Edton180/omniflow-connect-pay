@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Tickets from "./pages/Tickets";
+import TicketsImproved from "./pages/TicketsImproved";
 import TicketDetail from "./pages/TicketDetail";
 import Contacts from "./pages/Contacts";
 import Queues from "./pages/Queues";
@@ -44,6 +45,7 @@ const App = () => (
           <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
+          <Route path="/tickets-improved" element={<AuthGuard requireAuth><TicketsImproved /></AuthGuard>} />
           <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
           <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />

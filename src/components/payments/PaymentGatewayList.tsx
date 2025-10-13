@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PaymentGatewayCard } from "./PaymentGatewayCard";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
   DialogContent,
@@ -53,12 +54,64 @@ export const PaymentGatewayList = () => {
     setDialogOpen(true);
   };
 
-  const handleSave = () => {
-    toast({
-      title: "Configuração salva",
-      description: `Gateway ${selectedGateway?.name} configurado com sucesso.`,
-    });
-    setDialogOpen(false);
+  const handleSave = async () => {
+    try {
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Tenant não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get form values
+      const apiKey = (document.getElementById(`${selectedGateway.id}_api_key`) as HTMLInputElement)?.value;
+      const config: Record<string, any> = {};
+
+      if (selectedGateway.id === "asaas") {
+        config.api_key = apiKey;
+        config.wallet_id = (document.getElementById("asaas_wallet_id") as HTMLInputElement)?.value;
+      } else if (selectedGateway.id === "mercadopago") {
+        config.public_key = (document.getElementById("mp_public_key") as HTMLInputElement)?.value;
+        config.access_token = (document.getElementById("mp_access_token") as HTMLInputElement)?.value;
+      } else if (selectedGateway.id === "stripe") {
+        config.public_key = (document.getElementById("stripe_public_key") as HTMLInputElement)?.value;
+        config.secret_key = (document.getElementById("stripe_secret_key") as HTMLInputElement)?.value;
+      } else if (selectedGateway.id === "infinitepay") {
+        config.api_key = apiKey;
+      }
+
+      const { error } = await supabase.from("payment_gateways").upsert({
+        tenant_id: userRole.tenant_id,
+        gateway_name: selectedGateway.id,
+        api_key_encrypted: apiKey,
+        config: config,
+        is_active: true,
+      }, {
+        onConflict: "tenant_id,gateway_name",
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Configuração salva",
+        description: `Gateway ${selectedGateway?.name} configurado com sucesso.`,
+      });
+      setDialogOpen(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   return (

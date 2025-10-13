@@ -4,20 +4,66 @@ Guia completo de instalação do OmniFlow para desenvolvimento e produção.
 
 ## 📋 Requisitos Mínimos
 
-### Hardware
-- **Desenvolvimento**: 4GB RAM, 10GB disco
-- **Produção**: 8GB RAM, 50GB disco SSD, 2 vCPUs
+### Para VPS/Servidor
+- Ubuntu 20.04+ ou CentOS 7+
+- 8GB RAM (mínimo 4GB)
+- 50GB de armazenamento SSD
+- 2 vCPUs
+- Acesso root (sudo)
 
-### Software
+### Para Desenvolvimento Local
 - Node.js 18+ ou Bun
-- PostgreSQL 14+ (ou conta Supabase Cloud)
-- Docker 20.10+ e Docker Compose
-- Git 2.30+
-- Nginx (para produção)
+- 4GB RAM disponível
+- 10GB de espaço em disco
 
 ---
 
-## 🚀 Instalação Rápida (Desenvolvimento)
+## 🚀 Instalação Rápida (Recomendado)
+
+### Instalador Automático
+
+O OmniFlow possui um instalador automático que facilita a instalação em diferentes ambientes:
+
+```bash
+# Download e execute o instalador
+curl -sSL https://raw.githubusercontent.com/seu-usuario/omniflow/main/scripts/auto-install.sh | sudo bash
+```
+
+**O instalador oferece 4 opções:**
+
+1. **VPS** - Instalação completa em servidor dedicado/VPS
+   - Instala Docker, Node.js, Nginx, SSL
+   - Configura Evolution API automaticamente
+   - Configura backups automáticos
+   - Instala firewall
+
+2. **cPanel** - Guia passo a passo para hospedagem compartilhada
+   - Instruções detalhadas para upload
+   - Configuração de .htaccess
+   - Setup de variáveis de ambiente
+
+3. **Localhost** - Ambiente de desenvolvimento local
+   - Instalação rápida para desenvolvimento
+   - Servidor de desenvolvimento com hot-reload
+
+4. **VirtualBox** - Instalação em máquina virtual
+   - Ideal para testes e homologação
+   - Configuração completa incluída
+
+### O que o instalador faz automaticamente:
+
+- ✅ Detecta seu sistema operacional
+- ✅ Instala todas as dependências necessárias
+- ✅ Configura Docker e Docker Compose
+- ✅ Instala e configura Nginx com SSL
+- ✅ Configura Evolution API para WhatsApp
+- ✅ Configura firewall (UFW/Firewalld)
+- ✅ Cria scripts de backup automático
+- ✅ Configura domínio e certificado SSL
+
+---
+
+## 🖥️ Instalação Manual em VPS
 
 ```bash
 # Clone o repositório
@@ -39,11 +85,18 @@ npm run dev
 bun dev
 ```
 
-Acesse: `http://localhost:5173`
-
 ---
 
-## 🏢 Instalação para Produção
+## 🔧 Instalação em cPanel
+
+### Usando o Instalador
+
+```bash
+# Execute localmente e escolha opção 2 para ver instruções
+./scripts/auto-install.sh
+```
+
+### Passo a Passo Manual:
 
 ### 1. Clone e Prepare o Projeto
 

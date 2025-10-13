@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Edit } from 'lucide-react';
+import { ArrowLeft, Save, Edit, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -22,19 +23,41 @@ export default function Settings() {
     requireEmailVerification: false,
     maxTenantsPerPlan: 100,
     sessionTimeout: 30,
+    webhookUrl: '',
+    customDomain: '',
   });
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      loadSettings();
+    }
+  }, [isSuperAdmin]);
+
+  const loadSettings = async () => {
+    try {
+      const webhookUrl = `${window.location.origin}/api/webhooks`;
+      setSettings(prev => ({ ...prev, webhookUrl }));
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const handleSaveSettings = async () => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Save settings to database or localStorage
+      localStorage.setItem('omniflow_settings', JSON.stringify(settings));
       toast.success('Configurações salvas com sucesso!');
     } catch (error) {
       toast.error('Erro ao salvar configurações');
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Copiado para área de transferência!');
   };
 
   return (
@@ -58,22 +81,71 @@ export default function Settings() {
 
         <div className="space-y-6">
           {isSuperAdmin && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Landing Page</CardTitle>
-                <CardDescription>Edite a página inicial customizável do sistema</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/landing-page-editor')}
-                  className="w-full"
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar Landing Page
-                </Button>
-              </CardContent>
-            </Card>
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Webhook URL</CardTitle>
+                  <CardDescription>URL para receber notificações de eventos do sistema</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      value={settings.webhookUrl}
+                      readOnly
+                      className="flex-1"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard(settings.webhookUrl)}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Use esta URL para configurar webhooks nos gateways de pagamento e canais de comunicação
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Domínio Customizado</CardTitle>
+                  <CardDescription>Configure o domínio do seu SaaS</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="customDomain">Domínio</Label>
+                    <Input
+                      id="customDomain"
+                      value={settings.customDomain}
+                      onChange={(e) => setSettings({ ...settings, customDomain: e.target.value })}
+                      placeholder="seu-dominio.com.br"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Após configurar, aponte seu domínio para o IP do servidor
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Landing Page</CardTitle>
+                  <CardDescription>Edite a página inicial customizável do sistema</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/landing-page-editor')}
+                    className="w-full"
+                  >
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar Landing Page
+                  </Button>
+                </CardContent>
+              </Card>
+            </>
           )}
 
           <Card>

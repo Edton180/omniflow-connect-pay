@@ -22,6 +22,18 @@ export const SetupWizard = () => {
 
     setLoading(true);
     try {
+      // Check if super admin already exists
+      const { data: existingSuperAdmin } = await supabase
+        .from('user_roles')
+        .select('id')
+        .eq('role', 'super_admin')
+        .maybeSingle();
+
+      if (existingSuperAdmin) {
+        toast.error('Um Super Admin já existe no sistema');
+        navigate('/dashboard');
+        return;
+      }
       // Upsert profile to avoid duplicate key error
       const { error: profileError } = await supabase
         .from('profiles')

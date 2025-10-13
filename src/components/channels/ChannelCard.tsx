@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2 } from "lucide-react";
 
 interface ChannelCardProps {
   channel: {
@@ -14,6 +14,7 @@ interface ChannelCardProps {
     status?: string;
   };
   onConfigure: () => void;
+  onDelete?: () => void;
 }
 
 const getIcon = (type: string) => {
@@ -40,7 +41,7 @@ const getColor = (type: string) => {
   return colors[type] || "bg-gray-500";
 };
 
-export const ChannelCard = ({ channel, onConfigure }: ChannelCardProps) => {
+export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps) => {
   const Icon = getIcon(channel.type);
   const colorClass = getColor(channel.type);
 
@@ -73,14 +74,25 @@ export const ChannelCard = ({ channel, onConfigure }: ChannelCardProps) => {
             {channel.connected ? "Conectado" : "Desconectado"}
           </Badge>
         </div>
-        <Button
-          variant={channel.connected ? "outline" : "default"}
-          className="w-full"
-          onClick={onConfigure}
-        >
-          <Settings className="mr-2 h-4 w-4" />
-          {channel.connected ? "Configurar" : "Conectar"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant={channel.connected ? "outline" : "default"}
+            className="flex-1"
+            onClick={onConfigure}
+          >
+            <Settings className="mr-2 h-4 w-4" />
+            {channel.connected ? "Configurar" : "Conectar"}
+          </Button>
+          {onDelete && (
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={onDelete}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
