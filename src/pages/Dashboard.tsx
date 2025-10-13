@@ -16,7 +16,10 @@ import {
   Palette,
   FileText,
   Users2,
-  MessageCircle
+  MessageCircle,
+  ShoppingBag,
+  Globe,
+  DollarSign
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
@@ -258,8 +261,8 @@ const Dashboard = () => {
                 onClick={() => navigate("/crm")}
               >
                 <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
-                    <Users2 className="w-5 h-5 text-amber-500" />
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                    <Users2 className="w-5 h-5 text-accent" />
                   </div>
                   <div>
                     <div className="font-semibold mb-1">CRM / Kanban</div>
@@ -276,8 +279,8 @@ const Dashboard = () => {
                 onClick={() => navigate("/internal-chat")}
               >
                 <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                    <MessageCircle className="w-5 h-5 text-blue-500" />
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-primary" />
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Chat Interno</div>
@@ -296,8 +299,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/tenant/settings")}
                   >
                     <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center flex-shrink-0">
-                        <Settings className="w-5 h-5 text-orange-600" />
+                      <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                        <Settings className="w-5 h-5 text-secondary" />
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Configurações da Empresa</div>
@@ -314,8 +317,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/tenant/invoices")}
                   >
                     <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-primary" />
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Faturas</div>
@@ -336,8 +339,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/payments")}
                   >
                     <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
-                        <CreditCard className="w-5 h-5 text-green-600" />
+                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="w-5 h-5 text-accent" />
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Configurar Pagamentos</div>
@@ -354,8 +357,8 @@ const Dashboard = () => {
                     onClick={() => navigate("/branding")}
                   >
                     <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
-                        <Palette className="w-5 h-5 text-purple-600" />
+                      <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                        <Palette className="w-5 h-5 text-secondary" />
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Marca Branca</div>
