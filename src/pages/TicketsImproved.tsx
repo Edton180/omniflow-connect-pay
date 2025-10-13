@@ -13,6 +13,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaUpload } from "@/components/tickets/MediaUpload";
 
 export default function TicketsImproved() {
   const navigate = useNavigate();
@@ -26,6 +27,8 @@ export default function TicketsImproved() {
   const [statusFilter, setStatusFilter] = useState("open");
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<string | null>(null);
 
   useEffect(() => {
     loadTickets();
@@ -108,7 +111,7 @@ export default function TicketsImproved() {
   };
 
   const handleSendMessage = async () => {
-    if (!messageText.trim() || !selectedTicket || !user) return;
+    if ((!messageText.trim() && !mediaUrl) || !selectedTicket || !user) return;
 
     setSending(true);
     try {
@@ -116,8 +119,10 @@ export default function TicketsImproved() {
         {
           ticket_id: selectedTicket.id,
           sender_id: user.id,
-          content: messageText.trim(),
+          content: messageText.trim() || '[Mídia]',
           is_from_contact: false,
+          media_url: mediaUrl,
+          media_type: mediaType,
         },
       ]);
 
@@ -126,12 +131,14 @@ export default function TicketsImproved() {
       await supabase
         .from("tickets")
         .update({ 
-          last_message: messageText.trim(),
+          last_message: messageText.trim() || '[Mídia enviada]',
           updated_at: new Date().toISOString()
         })
         .eq("id", selectedTicket.id);
 
       setMessageText("");
+      setMediaUrl(null);
+      setMediaType(null);
       loadMessages(selectedTicket.id);
       loadTickets();
     } catch (error: any) {
@@ -338,10 +345,28 @@ export default function TicketsImproved() {
 
             {/* Input de Mensagem */}
             <div className="border-t p-4 bg-card">
+              {mediaUrl && (
+                <div className="mb-2 p-2 bg-muted rounded-lg flex items-center justify-between">
+                  <span className="text-sm">Mídia anexada</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setMediaUrl(null);
+                      setMediaType(null);
+                    }}
+                  >
+                    Remover
+                  </Button>
+                </div>
+              )}
               <div className="flex gap-2 items-end">
-                <Button variant="ghost" size="icon" className="flex-shrink-0">
-                  <Paperclip className="h-5 w-5" />
-                </Button>
+                <MediaUpload
+                  onMediaSelect={(url, type) => {
+                    setMediaUrl(url);
+                    setMediaType(type);
+                  }}
+                />
                 <Textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
@@ -358,7 +383,7 @@ export default function TicketsImproved() {
                 />
                 <Button
                   onClick={handleSendMessage}
-                  disabled={sending || !messageText.trim() || selectedTicket.status === "closed"}
+                  disabled={sending || (!messageText.trim() && !mediaUrl) || selectedTicket.status === "closed"}
                   size="icon"
                   className="flex-shrink-0"
                 >

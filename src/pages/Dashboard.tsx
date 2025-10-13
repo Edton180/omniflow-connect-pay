@@ -22,6 +22,7 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
 import { ChannelStats } from "@/components/dashboard/ChannelStats";
 import { useBranding } from "@/hooks/useBranding";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Dashboard = () => {
   const { user, session, loading, signOut, isSuperAdmin, hasRole } = useAuth();
@@ -83,6 +84,7 @@ const Dashboard = () => {
               <span className="text-sm text-muted-foreground hidden sm:inline font-medium">
                 {session?.user?.email}
               </span>
+              <ThemeToggle />
               <Button variant="ghost" size="icon" className="hover:bg-primary/10">
                 <Settings className="w-5 h-5" />
               </Button>

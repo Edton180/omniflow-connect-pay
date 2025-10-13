@@ -25,6 +25,7 @@ export default function Settings() {
     sessionTimeout: 30,
     webhookUrl: '',
     customDomain: '',
+    serverIp: '',
   });
 
   useEffect(() => {
@@ -36,7 +37,17 @@ export default function Settings() {
   const loadSettings = async () => {
     try {
       const webhookUrl = `${window.location.origin}/api/webhooks`;
-      setSettings(prev => ({ ...prev, webhookUrl }));
+      
+      // Buscar IP do servidor
+      const response = await fetch('https://api.ipify.org?format=json');
+      const data = await response.json();
+      const serverIp = data.ip;
+      
+      setSettings(prev => ({ 
+        ...prev, 
+        webhookUrl,
+        serverIp 
+      }));
     } catch (error) {
       console.error('Error loading settings:', error);
     }
@@ -104,6 +115,33 @@ export default function Settings() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Use esta URL para configurar webhooks nos gateways de pagamento e canais de comunicação
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>IP do Servidor</CardTitle>
+                  <CardDescription>IP público para apontamento de domínio</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex gap-2">
+                    <Input
+                      value={settings.serverIp || 'Carregando...'}
+                      readOnly
+                      className="flex-1 font-mono"
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => copyToClipboard(settings.serverIp)}
+                      disabled={!settings.serverIp}
+                    >
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Aponte seu domínio para este IP usando um registro A
                   </p>
                 </CardContent>
               </Card>
