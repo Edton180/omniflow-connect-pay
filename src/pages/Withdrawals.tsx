@@ -237,7 +237,29 @@ export default function Withdrawals() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 mb-8 md:grid-cols-3">
+        {!tenantId ? (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Acesso Restrito</CardTitle>
+              <CardDescription>
+                Você precisa estar associado a uma empresa para gerenciar saques.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Entre em contato com o administrador do sistema para associar sua conta a uma empresa.
+              </p>
+              <Button 
+                onClick={() => navigate("/dashboard")} 
+                className="mt-4"
+              >
+                Voltar ao Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <>
+            <div className="grid gap-6 mb-8 md:grid-cols-3">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Saldo Disponível</CardTitle>
@@ -313,9 +335,11 @@ export default function Withdrawals() {
                   Nenhuma solicitação de saque ainda
                 </p>
               )}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

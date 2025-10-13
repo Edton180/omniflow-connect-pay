@@ -228,8 +228,52 @@ export default function Catalog() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {products.map((product) => (
+        {!tenantId ? (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Acesso Restrito</CardTitle>
+              <CardDescription>
+                Você precisa estar associado a uma empresa para gerenciar o catálogo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Entre em contato com o administrador do sistema para associar sua conta a uma empresa.
+              </p>
+              <Button 
+                onClick={() => navigate("/dashboard")} 
+                className="mt-4"
+              >
+                Voltar ao Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+        ) : products.length === 0 ? (
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>Nenhum produto cadastrado</CardTitle>
+              <CardDescription>
+                Comece adicionando seu primeiro produto ao catálogo
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center gap-4 py-8">
+              <ShoppingBag className="h-16 w-16 text-muted-foreground" />
+              <p className="text-center text-muted-foreground">
+                Cadastre produtos com nome, descrição, preço e imagens para começar a vender online
+              </p>
+              <Button onClick={() => {
+                setEditingProduct(null);
+                setFormData({ name: "", description: "", price: "", stock_quantity: "", image_url: "" });
+                setDialogOpen(true);
+              }}>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Primeiro Produto
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {products.map((product) => (
             <Card key={product.id}>
               {product.image_url && (
                 <img 
@@ -264,8 +308,9 @@ export default function Catalog() {
                 </Button>
               </CardFooter>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
