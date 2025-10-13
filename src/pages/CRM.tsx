@@ -74,21 +74,28 @@ export default function CRM() {
 
       if (roleError) {
         console.error("Error loading user role:", roleError);
-        throw roleError;
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar dados do usuário",
+          variant: "destructive",
+        });
+        return;
       }
 
       if (!userRole?.tenant_id) {
         toast({
           title: "Erro",
-          description: "Tenant não encontrado. Recarregue a página.",
+          description: "Você precisa estar associado a uma empresa para acessar o CRM",
           variant: "destructive",
         });
         return;
       }
       
       setTenantId(userRole.tenant_id);
-      await loadColumns(userRole.tenant_id);
-      await loadLeads(userRole.tenant_id);
+      await Promise.all([
+        loadColumns(userRole.tenant_id),
+        loadLeads(userRole.tenant_id)
+      ]);
     } catch (error: any) {
       console.error("Error in loadData:", error);
       toast({

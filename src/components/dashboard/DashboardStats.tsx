@@ -152,7 +152,7 @@ export const DashboardStats = () => {
                 <span className="text-green-500 font-medium">+{stats.ticketsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Sem novos tickets</span>
+              <span className="text-foreground/60">Sem novos tickets</span>
             )}
           </div>
         </CardContent>
@@ -179,7 +179,7 @@ export const DashboardStats = () => {
                 <span className="text-green-500 font-medium">+{stats.contactsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-muted-foreground">Sem novos contatos</span>
+              <span className="text-foreground/60">Sem novos contatos</span>
             )}
           </div>
         </CardContent>
@@ -199,7 +199,7 @@ export const DashboardStats = () => {
           <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-foreground/60">
             Tempo médio de resposta
           </div>
         </CardContent>
@@ -219,7 +219,7 @@ export const DashboardStats = () => {
           <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <div className="flex items-center gap-2 text-xs text-foreground/60">
             Primeira resposta média
           </div>
         </CardContent>

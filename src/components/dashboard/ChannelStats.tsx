@@ -86,7 +86,7 @@ export const ChannelStats = () => {
           <CardDescription>Status das integrações</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-8 text-foreground/60">
             <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>Nenhum canal conectado ainda</p>
             <p className="text-sm mt-2">Configure seus canais de atendimento</p>
@@ -117,7 +117,7 @@ export const ChannelStats = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-base">{channel.name}</p>
-                    <p className="text-xs text-muted-foreground capitalize flex items-center gap-1">
+                    <p className="text-xs text-foreground/60 capitalize flex items-center gap-1">
                       <span className={`w-2 h-2 rounded-full ${channel.status === 'active' ? 'bg-green-500' : 'bg-muted'}`}></span>
                       {channel.type}
                     </p>

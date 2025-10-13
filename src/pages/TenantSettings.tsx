@@ -69,6 +69,8 @@ export default function TenantSettings() {
 
     setSaving(true);
     try {
+      const oldDomain = tenant.custom_domain;
+      
       const { error } = await supabase
         .from('tenants')
         .update({
@@ -80,6 +82,24 @@ export default function TenantSettings() {
         .eq('id', tenant.id);
 
       if (error) throw error;
+
+      // Se o domínio foi alterado, atualizar webhook do Telegram
+      const newDomain = formData.logo_url || tenant.custom_domain;
+      if (oldDomain !== newDomain && newDomain) {
+        try {
+          // Atualizar webhook do Telegram via edge function
+          await supabase.functions.invoke('telegram-webhook', {
+            body: {
+              action: 'update_webhook',
+              domain: newDomain,
+              tenant_id: tenant.id
+            }
+          });
+        } catch (webhookError) {
+          console.error('Error updating webhook:', webhookError);
+          // Não bloqueia o salvamento se webhook falhar
+        }
+      }
 
       toast.success('Configurações atualizadas com sucesso!');
       fetchTenant();
@@ -115,9 +135,9 @@ export default function TenantSettings() {
             <Building2 className="h-8 w-8" />
             Configurações da Empresa
           </h1>
-          <p className="text-muted-foreground">
-            Gerencie as configurações e usuários da sua empresa
-          </p>
+            <p className="text-sm text-foreground/60">
+              Gerencie as configurações e usuários da sua empresa
+            </p>
         </div>
 
         <Tabs defaultValue="company" className="space-y-6">
@@ -131,7 +151,7 @@ export default function TenantSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Informações da Empresa</CardTitle>
-                <CardDescription>
+                <CardDescription className="text-foreground/60">
                   Atualize as informações básicas da sua empresa
                 </CardDescription>
               </CardHeader>

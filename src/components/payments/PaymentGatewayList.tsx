@@ -237,17 +237,43 @@ export const PaymentGatewayList = () => {
 
       console.log("Gateway data to save:", gatewayData);
 
-      // Use upsert with proper conflict handling
-      const { error } = await supabase
+      // Check if gateway already exists for this tenant
+      let query = supabase
         .from("payment_gateways")
-        .upsert(gatewayData, {
-          onConflict: tenantId ? 'tenant_id,gateway_name' : 'gateway_name',
-          ignoreDuplicates: false
-        });
+        .select("id")
+        .eq("gateway_name", selectedGateway.id);
+      
+      if (tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      } else {
+        query = query.is("tenant_id", null);
+      }
 
-      if (error) {
-        console.error("Error saving gateway:", error);
-        throw error;
+      const { data: existing } = await query.maybeSingle();
+
+      let result;
+      if (existing) {
+        // Update existing
+        result = await supabase
+          .from("payment_gateways")
+          .update({
+            api_key_encrypted: gatewayData.api_key_encrypted,
+            config: gatewayData.config,
+            is_active: true,
+          })
+          .eq("id", existing.id)
+          .select();
+      } else {
+        // Insert new
+        result = await supabase
+          .from("payment_gateways")
+          .insert(gatewayData)
+          .select();
+      }
+
+      if (result.error) {
+        console.error("Error saving gateway:", result.error);
+        throw result.error;
       }
 
       toast({
@@ -290,7 +316,7 @@ export const PaymentGatewayList = () => {
         <CardContent className="pt-6">
           <div className="text-center space-y-2">
             <h3 className="text-lg font-semibold">Aceite pagamentos de múltiplas formas</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-foreground/60">
               Integre com os principais gateways de pagamento do Brasil e ofereça Pix, 
               boleto, cartão de crédito e débito para seus clientes.
             </p>
@@ -416,7 +442,7 @@ export const PaymentGatewayList = () => {
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">Links Úteis</h4>
-                  <ul className="space-y-2 text-sm text-muted-foreground">
+                  <ul className="space-y-2 text-sm text-foreground/70">
                     {selectedGateway?.id === "asaas" && (
                       <>
                         <li>• <a href="https://docs.asaas.com" target="_blank" rel="noopener" className="text-primary hover:underline">Documentação oficial ASAAS</a></li>

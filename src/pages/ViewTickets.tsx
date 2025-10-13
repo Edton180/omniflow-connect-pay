@@ -29,10 +29,10 @@ export default function ViewTickets() {
 
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-4xl mx-auto space-y-6">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-2">Escolha sua Visualização</h2>
-            <p className="text-muted-foreground">Selecione o formato que melhor atende suas necessidades</p>
-          </div>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold mb-2">Escolha sua Visualização</h2>
+              <p className="text-foreground/60">Selecione o formato que melhor atende suas necessidades</p>
+            </div>
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card 
@@ -46,7 +46,7 @@ export default function ViewTickets() {
                   </div>
                   <div>
                     <CardTitle className="text-xl">Visualização de Lista</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Gestão completa</p>
+                    <p className="text-sm text-foreground/60 mt-1">Gestão completa</p>
                   </div>
                 </div>
                 <CardDescription className="text-base">
@@ -74,7 +74,7 @@ export default function ViewTickets() {
                   </div>
                   <div>
                     <CardTitle className="text-xl">Visualização de Chat</CardTitle>
-                    <p className="text-sm text-muted-foreground mt-1">Atendimento em tempo real</p>
+                    <p className="text-sm text-foreground/60 mt-1">Atendimento em tempo real</p>
                   </div>
                 </div>
                 <CardDescription className="text-base">
