@@ -12,6 +12,8 @@ import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOu
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function TicketsImproved() {
   const navigate = useNavigate();
