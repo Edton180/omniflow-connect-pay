@@ -237,43 +237,21 @@ export const PaymentGatewayList = () => {
 
       console.log("Gateway data to save:", gatewayData);
 
-      // Check if gateway already exists for this tenant
-      let query = supabase
+      // Use UPSERT with ON CONFLICT to insert or update in one operation
+      const { data, error } = await supabase
         .from("payment_gateways")
-        .select("id")
-        .eq("gateway_name", selectedGateway.id);
-      
-      if (tenantId) {
-        query = query.eq("tenant_id", tenantId);
-      } else {
-        query = query.is("tenant_id", null);
-      }
+        .upsert(
+          gatewayData,
+          { 
+            onConflict: 'tenant_id,gateway_name',
+            ignoreDuplicates: false 
+          }
+        )
+        .select();
 
-      const { data: existing } = await query.maybeSingle();
-
-      let result;
-      if (existing) {
-        // Update existing
-        result = await supabase
-          .from("payment_gateways")
-          .update({
-            api_key_encrypted: gatewayData.api_key_encrypted,
-            config: gatewayData.config,
-            is_active: true,
-          })
-          .eq("id", existing.id)
-          .select();
-      } else {
-        // Insert new
-        result = await supabase
-          .from("payment_gateways")
-          .insert(gatewayData)
-          .select();
-      }
-
-      if (result.error) {
-        console.error("Error saving gateway:", result.error);
-        throw result.error;
+      if (error) {
+        console.error("Error saving gateway:", error);
+        throw error;
       }
 
       toast({
