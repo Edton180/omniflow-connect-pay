@@ -58,6 +58,60 @@ export type Database = {
           },
         ]
       }
+      catalog_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          position: number
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          position?: number
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          position?: number
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_categories_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_landing_settings: {
         Row: {
           created_at: string | null
@@ -204,50 +258,157 @@ export type Database = {
           },
         ]
       }
+      catalog_product_optionals: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_required: boolean | null
+          max_quantity: number | null
+          name: string
+          price: number
+          product_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          max_quantity?: number | null
+          name: string
+          price?: number
+          product_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_required?: boolean | null
+          max_quantity?: number | null
+          name?: string
+          price?: number
+          product_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_product_optionals_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_product_variations: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name: string
+          option_name: string
+          price_adjustment: number | null
+          product_id: string
+          stock_quantity: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name: string
+          option_name: string
+          price_adjustment?: number | null
+          product_id: string
+          stock_quantity?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name?: string
+          option_name?: string
+          price_adjustment?: number | null
+          product_id?: string
+          stock_quantity?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_product_variations_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_products: {
         Row: {
+          category_id: string | null
           created_at: string | null
           currency: string
           description: string | null
+          has_variations: boolean | null
+          highlight: boolean | null
           id: string
           image_url: string | null
           is_active: boolean | null
+          max_quantity_per_order: number | null
           metadata: Json | null
           name: string
+          preparation_time: number | null
           price: number
           stock_quantity: number | null
           tenant_id: string
           updated_at: string | null
         }
         Insert: {
+          category_id?: string | null
           created_at?: string | null
           currency?: string
           description?: string | null
+          has_variations?: boolean | null
+          highlight?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          max_quantity_per_order?: number | null
           metadata?: Json | null
           name: string
+          preparation_time?: number | null
           price: number
           stock_quantity?: number | null
           tenant_id: string
           updated_at?: string | null
         }
         Update: {
+          category_id?: string | null
           created_at?: string | null
           currency?: string
           description?: string | null
+          has_variations?: boolean | null
+          highlight?: boolean | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
+          max_quantity_per_order?: number | null
           metadata?: Json | null
           name?: string
+          preparation_time?: number | null
           price?: number
           stock_quantity?: number | null
           tenant_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "catalog_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_categories"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "catalog_products_tenant_id_fkey"
             columns: ["tenant_id"]
