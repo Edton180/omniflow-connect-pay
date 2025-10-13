@@ -85,30 +85,33 @@ export const SetupWizard = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
-      <Card className="w-full max-w-md gradient-card">
-        <CardHeader>
-          <CardTitle>Complete Your Setup</CardTitle>
-          <CardDescription>
-            Let's set up your account as a Super Admin
+      <Card className="w-full max-w-md shadow-2xl border-2 border-primary/20">
+        <CardHeader className="space-y-1 text-center">
+          <CardTitle className="text-3xl font-bold text-gradient">Primeiros Passos</CardTitle>
+          <CardDescription className="text-base text-foreground/90">
+            Configure sua plataforma em minutos
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+        <CardContent className="space-y-6">
+          <div className="space-y-3">
+            <Label htmlFor="fullName" className="text-base font-semibold text-foreground">
+              Nome Completo
+            </Label>
             <Input
               id="fullName"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              placeholder="Enter your full name"
+              placeholder="Digite seu nome completo"
               disabled={loading}
+              className="h-12 text-base"
             />
           </div>
           <Button
             onClick={handleSetup}
             disabled={loading || !fullName.trim()}
-            className="w-full"
+            className="w-full h-12 text-base font-semibold bg-gradient-primary hover:opacity-90 transition-opacity"
           >
-            {loading ? 'Setting up...' : 'Complete Setup'}
+            {loading ? 'Configurando...' : 'Começar Agora'}
           </Button>
         </CardContent>
       </Card>

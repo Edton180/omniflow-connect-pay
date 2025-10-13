@@ -98,9 +98,71 @@ export const PaymentGatewayList = () => {
     }
   };
 
-  const handleConfigure = (gateway: any) => {
+  const handleConfigure = async (gateway: any) => {
     setSelectedGateway(gateway);
     setDialogOpen(true);
+    
+    // Carregar credenciais salvas
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: isSuperAdmin } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      let query = supabase
+        .from("payment_gateways")
+        .select("*")
+        .eq("gateway_name", gateway.id)
+        .eq("is_active", true);
+
+      if (!isSuperAdmin) {
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (userRole?.tenant_id) {
+          query = query.eq("tenant_id", userRole.tenant_id);
+        }
+      }
+
+      const { data: savedGateway } = await query.maybeSingle();
+
+      if (savedGateway?.config) {
+        // Preencher os campos com os valores salvos
+        setTimeout(() => {
+          const config = savedGateway.config as any;
+          
+          if (gateway.id === "asaas" && config.api_key) {
+            const apiKeyInput = document.getElementById("asaas_api_key") as HTMLInputElement;
+            const walletInput = document.getElementById("asaas_wallet_id") as HTMLInputElement;
+            if (apiKeyInput) apiKeyInput.value = config.api_key;
+            if (walletInput && config.wallet_id) walletInput.value = config.wallet_id;
+          } else if (gateway.id === "mercadopago") {
+            const publicKeyInput = document.getElementById("mp_public_key") as HTMLInputElement;
+            const accessTokenInput = document.getElementById("mp_access_token") as HTMLInputElement;
+            if (publicKeyInput && config.public_key) publicKeyInput.value = config.public_key;
+            if (accessTokenInput && config.access_token) accessTokenInput.value = config.access_token;
+          } else if (gateway.id === "stripe") {
+            const publicKeyInput = document.getElementById("stripe_public_key") as HTMLInputElement;
+            const secretKeyInput = document.getElementById("stripe_secret_key") as HTMLInputElement;
+            if (publicKeyInput && config.public_key) publicKeyInput.value = config.public_key;
+            if (secretKeyInput && config.secret_key) secretKeyInput.value = config.secret_key;
+          } else if (gateway.id === "infinitepay" && config.api_key) {
+            const apiKeyInput = document.getElementById("infinitepay_api_key") as HTMLInputElement;
+            if (apiKeyInput) apiKeyInput.value = config.api_key;
+          }
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error loading gateway config:", error);
+    }
   };
 
   const handleSave = async () => {

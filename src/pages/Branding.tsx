@@ -35,7 +35,25 @@ export default function Branding() {
 
   const loadTenantData = async () => {
     try {
-      const { data: userRole, error: roleError } = await supabase
+      // Verificar se é super admin
+      const { data: isSuperAdmin } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session?.user?.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      // Super admins podem personalizar a landing page settings ao invés de tenant
+      if (isSuperAdmin) {
+        toast({
+          title: "Super Admin",
+          description: "Como super admin, você pode personalizar a landing page em vez de tenant específico",
+        });
+        navigate("/landing-page-editor");
+        return;
+      }
+
+      const { data: userRole, error: roleError} = await supabase
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", session?.user?.id)
