@@ -162,6 +162,179 @@ export type Database = {
           },
         ]
       }
+      crm_columns: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          position: number
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name: string
+          position?: number
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          position?: number
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_columns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_leads: {
+        Row: {
+          column_id: string
+          contact_id: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          notes: string | null
+          phone: string | null
+          position: number
+          tenant_id: string
+          ticket_id: string | null
+          updated_at: string | null
+          value: number | null
+        }
+        Insert: {
+          column_id: string
+          contact_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          phone?: string | null
+          position?: number
+          tenant_id: string
+          ticket_id?: string | null
+          updated_at?: string | null
+          value?: number | null
+        }
+        Update: {
+          column_id?: string
+          contact_id?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          position?: number
+          tenant_id?: string
+          ticket_id?: string | null
+          updated_at?: string | null
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_leads_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "crm_columns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "crm_leads_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      internal_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          tenant_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          tenant_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "internal_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
@@ -649,51 +822,68 @@ export type Database = {
           created_at: string | null
           custom_css: Json | null
           custom_domain: string | null
+          expiry_date: string | null
           id: string
           is_active: boolean | null
           logo_url: string | null
           max_tickets: number | null
           max_users: number | null
           name: string
+          plan_id: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string
           subscription_status: string | null
           updated_at: string | null
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string | null
           custom_css?: Json | null
           custom_domain?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
           max_tickets?: number | null
           max_users?: number | null
           name: string
+          plan_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
           subscription_status?: string | null
           updated_at?: string | null
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string | null
           custom_css?: Json | null
           custom_domain?: string | null
+          expiry_date?: string | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
           max_tickets?: number | null
           max_users?: number | null
           name?: string
+          plan_id?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string
           subscription_status?: string | null
           updated_at?: string | null
+          whatsapp?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "tenants_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tickets: {
         Row: {

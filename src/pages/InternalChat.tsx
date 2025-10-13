@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User } from "lucide-react";
+import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Paperclip, Mic } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function InternalChat() {
   const navigate = useNavigate();
@@ -18,10 +19,45 @@ export default function InternalChat() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageText, setMessageText] = useState("");
+  const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [tenantId, setTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
+    setupRealtimeSubscription();
   }, []);
+
+  useEffect(() => {
+    if (selectedUser) {
+      loadMessages();
+    }
+  }, [selectedUser]);
+
+  const setupRealtimeSubscription = () => {
+    const channel = supabase
+      .channel('internal_messages_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'internal_messages'
+        },
+        (payload) => {
+          if (selectedUser && 
+              ((payload.new.sender_id === selectedUser.id && payload.new.recipient_id === user?.id) ||
+               (payload.new.sender_id === user?.id && payload.new.recipient_id === selectedUser.id))) {
+            setMessages((prev) => [...prev, payload.new]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
 
   const loadUsers = async () => {
     try {
@@ -32,6 +68,7 @@ export default function InternalChat() {
         .maybeSingle();
 
       if (!userRole?.tenant_id) return;
+      setTenantId(userRole.tenant_id);
 
       const { data, error } = await supabase
         .from("profiles")
@@ -50,15 +87,57 @@ export default function InternalChat() {
     }
   };
 
+  const loadMessages = async () => {
+    if (!selectedUser || !user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("internal_messages")
+        .select("*")
+        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${user.id})`)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar mensagens",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
-  const handleSend = () => {
-    if (!messageText.trim()) return;
-    // Implementar lógica de envio aqui
-    setMessageText("");
+  const handleSend = async () => {
+    if (!messageText.trim() || !selectedUser || !user || !tenantId || loading) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("internal_messages")
+        .insert({
+          sender_id: user.id,
+          recipient_id: selectedUser.id,
+          tenant_id: tenantId,
+          content: messageText,
+        });
+
+      if (error) throw error;
+      setMessageText("");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar mensagem",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -157,22 +236,51 @@ export default function InternalChat() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-muted/20">
-              <div className="text-center text-muted-foreground py-8">
-                <p className="text-sm">Nenhuma mensagem ainda</p>
-                <p className="text-xs">Seja o primeiro a enviar uma mensagem</p>
-              </div>
+            <div className="flex-1 overflow-y-auto p-4 bg-muted/20 space-y-4">
+              {messages.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  <p className="text-sm">Nenhuma mensagem ainda</p>
+                  <p className="text-xs">Seja o primeiro a enviar uma mensagem</p>
+                </div>
+              ) : (
+                messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div
+                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                        msg.sender_id === user?.id
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-card'
+                      }`}
+                    >
+                      <p className="text-sm">{msg.content}</p>
+                      <span className="text-xs opacity-70 mt-1 block">
+                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
+                      </span>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="border-t p-4 bg-card">
               <div className="flex gap-2">
+                <Button variant="ghost" size="icon">
+                  <Paperclip className="h-5 w-5" />
+                </Button>
                 <Input
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   placeholder="Digite sua mensagem..."
+                  disabled={loading}
                 />
-                <Button onClick={handleSend} size="icon">
+                <Button variant="ghost" size="icon">
+                  <Mic className="h-5 w-5" />
+                </Button>
+                <Button onClick={handleSend} size="icon" disabled={loading}>
                   <Send className="h-5 w-5" />
                 </Button>
               </div>
