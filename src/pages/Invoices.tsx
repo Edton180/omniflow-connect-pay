@@ -34,11 +34,15 @@ const Invoices = () => {
 
   const loadInvoices = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) return;
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("tenant_id")
-        .eq("id", (await supabase.auth.getUser()).data.user?.id)
-        .single();
+        .eq("id", user.id)
+        .maybeSingle();
 
       if (!profile?.tenant_id) {
         toast({
@@ -56,7 +60,34 @@ const Invoices = () => {
         .order("due_date", { ascending: false });
 
       if (error) throw error;
-      setInvoices(data || []);
+      
+      // Verificar faturas vencidas e próximas do vencimento
+      const now = new Date();
+      const invoicesData = data || [];
+      
+      invoicesData.forEach(invoice => {
+        const dueDate = new Date(invoice.due_date);
+        const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (invoice.status === 'pending') {
+          if (daysUntilDue < 0) {
+            // Vencida
+            toast({
+              title: "Fatura Vencida",
+              description: `Fatura de ${formatCurrency(Number(invoice.amount), invoice.currency)} está vencida`,
+              variant: "destructive",
+            });
+          } else if (daysUntilDue <= 3 && daysUntilDue >= 0) {
+            // Próxima do vencimento
+            toast({
+              title: "Fatura a Vencer",
+              description: `Fatura de ${formatCurrency(Number(invoice.amount), invoice.currency)} vence em ${daysUntilDue} dia(s)`,
+            });
+          }
+        }
+      });
+      
+      setInvoices(invoicesData);
     } catch (error) {
       console.error("Erro ao carregar faturas:", error);
       toast({
@@ -122,6 +153,12 @@ const Invoices = () => {
     }).format(amount);
   };
 
+  const getDaysUntilDue = (dueDate: string) => {
+    const now = new Date();
+    const due = new Date(dueDate);
+    return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -152,9 +189,11 @@ const Invoices = () => {
         <div className="grid gap-4">
           {invoices.map((invoice) => {
             const isOverdue = new Date(invoice.due_date) < new Date() && invoice.status === "pending";
+            const daysUntilDue = getDaysUntilDue(invoice.due_date);
+            const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0 && invoice.status === "pending";
             
             return (
-              <Card key={invoice.id} className={isOverdue ? "border-destructive" : ""}>
+              <Card key={invoice.id} className={isOverdue ? "border-destructive" : isDueSoon ? "border-yellow-500" : ""}>
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
@@ -185,7 +224,7 @@ const Invoices = () => {
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
                         <p className="text-sm text-muted-foreground">Vencimento</p>
-                        <p className={`font-semibold ${isOverdue ? "text-destructive" : ""}`}>
+                        <p className={`font-semibold ${isOverdue ? "text-destructive" : isDueSoon ? "text-yellow-600" : ""}`}>
                           {format(new Date(invoice.due_date), "dd/MM/yyyy", { locale: ptBR })}
                         </p>
                       </div>
@@ -207,7 +246,14 @@ const Invoices = () => {
                   {isOverdue && (
                     <div className="flex items-center gap-2 text-destructive bg-destructive/10 p-3 rounded-lg">
                       <AlertCircle className="h-4 w-4" />
-                      <p className="text-sm">Esta fatura está vencida</p>
+                      <p className="text-sm font-semibold">Esta fatura está vencida há {Math.abs(daysUntilDue)} dia(s)</p>
+                    </div>
+                  )}
+
+                  {isDueSoon && !isOverdue && (
+                    <div className="flex items-center gap-2 text-yellow-600 bg-yellow-500/10 p-3 rounded-lg">
+                      <AlertCircle className="h-4 w-4" />
+                      <p className="text-sm font-semibold">Vence em {daysUntilDue} dia(s)</p>
                     </div>
                   )}
 

@@ -85,7 +85,12 @@ const Dashboard = () => {
                 {session?.user?.email}
               </span>
               <ThemeToggle />
-              <Button variant="ghost" size="icon" className="hover:bg-primary/10">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="hover:bg-primary/10"
+                onClick={() => navigate("/tenant/settings")}
+              >
                 <Settings className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:bg-destructive/10">

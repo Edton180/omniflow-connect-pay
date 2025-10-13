@@ -17,21 +17,22 @@ export const AuthGuard = ({ children, requireAuth = true, requiredRoles = [] }: 
 
   useEffect(() => {
     const checkSetup = async () => {
-      if (!loading && user) {
-        // Check if we're on the setup page and if super admin exists
-        if (window.location.pathname === '/setup') {
-          const { data: existingSuperAdmin } = await supabase
-            .from('user_roles')
-            .select('id')
-            .eq('role', 'super_admin')
-            .maybeSingle();
+      // Prevenir acesso ao /setup se já existe super admin
+      if (window.location.pathname === '/setup' && user) {
+        const { data: existingSuperAdmin } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('role', 'super_admin')
+          .maybeSingle();
 
-          if (existingSuperAdmin) {
-            navigate('/dashboard');
-            return;
-          }
+        if (existingSuperAdmin) {
+          navigate('/dashboard');
+          setChecking(false);
+          return;
         }
+      }
 
+      if (!loading) {
         if (requireAuth && !user) {
           navigate('/auth');
         } else if (requiredRoles.length > 0 && roles) {

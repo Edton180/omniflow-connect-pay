@@ -8,9 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Paperclip, Phone, Mail, LogOut } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
@@ -328,6 +326,33 @@ export default function TicketsImproved() {
                         : "bg-primary text-primary-foreground"
                     }`}
                   >
+                    {message.media_url && (
+                      <div className="mb-2">
+                        {message.media_type === 'image' && (
+                          <img 
+                            src={message.media_url} 
+                            alt="Mídia" 
+                            className="rounded-lg max-w-full h-auto"
+                          />
+                        )}
+                        {message.media_type === 'audio' && (
+                          <audio controls className="w-full">
+                            <source src={message.media_url} />
+                          </audio>
+                        )}
+                        {message.media_type === 'document' && (
+                          <a 
+                            href={message.media_url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 text-sm underline"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Abrir documento
+                          </a>
+                        )}
+                      </div>
+                    )}
                     <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                     <div className="flex items-center justify-end gap-1 mt-1">
                       <Clock className="h-3 w-3 opacity-70" />

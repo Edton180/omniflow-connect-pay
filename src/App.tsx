@@ -30,6 +30,7 @@ import { SetupWizard } from "./components/SetupWizard";
 import Revenue from "./pages/Revenue";
 import CRM from "./pages/CRM";
 import InternalChat from "./pages/InternalChat";
+import SuperAdminTickets from "./pages/SuperAdminTickets";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +61,7 @@ const App = () => (
           <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
           <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
+          <Route path="/admin/all-tickets" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminTickets /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />

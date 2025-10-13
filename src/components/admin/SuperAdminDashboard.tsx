@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard, TrendingUp, DollarSign } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard, TrendingUp, DollarSign, Palette } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,6 +218,14 @@ export const SuperAdminDashboard = () => {
             <Button 
               className="h-20 text-lg hover-scale" 
               variant="outline"
+              onClick={() => navigate('/admin/all-tickets')}
+            >
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Todos os Atendimentos
+            </Button>
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
               onClick={() => navigate('/payments')}
             >
               <CreditCard className="mr-2 h-5 w-5" />
@@ -230,6 +238,14 @@ export const SuperAdminDashboard = () => {
             >
               <TrendingUp className="mr-2 h-5 w-5" />
               Receita e Faturamento
+            </Button>
+            <Button 
+              className="h-20 text-lg hover-scale" 
+              variant="outline"
+              onClick={() => navigate('/branding')}
+            >
+              <Palette className="mr-2 h-5 w-5" />
+              Marca Branca
             </Button>
             <Button 
               className="h-20 text-lg hover-scale" 
