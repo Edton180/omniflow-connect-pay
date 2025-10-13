@@ -2,37 +2,53 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Paperclip, Mic } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MediaUpload } from "@/components/tickets/MediaUpload";
+import { AudioRecorder } from "@/components/chat/AudioRecorder";
+import { StickerPicker } from "@/components/chat/StickerPicker";
+import { TeamManagement } from "@/components/chat/TeamManagement";
 
 export default function InternalChat() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
   const [users, setUsers] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [messageText, setMessageText] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [showTeamSettings, setShowTeamSettings] = useState(false);
 
   useEffect(() => {
     loadUsers();
+    loadTeams();
     setupRealtimeSubscription();
   }, []);
 
   useEffect(() => {
     if (selectedUser) {
       loadMessages();
+      setSelectedTeam(null);
     }
   }, [selectedUser]);
+
+  useEffect(() => {
+    if (selectedTeam) {
+      loadTeamMessages();
+      setSelectedUser(null);
+    }
+  }, [selectedTeam]);
 
   const setupRealtimeSubscription = () => {
     const channel = supabase
@@ -87,6 +103,46 @@ export default function InternalChat() {
     }
   };
 
+  const loadTeams = async () => {
+    if (!tenantId) return;
+    try {
+      const { data, error } = await supabase
+        .from("teams")
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .order("name");
+
+      if (error) throw error;
+      setTeams(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar equipes",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadTeamMessages = async () => {
+    if (!selectedTeam || !user) return;
+    try {
+      const { data, error } = await supabase
+        .from("internal_messages")
+        .select("*, sender:profiles!internal_messages_sender_id_fkey(full_name, avatar_url)")
+        .eq("team_id", selectedTeam.id)
+        .order("created_at", { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao carregar mensagens",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const loadMessages = async () => {
     if (!selectedUser || !user) return;
 
@@ -113,19 +169,32 @@ export default function InternalChat() {
     navigate('/');
   };
 
-  const handleSend = async () => {
-    if (!messageText.trim() || !selectedUser || !user || !tenantId || loading) return;
+  const handleSend = async (mediaUrl?: string, mediaType?: string) => {
+    if ((!messageText.trim() && !mediaUrl) || !user || !tenantId || loading) return;
+    if (!selectedUser && !selectedTeam) return;
 
     setLoading(true);
     try {
+      const messageData: any = {
+        sender_id: user.id,
+        tenant_id: tenantId,
+        content: messageText || "(mídia)",
+      };
+
+      if (selectedUser) {
+        messageData.recipient_id = selectedUser.id;
+      } else if (selectedTeam) {
+        messageData.team_id = selectedTeam.id;
+      }
+
+      if (mediaUrl) {
+        messageData.media_url = mediaUrl;
+        messageData.media_type = mediaType;
+      }
+
       const { error } = await supabase
         .from("internal_messages")
-        .insert({
-          sender_id: user.id,
-          recipient_id: selectedUser.id,
-          tenant_id: tenantId,
-          content: messageText,
-        });
+        .insert(messageData);
 
       if (error) throw error;
       setMessageText("");
@@ -138,6 +207,18 @@ export default function InternalChat() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMediaSelect = (url: string, type: string) => {
+    handleSend(url, type);
+  };
+
+  const handleAudioRecorded = (url: string) => {
+    handleSend(url, 'audio');
+  };
+
+  const handleStickerSelect = (sticker: string) => {
+    setMessageText(messageText + sticker);
   };
 
   const filteredUsers = users.filter(u => 
@@ -173,7 +254,7 @@ export default function InternalChat() {
             </div>
 
             <Tabs defaultValue="users" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="users" className="text-xs">
                   <UsersIcon className="h-3 w-3 mr-1" />
                   Usuários
@@ -181,58 +262,112 @@ export default function InternalChat() {
                 <TabsTrigger value="teams" className="text-xs">
                   Equipes
                 </TabsTrigger>
+                <TabsTrigger value="settings" className="text-xs">
+                  <Settings className="h-3 w-3 mr-1" />
+                  Config
+                </TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="settings" className="mt-4">
+                {tenantId && <TeamManagement tenantId={tenantId} />}
+              </TabsContent>
             </Tabs>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {filteredUsers.map((u) => (
-              <div
-                key={u.id}
-                onClick={() => setSelectedUser(u)}
-                className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                  selectedUser?.id === u.id ? 'bg-muted' : ''
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={u.avatar_url} />
-                      <AvatarFallback>
-                        <User className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+            <Tabs defaultValue="users" className="h-full">
+              <TabsContent value="users" className="h-full mt-0">
+                {filteredUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    onClick={() => setSelectedUser(u)}
+                    className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                      selectedUser?.id === u.id ? 'bg-muted' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={u.avatar_url} />
+                          <AvatarFallback>
+                            <User className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate block">
+                          {u.full_name || 'Sem nome'}
+                        </span>
+                        <span className="text-xs text-muted-foreground truncate block">
+                          {u.phone || 'Sem telefone'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-medium text-sm truncate block">
-                      {u.full_name || 'Sem nome'}
-                    </span>
-                    <span className="text-xs text-muted-foreground truncate block">
-                      {u.phone || 'Sem telefone'}
-                    </span>
+                ))}
+              </TabsContent>
+              
+              <TabsContent value="teams" className="h-full mt-0">
+                {teams.map((team) => (
+                  <div
+                    key={team.id}
+                    onClick={() => setSelectedTeam(team)}
+                    className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                      selectedTeam?.id === team.id ? 'bg-muted' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UsersIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate block">
+                          {team.name}
+                        </span>
+                        {team.description && (
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {team.description}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            ))}
+                ))}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
 
         {/* Área de Chat */}
-        {selectedUser ? (
+        {(selectedUser || selectedTeam) ? (
           <div className="flex-1 flex flex-col">
             <div className="border-b p-4 bg-card">
               <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={selectedUser.avatar_url} />
-                  <AvatarFallback>
-                    <User className="h-5 w-5" />
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h3 className="font-semibold">{selectedUser.full_name}</h3>
-                  <span className="text-xs text-green-500">Online</span>
-                </div>
+                {selectedUser ? (
+                  <>
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={selectedUser.avatar_url} />
+                      <AvatarFallback>
+                        <User className="h-5 w-5" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-semibold">{selectedUser.full_name}</h3>
+                      <span className="text-xs text-green-500">Online</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                      <UsersIcon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{selectedTeam?.name}</h3>
+                      <span className="text-xs text-muted-foreground">Equipe</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -243,33 +378,55 @@ export default function InternalChat() {
                   <p className="text-xs">Seja o primeiro a enviar uma mensagem</p>
                 </div>
               ) : (
-                messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${msg.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                  >
+                messages.map((msg) => {
+                  const isOwnMessage = msg.sender_id === user?.id;
+                  const showSenderName = selectedTeam && !isOwnMessage;
+                  
+                  return (
                     <div
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        msg.sender_id === user?.id
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-card'
-                      }`}
+                      key={msg.id}
+                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
-                      <p className="text-sm">{msg.content}</p>
-                      <span className="text-xs opacity-70 mt-1 block">
-                        {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
-                      </span>
+                      <div
+                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                          isOwnMessage
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-card'
+                        }`}
+                      >
+                        {showSenderName && (
+                          <p className="text-xs font-semibold mb-1">
+                            {msg.sender?.full_name || 'Usuário'}
+                          </p>
+                        )}
+                        {msg.media_url && (
+                          <div className="mb-2">
+                            {msg.media_type === 'image' ? (
+                              <img src={msg.media_url} alt="Mídia" className="rounded max-w-full" />
+                            ) : msg.media_type === 'audio' ? (
+                              <audio controls src={msg.media_url} className="max-w-full" />
+                            ) : (
+                              <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="text-xs underline">
+                                Ver arquivo
+                              </a>
+                            )}
+                          </div>
+                        )}
+                        <p className="text-sm">{msg.content}</p>
+                        <span className="text-xs opacity-70 mt-1 block">
+                          {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 
             <div className="border-t p-4 bg-card">
               <div className="flex gap-2">
-                <Button variant="ghost" size="icon">
-                  <Paperclip className="h-5 w-5" />
-                </Button>
+                <MediaUpload onMediaSelect={handleMediaSelect} />
+                <StickerPicker onStickerSelect={handleStickerSelect} />
                 <Input
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
@@ -277,10 +434,8 @@ export default function InternalChat() {
                   placeholder="Digite sua mensagem..."
                   disabled={loading}
                 />
-                <Button variant="ghost" size="icon">
-                  <Mic className="h-5 w-5" />
-                </Button>
-                <Button onClick={handleSend} size="icon" disabled={loading}>
+                <AudioRecorder onAudioRecorded={handleAudioRecorded} />
+                <Button onClick={() => handleSend()} size="icon" disabled={loading}>
                   <Send className="h-5 w-5" />
                 </Button>
               </div>

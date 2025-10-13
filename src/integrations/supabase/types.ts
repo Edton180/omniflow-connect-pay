@@ -58,6 +58,42 @@ export type Database = {
           },
         ]
       }
+      channel_queues: {
+        Row: {
+          channel_id: string
+          created_at: string
+          id: string
+          queue_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          id?: string
+          queue_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          id?: string
+          queue_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_queues_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_queues_queue_id_fkey"
+            columns: ["queue_id"]
+            isOneToOne: false
+            referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channels: {
         Row: {
           config: Json | null
@@ -287,6 +323,7 @@ export type Database = {
           read_at: string | null
           recipient_id: string
           sender_id: string
+          team_id: string | null
           tenant_id: string
         }
         Insert: {
@@ -298,6 +335,7 @@ export type Database = {
           read_at?: string | null
           recipient_id: string
           sender_id: string
+          team_id?: string | null
           tenant_id: string
         }
         Update: {
@@ -309,6 +347,7 @@ export type Database = {
           read_at?: string | null
           recipient_id?: string
           sender_id?: string
+          team_id?: string | null
           tenant_id?: string
         }
         Relationships: [
@@ -324,6 +363,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_messages_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
             referencedColumns: ["id"]
           },
           {
@@ -816,6 +862,62 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tenants: {
         Row: {

@@ -3,8 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface ChannelCardProps {
   channel: {
@@ -15,6 +18,7 @@ interface ChannelCardProps {
     description: string;
     connected: boolean;
     status?: string;
+    tenant_id: string;
   };
   onConfigure: () => void;
   onDelete?: () => void;
@@ -48,6 +52,80 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
   const Icon = getIcon(channel.type);
   const colorClass = getColor(channel.type);
   const { toast } = useToast();
+  const [queues, setQueues] = useState<any[]>([]);
+  const [channelQueues, setChannelQueues] = useState<string[]>([]);
+  const [showQueueSelect, setShowQueueSelect] = useState(false);
+
+  useEffect(() => {
+    loadQueues();
+    loadChannelQueues();
+  }, [channel.id]);
+
+  const loadQueues = async () => {
+    const { data } = await supabase
+      .from("queues")
+      .select("*")
+      .eq("tenant_id", channel.tenant_id)
+      .eq("is_active", true);
+    setQueues(data || []);
+  };
+
+  const loadChannelQueues = async () => {
+    const { data } = await supabase
+      .from("channel_queues")
+      .select("queue_id")
+      .eq("channel_id", channel.id);
+    setChannelQueues(data?.map(cq => cq.queue_id) || []);
+  };
+
+  const handleAddQueue = async (queueId: string) => {
+    try {
+      const { error } = await supabase
+        .from("channel_queues")
+        .insert({ channel_id: channel.id, queue_id: queueId });
+
+      if (error) throw error;
+
+      toast({
+        title: "Fila adicionada",
+        description: "Fila vinculada ao canal com sucesso",
+      });
+      
+      loadChannelQueues();
+      setShowQueueSelect(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRemoveQueue = async (queueId: string) => {
+    try {
+      const { error } = await supabase
+        .from("channel_queues")
+        .delete()
+        .eq("channel_id", channel.id)
+        .eq("queue_id", queueId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Fila removida",
+        description: "Fila desvinculada do canal",
+      });
+      
+      loadChannelQueues();
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
 
   const getWebhookUrl = () => {
     const baseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -118,6 +196,51 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
             </div>
           </div>
         )}
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-xs text-muted-foreground">Filas Vinculadas</Label>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowQueueSelect(!showQueueSelect)}
+            >
+              <Plus className="h-3 w-3" />
+            </Button>
+          </div>
+
+          {showQueueSelect && (
+            <Select onValueChange={handleAddQueue}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue placeholder="Adicionar fila" />
+              </SelectTrigger>
+              <SelectContent>
+                {queues
+                  .filter(q => !channelQueues.includes(q.id))
+                  .map((queue) => (
+                    <SelectItem key={queue.id} value={queue.id}>
+                      {queue.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
+          )}
+
+          <div className="flex flex-wrap gap-1">
+            {queues
+              .filter(q => channelQueues.includes(q.id))
+              .map((queue) => (
+                <Badge
+                  key={queue.id}
+                  variant="secondary"
+                  className="text-xs cursor-pointer"
+                  onClick={() => handleRemoveQueue(queue.id)}
+                >
+                  {queue.name} ×
+                </Badge>
+              ))}
+          </div>
+        </div>
 
         <div className="flex gap-2">
           <Button
