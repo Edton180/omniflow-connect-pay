@@ -28,6 +28,8 @@ import TenantSettings from "./pages/TenantSettings";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import { SetupWizard } from "./components/SetupWizard";
 import Revenue from "./pages/Revenue";
+import CRM from "./pages/CRM";
+import InternalChat from "./pages/InternalChat";
 
 const queryClient = new QueryClient();
 
@@ -60,6 +62,8 @@ const App = () => (
           <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
+          <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
+          <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

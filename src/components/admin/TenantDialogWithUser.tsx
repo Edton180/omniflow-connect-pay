@@ -125,8 +125,8 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
             logo_url: formData.logo_url,
             primary_color: formData.primary_color,
             secondary_color: formData.secondary_color,
-            max_users: formData.max_users,
-            max_tickets: formData.max_tickets,
+            max_users: parseInt(String(formData.max_users)),
+            max_tickets: parseInt(String(formData.max_tickets)),
             subscription_status: formData.subscription_status,
             is_active: formData.is_active,
           })

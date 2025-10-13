@@ -56,16 +56,27 @@ export const PaymentGatewayList = () => {
 
   const handleSave = async () => {
     try {
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
-        .maybeSingle();
-
-      if (!userRole?.tenant_id) {
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
         toast({
           title: "Erro",
-          description: "Tenant não encontrado",
+          description: "Usuário não autenticado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { data: userRole, error: roleError } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (roleError || !userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Tenant não encontrado. Entre em contato com o administrador.",
           variant: "destructive",
         });
         return;

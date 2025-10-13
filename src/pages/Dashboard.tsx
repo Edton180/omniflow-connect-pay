@@ -14,7 +14,9 @@ import {
   Workflow,
   CreditCard,
   Palette,
-  FileText
+  FileText,
+  Users2,
+  MessageCircle
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
@@ -214,6 +216,42 @@ const Dashboard = () => {
                     <div className="font-semibold mb-1">Conectar Canais</div>
                     <div className="text-sm text-muted-foreground">
                       WhatsApp, Instagram e mais
+                    </div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/crm")}
+              >
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center flex-shrink-0">
+                    <Users2 className="w-5 h-5 text-amber-500" />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">CRM / Kanban</div>
+                    <div className="text-sm text-muted-foreground">
+                      Gerencie leads e oportunidades
+                    </div>
+                  </div>
+                </div>
+              </Button>
+
+              <Button 
+                variant="outline" 
+                className="justify-start h-auto py-4 px-6 hover-scale"
+                onClick={() => navigate("/internal-chat")}
+              >
+                <div className="flex items-start gap-4 text-left">
+                  <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-1">Chat Interno</div>
+                    <div className="text-sm text-muted-foreground">
+                      Comunicação entre equipes
                     </div>
                   </div>
                 </div>

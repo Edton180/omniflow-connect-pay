@@ -4,7 +4,7 @@ import { ChannelCard } from "./ChannelCard";
 import { BaileysConnection } from "./BaileysConnection";
 import { BaileysSetupGuide } from "./BaileysSetupGuide";
 import { EvolutionConnection } from "./EvolutionConnection";
-import { QrCode } from "lucide-react";
+import { QrCode, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -333,13 +333,22 @@ export const ChannelList = () => {
             {channels
               .filter(channel => channel.type === 'baileys-qr')
               .map((channel) => (
-                <BaileysConnection
-                  key={channel.id}
-                  channel={channel}
-                  onStatusChange={(status) => {
-                    loadChannels();
-                  }}
-                />
+                <div key={channel.id} className="relative group">
+                  <BaileysConnection
+                    channel={channel}
+                    onStatusChange={(status) => {
+                      loadChannels();
+                    }}
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDelete(channel.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
           </div>
         </div>
@@ -356,13 +365,22 @@ export const ChannelList = () => {
             {channels
               .filter(channel => channel.type === 'evolution-api')
               .map((channel) => (
-                <EvolutionConnection
-                  key={channel.id}
-                  channel={channel}
-                  onStatusChange={(status) => {
-                    loadChannels();
-                  }}
-                />
+                <div key={channel.id} className="relative group">
+                  <EvolutionConnection
+                    channel={channel}
+                    onStatusChange={(status) => {
+                      loadChannels();
+                    }}
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => handleDelete(channel.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               ))}
           </div>
         </div>
