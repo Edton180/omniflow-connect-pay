@@ -81,7 +81,7 @@ const Dashboard = () => {
               </span>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground hidden sm:inline font-medium">
+              <span className="text-sm text-foreground/70 hidden sm:inline font-medium">
                 {session?.user?.email}
               </span>
               <ThemeToggle />
@@ -106,27 +106,27 @@ const Dashboard = () => {
         {/* Page Title and Date Filters */}
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-2">Painel de Controle</h1>
-              <p className="text-muted-foreground">
-                Bem-vindo ao seu painel de controle OmniFlow
-              </p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold mb-2">Painel de Controle</h1>
+            <p className="text-foreground/60">
+              Bem-vindo ao seu painel de controle OmniFlow
+            </p>
+          </div>
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground font-medium">Data Atendimento:</label>
-                <input 
-                  type="date" 
-                  className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  defaultValue={new Date().toISOString().split('T')[0]}
-                />
-                <span className="text-muted-foreground">-</span>
-                <input 
-                  type="date" 
-                  className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
-                  defaultValue={new Date().toISOString().split('T')[0]}
-                />
-              </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm text-foreground/70 font-medium">Data Atendimento:</label>
+              <input 
+                type="date" 
+                className="px-3 py-2 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                defaultValue={new Date().toISOString().split('T')[0]}
+              />
+              <span className="text-foreground/70">-</span>
+              <input 
+                type="date" 
+                className="px-3 py-2 bg-card border border-border rounded-lg text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                defaultValue={new Date().toISOString().split('T')[0]}
+              />
+            </div>
               <Button 
                 className="shadow-md hover:shadow-lg transition-all"
                 onClick={() => window.location.reload()}
@@ -174,7 +174,7 @@ const Dashboard = () => {
         <Card className="border-border/50 shadow-lg backdrop-blur-sm bg-card/95">
           <CardHeader>
             <CardTitle>Primeiros Passos</CardTitle>
-            <CardDescription>
+            <CardDescription className="text-foreground/60">
               Configure sua plataforma em minutos
             </CardDescription>
           </CardHeader>
@@ -209,7 +209,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Gerenciar Contatos</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/60">
                       Adicione e organize seus contatos
                     </div>
                   </div>
@@ -227,7 +227,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Configurar Filas</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/60">
                       Organize o fluxo de atendimento
                     </div>
                   </div>
@@ -245,7 +245,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Conectar Canais</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/60">
                       WhatsApp, Instagram e mais
                     </div>
                   </div>
@@ -263,7 +263,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">CRM / Kanban</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/60">
                       Gerencie leads e oportunidades
                     </div>
                   </div>
@@ -281,7 +281,7 @@ const Dashboard = () => {
                   </div>
                   <div>
                     <div className="font-semibold mb-1">Chat Interno</div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-sm text-foreground/60">
                       Comunicação entre equipes
                     </div>
                   </div>
@@ -301,7 +301,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Configurações da Empresa</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-foreground/60">
                           Gerencie sua empresa e usuários
                         </div>
                       </div>
@@ -319,7 +319,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Faturas</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-foreground/60">
                           Visualize e pague suas faturas
                         </div>
                       </div>
@@ -341,7 +341,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Configurar Pagamentos</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-foreground/60">
                           Gateways e assinaturas
                         </div>
                       </div>
@@ -359,7 +359,7 @@ const Dashboard = () => {
                       </div>
                       <div>
                         <div className="font-semibold mb-1">Marca Branca</div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-sm text-foreground/60">
                           Personalize sua plataforma
                         </div>
                       </div>
