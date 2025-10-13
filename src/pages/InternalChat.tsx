@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Settings } from "lucide-react";
+import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Settings, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -415,7 +415,7 @@ export default function InternalChat() {
         {/* Área de Chat */}
         {(selectedUser || selectedTeam) ? (
           <div className="flex-1 flex flex-col">
-            <div className="border-b p-4 bg-card">
+            <div className="border-b p-4 bg-card shadow-sm">
               <div className="flex items-center gap-3">
                 {selectedUser ? (
                   <>
@@ -425,9 +425,12 @@ export default function InternalChat() {
                         <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
-                    <div>
-                      <h3 className="font-semibold">{selectedUser.full_name}</h3>
-                      <span className="text-xs text-green-500">Online</span>
+                     <div>
+                      <h3 className="font-semibold text-foreground">{selectedUser.full_name}</h3>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                        <span className="text-xs text-foreground/60">Online</span>
+                      </div>
                     </div>
                   </>
                 ) : (
@@ -444,11 +447,12 @@ export default function InternalChat() {
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 bg-muted/20 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 bg-muted/30 space-y-3">
               {messages.length === 0 ? (
-                <div className="text-center text-foreground/60 py-8">
-                  <p className="text-sm">Nenhuma mensagem ainda</p>
-                  <p className="text-xs">Seja o primeiro a enviar uma mensagem</p>
+                <div className="text-center text-foreground/60 py-12">
+                  <MessageCircle className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                  <p className="text-sm font-medium">Nenhuma mensagem ainda</p>
+                  <p className="text-xs mt-1">Seja o primeiro a enviar uma mensagem</p>
                 </div>
               ) : (
                 messages.map((msg) => {
@@ -461,21 +465,21 @@ export default function InternalChat() {
                       className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                     >
                       <div
-                        className={`max-w-[70%] rounded-lg px-4 py-2 ${
+                        className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-card'
+                            : 'bg-card border border-border'
                         }`}
                       >
                         {showSenderName && (
-                          <p className="text-xs font-semibold mb-1">
+                          <p className="text-xs font-semibold mb-1 text-primary">
                             {msg.sender?.full_name || 'Usuário'}
                           </p>
                         )}
                         {msg.media_url && (
                           <div className="mb-2">
                             {msg.media_type === 'image' ? (
-                              <img src={msg.media_url} alt="Mídia" className="rounded max-w-full" />
+                              <img src={msg.media_url} alt="Mídia" className="rounded-lg max-w-full" />
                             ) : msg.media_type === 'audio' ? (
                               <audio controls src={msg.media_url} className="max-w-full" />
                             ) : (
@@ -485,8 +489,8 @@ export default function InternalChat() {
                             )}
                           </div>
                         )}
-                        <p className="text-sm">{msg.content}</p>
-                        <span className="text-xs opacity-70 mt-1 block">
+                        <p className="text-sm break-words">{msg.content}</p>
+                        <span className={`text-xs mt-1 block ${isOwnMessage ? 'opacity-80' : 'text-foreground/60'}`}>
                           {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
                         </span>
                       </div>
@@ -496,9 +500,10 @@ export default function InternalChat() {
               )}
             </div>
 
-            <div className="border-t p-4 bg-card">
-              <div className="flex gap-2">
+            <div className="border-t p-4 bg-card shadow-lg">
+              <div className="flex gap-2 items-center">
                 <MediaUpload onMediaSelect={handleMediaSelect} />
+                <AudioRecorder onAudioRecorded={handleAudioRecorded} />
                 <StickerPicker onStickerSelect={handleStickerSelect} />
                 <Input
                   value={messageText}
@@ -506,9 +511,14 @@ export default function InternalChat() {
                   onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                   placeholder="Digite sua mensagem..."
                   disabled={loading}
+                  className="flex-1 bg-background"
                 />
-                <AudioRecorder onAudioRecorded={handleAudioRecorded} />
-                <Button onClick={() => handleSend()} size="icon" disabled={loading}>
+                <Button 
+                  onClick={() => handleSend()} 
+                  size="icon" 
+                  disabled={loading}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
+                >
                   <Send className="h-5 w-5" />
                 </Button>
               </div>
