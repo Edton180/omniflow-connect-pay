@@ -141,6 +141,9 @@ export default function Branding() {
         logoUrl = await uploadLogo();
       }
 
+      const oldDomain = tenant.custom_domain;
+      const newDomain = formData.custom_domain;
+
       const { error } = await supabase
         .from("tenants")
         .update({
@@ -153,6 +156,51 @@ export default function Branding() {
         .eq("id", tenant.id);
 
       if (error) throw error;
+
+      // Se o domínio foi alterado, atualizar webhooks do Telegram automaticamente
+      if (oldDomain !== newDomain) {
+        try {
+          // Buscar canais Telegram do tenant
+          const { data: telegramChannels } = await supabase
+            .from("channels")
+            .select("id, config")
+            .eq("tenant_id", tenant.id)
+            .eq("type", "telegram")
+            .eq("status", "active");
+
+          if (telegramChannels && telegramChannels.length > 0) {
+            toast({
+              title: "Atualizando webhooks",
+              description: "Atualizando webhooks do Telegram com o novo domínio...",
+            });
+
+            // Atualizar webhook para cada canal Telegram
+            for (const channel of telegramChannels) {
+              const config = channel.config as any;
+              if (config?.bot_token) {
+                await supabase.functions.invoke("telegram-auto-webhook", {
+                  body: {
+                    botToken: config.bot_token,
+                    customDomain: newDomain,
+                  },
+                });
+              }
+            }
+
+            toast({
+              title: "Webhooks atualizados",
+              description: "Webhooks do Telegram atualizados com sucesso!",
+            });
+          }
+        } catch (webhookError: any) {
+          console.error("Error updating Telegram webhooks:", webhookError);
+          toast({
+            title: "Aviso",
+            description: "Configurações salvas, mas houve erro ao atualizar webhooks do Telegram.",
+            variant: "destructive",
+          });
+        }
+      }
 
       toast({
         title: "Configurações salvas",
