@@ -4,13 +4,17 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, LogOut, ShoppingBag, Edit, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, LogOut, ShoppingBag, Edit, Trash2, FolderOpen, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ProductVariationsDialog } from "@/components/catalog/ProductVariationsDialog";
+import { ProductOptionalsDialog } from "@/components/catalog/ProductOptionalsDialog";
 
 export default function Catalog() {
   const navigate = useNavigate();
@@ -18,14 +22,21 @@ export default function Catalog() {
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [variationsDialogOpen, setVariationsDialogOpen] = useState(false);
+  const [optionalsDialogOpen, setOptionalsDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     stock_quantity: "",
     image_url: "",
+    category_id: "",
+    preparation_time: "",
+    highlight: false,
   });
 
   useEffect(() => {
@@ -61,7 +72,10 @@ export default function Catalog() {
       }
 
       setTenantId(userRole.tenant_id);
-      await loadProducts(userRole.tenant_id);
+      await Promise.all([
+        loadProducts(userRole.tenant_id),
+        loadCategories(userRole.tenant_id)
+      ]);
     } catch (error: any) {
       toast({
         title: "Erro",
@@ -83,6 +97,20 @@ export default function Catalog() {
 
     if (error) throw error;
     setProducts(data || []);
+  };
+
+  const loadCategories = async (tid?: string) => {
+    const targetTenantId = tid || tenantId;
+    if (!targetTenantId) return;
+
+    const { data, error } = await supabase
+      .from("catalog_categories")
+      .select("*")
+      .eq("tenant_id", targetTenantId)
+      .order("position", { ascending: true });
+
+    if (error) throw error;
+    setCategories(data || []);
   };
 
   const handleSignOut = async () => {
@@ -116,6 +144,9 @@ export default function Catalog() {
         price: parseFloat(formData.price),
         stock_quantity: parseInt(formData.stock_quantity) || 0,
         image_url: formData.image_url?.trim() || null,
+        category_id: formData.category_id || null,
+        preparation_time: parseInt(formData.preparation_time) || 0,
+        highlight: formData.highlight,
         tenant_id: tenantId,
         is_active: true,
       };
@@ -145,7 +176,16 @@ export default function Catalog() {
         });
       }
 
-      setFormData({ name: "", description: "", price: "", stock_quantity: "", image_url: "" });
+      setFormData({ 
+        name: "", 
+        description: "", 
+        price: "", 
+        stock_quantity: "", 
+        image_url: "",
+        category_id: "",
+        preparation_time: "",
+        highlight: false,
+      });
       setEditingProduct(null);
       setDialogOpen(false);
       await loadProducts();
@@ -166,6 +206,9 @@ export default function Catalog() {
       price: product.price.toString(),
       stock_quantity: product.stock_quantity?.toString() || "0",
       image_url: product.image_url || "",
+      category_id: product.category_id || "",
+      preparation_time: product.preparation_time?.toString() || "0",
+      highlight: product.highlight || false,
     });
     setDialogOpen(true);
   };
@@ -212,9 +255,22 @@ export default function Catalog() {
           </div>
           <div className="flex gap-2">
             <ThemeToggle />
+            <Button variant="outline" onClick={() => navigate("/categories")}>
+              <FolderOpen className="mr-2 h-4 w-4" />
+              Categorias
+            </Button>
             <Button onClick={() => {
               setEditingProduct(null);
-              setFormData({ name: "", description: "", price: "", stock_quantity: "", image_url: "" });
+              setFormData({ 
+                name: "", 
+                description: "", 
+                price: "", 
+                stock_quantity: "", 
+                image_url: "",
+                category_id: "",
+                preparation_time: "",
+                highlight: false,
+              });
               setDialogOpen(true);
             }}>
               <Plus className="mr-2 h-4 w-4" />
@@ -263,7 +319,16 @@ export default function Catalog() {
               </p>
               <Button onClick={() => {
                 setEditingProduct(null);
-                setFormData({ name: "", description: "", price: "", stock_quantity: "", image_url: "" });
+                setFormData({ 
+                  name: "", 
+                  description: "", 
+                  price: "", 
+                  stock_quantity: "", 
+                  image_url: "",
+                  category_id: "",
+                  preparation_time: "",
+                  highlight: false,
+                });
                 setDialogOpen(true);
               }}>
                 <Plus className="mr-2 h-4 w-4" />
@@ -298,14 +363,42 @@ export default function Catalog() {
                   </span>
                 </div>
               </CardContent>
-              <CardFooter className="gap-2">
-                <Button variant="outline" className="flex-1" onClick={() => handleEdit(product)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Editar
-                </Button>
-                <Button variant="destructive" onClick={() => handleDelete(product.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+              <CardFooter className="flex-col gap-2">
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1" 
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setVariationsDialogOpen(true);
+                    }}
+                  >
+                    <Settings className="mr-1 h-3 w-3" />
+                    Variações
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setOptionalsDialogOpen(true);
+                    }}
+                  >
+                    <Plus className="mr-1 h-3 w-3" />
+                    Opcionais
+                  </Button>
+                </div>
+                <div className="flex gap-2 w-full">
+                  <Button variant="outline" className="flex-1" onClick={() => handleEdit(product)}>
+                    <Edit className="mr-2 h-4 w-4" />
+                    Editar
+                  </Button>
+                  <Button variant="destructive" onClick={() => handleDelete(product.id)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </CardFooter>
             </Card>
             ))}
@@ -336,6 +429,24 @@ export default function Catalog() {
                 rows={3}
               />
             </div>
+            <div>
+              <Label>Categoria</Label>
+              <Select 
+                value={formData.category_id} 
+                onValueChange={(value) => setFormData({ ...formData, category_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Preço *</Label>
@@ -365,12 +476,54 @@ export default function Catalog() {
                 placeholder="https://..."
               />
             </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tempo de Preparo (min)</Label>
+                <Input
+                  type="number"
+                  value={formData.preparation_time}
+                  onChange={(e) => setFormData({ ...formData, preparation_time: e.target.value })}
+                  placeholder="0"
+                />
+              </div>
+              <div className="flex items-end pb-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="highlight"
+                    checked={formData.highlight}
+                    onCheckedChange={(checked) => 
+                      setFormData({ ...formData, highlight: checked as boolean })
+                    }
+                  />
+                  <Label htmlFor="highlight" className="cursor-pointer">
+                    Destacar produto
+                  </Label>
+                </div>
+              </div>
+            </div>
             <Button onClick={handleSave} className="w-full">
               {editingProduct ? "Atualizar Produto" : "Adicionar Produto"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      {selectedProduct && (
+        <>
+          <ProductVariationsDialog
+            open={variationsDialogOpen}
+            onOpenChange={setVariationsDialogOpen}
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+          />
+          <ProductOptionalsDialog
+            open={optionalsDialogOpen}
+            onOpenChange={setOptionalsDialogOpen}
+            productId={selectedProduct.id}
+            productName={selectedProduct.name}
+          />
+        </>
+      )}
     </div>
   );
 }

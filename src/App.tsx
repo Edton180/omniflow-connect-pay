@@ -37,6 +37,7 @@ import Withdrawals from "./pages/Withdrawals";
 import AdminWithdrawals from "./pages/AdminWithdrawals";
 import CatalogLandingEditor from "./pages/CatalogLandingEditor";
 import LandingPageEditor from "./pages/LandingPageEditor";
+import Categories from "./pages/Categories";
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => (
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/catalog" element={<AuthGuard requireAuth><Catalog /></AuthGuard>} />
+          <Route path="/categories" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Categories /></AuthGuard>} />
           <Route path="/catalog-landing-editor" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><CatalogLandingEditor /></AuthGuard>} />
           <Route path="/withdrawals" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Withdrawals /></AuthGuard>} />
           <Route path="/admin/withdrawals" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AdminWithdrawals /></AuthGuard>} />
