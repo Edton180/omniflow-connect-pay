@@ -177,6 +177,116 @@ export type Database = {
           },
         ]
       }
+      catalog_order_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          optionals: Json | null
+          order_id: string
+          product_id: string
+          product_name: string
+          product_price: number
+          quantity: number
+          subtotal: number
+          variations: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          optionals?: Json | null
+          order_id: string
+          product_id: string
+          product_name: string
+          product_price: number
+          quantity?: number
+          subtotal: number
+          variations?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          optionals?: Json | null
+          order_id?: string
+          product_id?: string
+          product_name?: string
+          product_price?: number
+          quantity?: number
+          subtotal?: number
+          variations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "catalog_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "catalog_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalog_order_settings: {
+        Row: {
+          accepts_scheduled_orders: boolean | null
+          auto_print: boolean | null
+          created_at: string | null
+          default_delivery_fee: number | null
+          free_delivery_above: number | null
+          id: string
+          min_order_value: number | null
+          order_message: string | null
+          sound_notification: boolean | null
+          tenant_id: string
+          updated_at: string | null
+          working_hours: Json | null
+        }
+        Insert: {
+          accepts_scheduled_orders?: boolean | null
+          auto_print?: boolean | null
+          created_at?: string | null
+          default_delivery_fee?: number | null
+          free_delivery_above?: number | null
+          id?: string
+          min_order_value?: number | null
+          order_message?: string | null
+          sound_notification?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+          working_hours?: Json | null
+        }
+        Update: {
+          accepts_scheduled_orders?: boolean | null
+          auto_print?: boolean | null
+          created_at?: string | null
+          default_delivery_fee?: number | null
+          free_delivery_above?: number | null
+          id?: string
+          min_order_value?: number | null
+          order_message?: string | null
+          sound_notification?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalog_order_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       catalog_orders: {
         Row: {
           created_at: string | null
@@ -184,9 +294,15 @@ export type Database = {
           customer_email: string | null
           customer_name: string
           customer_phone: string | null
+          delivery_address: Json | null
+          delivery_fee: number | null
+          discount_amount: number | null
+          estimated_delivery: string | null
           gateway_payment_id: string | null
           gateway_response: Json | null
           id: string
+          notes: string | null
+          order_number: string | null
           paid_at: string | null
           payment_gateway: string | null
           platform_commission_amount: number
@@ -205,9 +321,15 @@ export type Database = {
           customer_email?: string | null
           customer_name: string
           customer_phone?: string | null
+          delivery_address?: Json | null
+          delivery_fee?: number | null
+          discount_amount?: number | null
+          estimated_delivery?: string | null
           gateway_payment_id?: string | null
           gateway_response?: Json | null
           id?: string
+          notes?: string | null
+          order_number?: string | null
           paid_at?: string | null
           payment_gateway?: string | null
           platform_commission_amount?: number
@@ -226,9 +348,15 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string
           customer_phone?: string | null
+          delivery_address?: Json | null
+          delivery_fee?: number | null
+          discount_amount?: number | null
+          estimated_delivery?: string | null
           gateway_payment_id?: string | null
           gateway_response?: Json | null
           id?: string
+          notes?: string | null
+          order_number?: string | null
           paid_at?: string | null
           payment_gateway?: string | null
           platform_commission_amount?: number
@@ -1679,6 +1807,10 @@ export type Database = {
       check_and_generate_invoices: {
         Args: Record<PropertyKey, never>
         Returns: undefined
+      }
+      generate_order_number: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       has_role: {
         Args: { _role: string; _user_id: string }

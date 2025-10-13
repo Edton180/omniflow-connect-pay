@@ -21,7 +21,9 @@ import {
   Globe,
   DollarSign,
   Wallet,
-  Layout
+  Layout,
+  FolderOpen,
+  Package
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
@@ -310,6 +312,36 @@ const Dashboard = () => {
                   </div>
                 </div>
               </Button>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => navigate("/categories")}
+                >
+                  <FolderOpen className="mr-2 h-4 w-4" />
+                  Categorias
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => navigate("/orders")}
+                >
+                  <Package className="mr-2 h-4 w-4" />
+                  Pedidos
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="justify-start"
+                  onClick={() => navigate("/order-settings")}
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Configurações
+                </Button>
+              </div>
 
               {hasRole('tenant_admin') && !hasRole('super_admin') && (
                 <>

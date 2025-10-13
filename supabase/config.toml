@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.telegram-auto-webhook]
 verify_jwt = true
+
+[functions.process-catalog-order]
+verify_jwt = false
