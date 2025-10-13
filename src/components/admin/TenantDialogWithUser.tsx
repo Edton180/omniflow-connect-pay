@@ -116,20 +116,27 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
 
     try {
       if (tenant) {
-        // Update tenant
+        // Update tenant with all fields including whatsapp and expiry_date
+        const updateData: any = {
+          name: formData.name,
+          slug: formData.slug,
+          logo_url: formData.logo_url,
+          primary_color: formData.primary_color,
+          secondary_color: formData.secondary_color,
+          max_users: parseInt(String(formData.max_users)),
+          max_tickets: parseInt(String(formData.max_tickets)),
+          subscription_status: formData.subscription_status,
+          is_active: formData.is_active,
+        };
+
+        // Add optional fields if they have values
+        if (formData.whatsapp) updateData.whatsapp = formData.whatsapp;
+        if (formData.expiry_date) updateData.expiry_date = formData.expiry_date;
+        if (formData.plan_id) updateData.plan_id = formData.plan_id;
+
         const { error } = await supabase
           .from("tenants")
-          .update({
-            name: formData.name,
-            slug: formData.slug,
-            logo_url: formData.logo_url,
-            primary_color: formData.primary_color,
-            secondary_color: formData.secondary_color,
-            max_users: parseInt(String(formData.max_users)),
-            max_tickets: parseInt(String(formData.max_tickets)),
-            subscription_status: formData.subscription_status,
-            is_active: formData.is_active,
-          })
+          .update(updateData)
           .eq("id", tenant.id);
 
         if (error) throw error;

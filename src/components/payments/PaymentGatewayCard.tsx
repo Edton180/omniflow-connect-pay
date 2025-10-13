@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Settings, CheckCircle, XCircle } from "lucide-react";
+import { CreditCard, Settings, CheckCircle, XCircle, Loader2 } from "lucide-react";
 
 interface PaymentGatewayCardProps {
   gateway: {
@@ -13,6 +13,7 @@ interface PaymentGatewayCardProps {
     status?: string;
   };
   onConfigure: () => void;
+  loading?: boolean;
 }
 
 const getIcon = () => CreditCard;
@@ -27,7 +28,7 @@ const getColor = (name: string) => {
   return colors[name.toLowerCase()] || "bg-gray-500";
 };
 
-export const PaymentGatewayCard = ({ gateway, onConfigure }: PaymentGatewayCardProps) => {
+export const PaymentGatewayCard = ({ gateway, onConfigure, loading = false }: PaymentGatewayCardProps) => {
   const Icon = getIcon();
   const colorClass = getColor(gateway.name);
 
@@ -64,8 +65,13 @@ export const PaymentGatewayCard = ({ gateway, onConfigure }: PaymentGatewayCardP
           variant={gateway.connected ? "outline" : "default"}
           className="w-full"
           onClick={onConfigure}
+          disabled={loading}
         >
-          <Settings className="mr-2 h-4 w-4" />
+          {loading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Settings className="mr-2 h-4 w-4" />
+          )}
           {gateway.connected ? "Configurar" : "Conectar"}
         </Button>
       </CardContent>
