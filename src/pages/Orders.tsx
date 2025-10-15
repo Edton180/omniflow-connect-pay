@@ -73,30 +73,50 @@ export default function Orders() {
   };
 
   const loadOrders = async () => {
-    if (!tenantId) return;
+    if (!tenantId && !user?.id) return;
 
-    let query = supabase
-      .from("catalog_orders")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("created_at", { ascending: false });
+    try {
+      // Check if user is super admin
+      const { data: isSuperAdmin } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
 
-    if (filterStatus !== "all") {
-      query = query.eq("status", filterStatus);
-    }
+      let query = supabase
+        .from("catalog_orders")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    const { data, error } = await query;
+      // Only filter by tenant if not super admin
+      if (!isSuperAdmin && tenantId) {
+        query = query.eq("tenant_id", tenantId);
+      }
 
-    if (error) {
+      if (filterStatus !== "all") {
+        query = query.eq("status", filterStatus);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        toast({
+          title: "Erro ao carregar pedidos",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setOrders(data || []);
+    } catch (error: any) {
       toast({
-        title: "Erro ao carregar pedidos",
+        title: "Erro",
         description: error.message,
         variant: "destructive",
       });
-      return;
     }
-
-    setOrders(data || []);
   };
 
   const loadOrderDetails = async (orderId: string) => {

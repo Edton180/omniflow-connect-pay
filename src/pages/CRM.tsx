@@ -84,11 +84,34 @@ export default function CRM() {
       }
 
       if (!userRole?.tenant_id) {
-        toast({
-          title: "Erro",
-          description: "Você precisa estar associado a uma empresa para acessar o CRM",
-          variant: "destructive",
-        });
+        // Auto-assign tenant if user doesn't have one
+        const { data: newTenantId, error: rpcError } = await supabase
+          .rpc("auto_assign_tenant", {
+            _user_id: user.id,
+            _company_name: "Minha Empresa"
+          });
+
+        if (rpcError) {
+          console.error("Error auto-assigning tenant:", rpcError);
+          toast({
+            title: "Erro",
+            description: "Não foi possível criar empresa automaticamente",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (newTenantId) {
+          setTenantId(newTenantId);
+          await Promise.all([
+            loadColumns(newTenantId),
+            loadLeads(newTenantId)
+          ]);
+          toast({
+            title: "Empresa criada",
+            description: "Uma empresa foi criada automaticamente para você. Acesse o CRM agora!",
+          });
+        }
         return;
       }
       
