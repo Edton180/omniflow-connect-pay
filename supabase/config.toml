@@ -1,13 +1,46 @@
 project_id = "yfseeexwafzmezufwdxq"
 
 [functions.baileys-whatsapp]
-verify_jwt = true
+verify_jwt = false
 
-[functions.delete-all-users]
+[functions.evolution-whatsapp]
+verify_jwt = false
+
+[functions.telegram-webhook]
 verify_jwt = false
 
 [functions.telegram-auto-webhook]
 verify_jwt = true
 
+[functions.create-tenant]
+verify_jwt = true
+
+[functions.create-user]
+verify_jwt = true
+
+[functions.delete-all-users]
+verify_jwt = false
+
+[functions.generate-invoice]
+verify_jwt = true
+
+[functions.process-invoice-payment]
+verify_jwt = true
+
 [functions.process-catalog-order]
+verify_jwt = false
+
+[functions.check-expired-subscriptions]
+verify_jwt = true
+
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.mercadopago-webhook]
+verify_jwt = false
+
+[functions.asaas-webhook]
+verify_jwt = false
+
+[functions.infinitepay-webhook]
 verify_jwt = false
