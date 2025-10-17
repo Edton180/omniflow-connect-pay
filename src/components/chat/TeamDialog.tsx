@@ -25,6 +25,25 @@ export function TeamDialog({ open, onOpenChange, tenantId, onSuccess }: TeamDial
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.name.trim()) {
+      toast({
+        title: "Erro",
+        description: "Nome da equipe é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!tenantId || tenantId.trim() === '') {
+      toast({
+        title: "Erro",
+        description: "Tenant não encontrado. Recarregue a página.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -32,8 +51,8 @@ export function TeamDialog({ open, onOpenChange, tenantId, onSuccess }: TeamDial
         .from("teams")
         .insert({
           tenant_id: tenantId,
-          name: formData.name,
-          description: formData.description,
+          name: formData.name.trim(),
+          description: formData.description.trim() || null,
         })
         .select()
         .single();
