@@ -16,6 +16,8 @@ import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { TeamManagement } from "@/components/chat/TeamManagement";
+import { TeamDialog } from "@/components/chat/TeamDialog";
+import { ChatConfigTab } from "@/components/chat/ChatConfigTab";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function InternalChat() {
@@ -31,7 +33,8 @@ export default function InternalChat() {
   const [messages, setMessages] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [tenantId, setTenantId] = useState<string | null>(null);
-  const [showTeamSettings, setShowTeamSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<"users" | "teams" | "config">("users");
+  const [showTeamDialog, setShowTeamDialog] = useState(false);
 
   useEffect(() => {
     const init = async () => {
@@ -332,6 +335,7 @@ export default function InternalChat() {
                   Config
                 </TabsTrigger>
               </TabsList>
+            </Tabs>
           </div>
 
           <div className="flex-1 overflow-y-auto">
