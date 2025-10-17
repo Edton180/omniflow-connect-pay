@@ -318,13 +318,7 @@ export default function InternalChat() {
               />
             </div>
 
-            <Tabs defaultValue="users" className="w-full" onValueChange={(v) => {
-              if (v === "settings" && tenantId) {
-                setShowTeamSettings(true);
-              } else {
-                setShowTeamSettings(false);
-              }
-            }}>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "users" | "teams" | "config")} className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="users" className="text-xs">
                   <UsersIcon className="h-3 w-3 mr-1" />
@@ -333,85 +327,102 @@ export default function InternalChat() {
                 <TabsTrigger value="teams" className="text-xs">
                   Equipes
                 </TabsTrigger>
-                <TabsTrigger value="settings" className="text-xs">
+                <TabsTrigger value="config" className="text-xs">
                   <Settings className="h-3 w-3 mr-1" />
                   Config
                 </TabsTrigger>
               </TabsList>
-              
-              {showTeamSettings && (
-                <div className="mt-4">
-                  {tenantId && <TeamManagement tenantId={tenantId} />}
-                </div>
-              )}
-            </Tabs>
           </div>
 
           <div className="flex-1 overflow-y-auto">
-            {!showTeamSettings && (
-              <Tabs defaultValue="users" className="h-full">
-                <TabsContent value="users" className="h-full mt-0">
-                  {filteredUsers.map((u) => (
-                    <div
-                      key={u.id}
-                      onClick={() => setSelectedUser(u)}
-                      className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                        selectedUser?.id === u.id ? 'bg-muted' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="relative">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={u.avatar_url} />
-                            <AvatarFallback>
-                              <User className="h-5 w-5" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium text-sm truncate block">
-                            {u.full_name || 'Sem nome'}
-                          </span>
+            {activeTab === "users" && (
+              <div className="h-full">
+                {filteredUsers.map((u) => (
+                  <div
+                    key={u.id}
+                    onClick={() => setSelectedUser(u)}
+                    className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
+                      selectedUser?.id === u.id ? 'bg-muted' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={u.avatar_url} />
+                          <AvatarFallback>
+                            <User className="h-5 w-5" />
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate block">
+                          {u.full_name || 'Sem nome'}
+                        </span>
+                        <span className="text-xs text-foreground/60 truncate block">
+                          {u.phone || 'Sem telefone'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {activeTab === "teams" && (
+              <div className="h-full space-y-2 p-2">
+                <Button
+                  onClick={() => setShowTeamDialog(true)}
+                  className="w-full"
+                  size="sm"
+                >
+                  <UsersIcon className="h-4 w-4 mr-2" />
+                  Criar Nova Equipe
+                </Button>
+                {teams.map((team) => (
+                  <div
+                    key={team.id}
+                    onClick={() => setSelectedTeam(team)}
+                    className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
+                      selectedTeam?.id === team.id ? 'bg-muted' : ''
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <UsersIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="font-medium text-sm truncate block">
+                          {team.name}
+                        </span>
+                        {team.description && (
                           <span className="text-xs text-foreground/60 truncate block">
-                            {u.phone || 'Sem telefone'}
+                            {team.description}
                           </span>
-                        </div>
+                        )}
                       </div>
                     </div>
-                  ))}
-                </TabsContent>
-                
-                <TabsContent value="teams" className="h-full mt-0">
-                  {teams.map((team) => (
-                    <div
-                      key={team.id}
-                      onClick={() => setSelectedTeam(team)}
-                      className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                        selectedTeam?.id === team.id ? 'bg-muted' : ''
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <UsersIcon className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="font-medium text-sm truncate block">
-                            {team.name}
-                          </span>
-                          {team.description && (
-                            <span className="text-xs text-foreground/60 truncate block">
-                              {team.description}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </TabsContent>
-              </Tabs>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {activeTab === "config" && tenantId && (
+              <div className="p-2">
+                <ChatConfigTab tenantId={tenantId} />
+              </div>
             )}
           </div>
+          
+          <TeamDialog
+            open={showTeamDialog}
+            onOpenChange={setShowTeamDialog}
+            tenantId={tenantId || ""}
+            onSuccess={() => {
+              loadUsers();
+              loadTeams();
+            }}
+          />
         </div>
 
         {/* Área de Chat */}
