@@ -112,13 +112,25 @@ async function handleCheckoutCompleted(supabase: any, session: any) {
   const { metadata } = session;
   if (!metadata?.tenant_id) return;
 
+  // Idempotency check
+  const { data: existingPayment } = await supabase
+    .from('payments')
+    .select('id')
+    .eq('gateway_payment_id', session.payment_intent)
+    .maybeSingle();
+
+  if (existingPayment) {
+    console.log('Payment already processed, skipping');
+    return;
+  }
+
   // Create payment record
   const { error } = await supabase
     .from('payments')
     .insert({
       tenant_id: metadata.tenant_id,
       subscription_id: metadata.subscription_id || null,
-      amount: session.amount_total / 100, // Convert from cents
+      amount: session.amount_total / 100,
       currency: session.currency.toUpperCase(),
       status: 'completed',
       payment_gateway: 'stripe',
@@ -132,10 +144,17 @@ async function handleCheckoutCompleted(supabase: any, session: any) {
     throw error;
   }
 
-  // If there's an invoice, mark it as paid
+  // Process invoice if present
   if (metadata.invoice_id) {
     await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
+    });
+  }
+
+  // Process catalog order if present
+  if (metadata.order_id) {
+    await supabase.rpc('process_catalog_order_payment', {
+      order_id_param: metadata.order_id
     });
   }
 }

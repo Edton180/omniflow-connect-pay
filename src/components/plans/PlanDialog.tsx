@@ -1,21 +1,31 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Slider } from "@/components/ui/slider";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface PlanDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  plan?: any;
+  plan: any | null;
   onSuccess: () => void;
 }
 
 export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogProps) {
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -24,17 +34,16 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
     billing_period: "monthly",
     max_users: "",
     max_tickets: "",
-    features: {
-      publico: true,
-      grupos: true,
-      campanhas: true,
-      integracoes: true,
-      imp_mensagens: true,
-    }
+    catalog_access: false,
+    stripe_fee: 2.99,
+    asaas_fee: 1.99,
+    mercadopago_fee: 3.99,
+    infinitepay_fee: 2.49,
   });
 
   useEffect(() => {
     if (plan) {
+      const features = plan.features || {};
       setFormData({
         name: plan.name || "",
         description: plan.description || "",
@@ -42,13 +51,11 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         billing_period: plan.billing_period || "monthly",
         max_users: plan.max_users?.toString() || "",
         max_tickets: plan.max_tickets?.toString() || "",
-        features: typeof plan.features === 'object' ? plan.features : {
-          publico: true,
-          grupos: true,
-          campanhas: true,
-          integracoes: true,
-          imp_mensagens: true,
-        }
+        catalog_access: features.catalog_access || false,
+        stripe_fee: features.stripe_fee || 2.99,
+        asaas_fee: features.asaas_fee || 1.99,
+        mercadopago_fee: features.mercadopago_fee || 3.99,
+        infinitepay_fee: features.infinitepay_fee || 2.49,
       });
     } else {
       setFormData({
@@ -58,33 +65,45 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         billing_period: "monthly",
         max_users: "",
         max_tickets: "",
-        features: {
-          publico: true,
-          grupos: true,
-          campanhas: true,
-          integracoes: true,
-          imp_mensagens: true,
-        }
+        catalog_access: false,
+        stripe_fee: 2.99,
+        asaas_fee: 1.99,
+        mercadopago_fee: 3.99,
+        infinitepay_fee: 2.49,
       });
     }
-  }, [plan, open]);
+  }, [plan]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = async () => {
+    if (!formData.name.trim() || !formData.price) {
+      toast({
+        title: "Erro",
+        description: "Nome e preço são obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
-
     try {
+      const features = {
+        catalog_access: formData.catalog_access,
+        stripe_fee: formData.stripe_fee,
+        asaas_fee: formData.asaas_fee,
+        mercadopago_fee: formData.mercadopago_fee,
+        infinitepay_fee: formData.infinitepay_fee,
+      };
+
       const planData = {
-        name: formData.name,
-        description: formData.description,
+        name: formData.name.trim(),
+        description: formData.description.trim() || null,
         price: parseFloat(formData.price),
         billing_period: formData.billing_period,
-        max_users: parseInt(formData.max_users) || null,
-        max_tickets: parseInt(formData.max_tickets) || null,
-        features: formData.features,
-        tenant_id: null, // Global plans
-        currency: "BRL",
-        is_active: true
+        max_users: formData.max_users ? parseInt(formData.max_users) : null,
+        max_tickets: formData.max_tickets ? parseInt(formData.max_tickets) : null,
+        features,
+        is_active: true,
+        tenant_id: null,
       };
 
       if (plan) {
@@ -94,173 +113,211 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
           .eq("id", plan.id);
 
         if (error) throw error;
-        toast.success("Plano atualizado com sucesso!");
+
+        toast({
+          title: "Plano atualizado",
+          description: "Plano atualizado com sucesso!",
+        });
       } else {
         const { error } = await supabase
           .from("plans")
           .insert(planData);
 
         if (error) throw error;
-        toast.success("Plano criado com sucesso!");
+
+        toast({
+          title: "Plano criado",
+          description: "Plano criado com sucesso!",
+        });
       }
 
       onSuccess();
       onOpenChange(false);
     } catch (error: any) {
-      console.error("Error saving plan:", error);
-      toast.error(error.message || "Erro ao salvar plano");
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const totalFee = formData.catalog_access 
+    ? ((formData.stripe_fee + formData.asaas_fee + formData.mercadopago_fee + formData.infinitepay_fee) / 4).toFixed(2)
+    : "0.00";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{plan ? "Editar Plano" : "Criar Plano"}</DialogTitle>
+          <DialogTitle>{plan ? "Editar Plano" : "Novo Plano"}</DialogTitle>
+          <DialogDescription>
+            Configure as funcionalidades e taxas do plano
+          </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="font-semibold">Informações</h3>
-            
+
+        <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Plano</Label>
+              <Label>Nome *</Label>
               <Input
-                id="name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Nome do plano"
-                required
+                placeholder="Ex: Plano Pro"
               />
             </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="max_users">Máx. Usuários</Label>
-                <Input
-                  id="max_users"
-                  type="number"
-                  value={formData.max_users}
-                  onChange={(e) => setFormData({ ...formData, max_users: e.target.value })}
-                  placeholder="Número de usuários"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="max_tickets">Máx. Conexões</Label>
-                <Input
-                  id="max_tickets"
-                  type="number"
-                  value={formData.max_tickets}
-                  onChange={(e) => setFormData({ ...formData, max_tickets: e.target.value })}
-                  placeholder="Número de conexões"
-                />
-              </div>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price">Valor</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="billing_period">Período de Cobrança</Label>
-                <select
-                  id="billing_period"
-                  value={formData.billing_period}
-                  onChange={(e) => setFormData({ ...formData, billing_period: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="monthly">Mensal</option>
-                  <option value="quarterly">Trimestral</option>
-                  <option value="semiannual">Semestral</option>
-                  <option value="yearly">Anual</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <Label>Recursos Incluídos</Label>
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="publico"
-                    checked={formData.features.publico}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, features: { ...formData.features, publico: checked as boolean }})
-                    }
-                  />
-                  <label htmlFor="publico" className="text-sm">Público</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="grupos"
-                    checked={formData.features.grupos}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, features: { ...formData.features, grupos: checked as boolean }})
-                    }
-                  />
-                  <label htmlFor="grupos" className="text-sm">Grupos</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="campanhas"
-                    checked={formData.features.campanhas}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, features: { ...formData.features, campanhas: checked as boolean }})
-                    }
-                  />
-                  <label htmlFor="campanhas" className="text-sm">Campanhas</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="integracoes"
-                    checked={formData.features.integracoes}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, features: { ...formData.features, integracoes: checked as boolean }})
-                    }
-                  />
-                  <label htmlFor="integracoes" className="text-sm">Integrações</label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="imp_mensagens"
-                    checked={formData.features.imp_mensagens}
-                    onCheckedChange={(checked) => 
-                      setFormData({ ...formData, features: { ...formData.features, imp_mensagens: checked as boolean }})
-                    }
-                  />
-                  <label htmlFor="imp_mensagens" className="text-sm">Imp. Mensagens</label>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>Preço (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                placeholder="99.90"
+              />
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
+          <div className="space-y-2">
+            <Label>Descrição</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Descrição do plano"
+              rows={2}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Máx. Usuários</Label>
+              <Input
+                type="number"
+                value={formData.max_users}
+                onChange={(e) => setFormData({ ...formData, max_users: e.target.value })}
+                placeholder="Ilimitado"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Máx. Tickets</Label>
+              <Input
+                type="number"
+                value={formData.max_tickets}
+                onChange={(e) => setFormData({ ...formData, max_tickets: e.target.value })}
+                placeholder="Ilimitado"
+              />
+            </div>
+          </div>
+
+          <Card>
+            <CardContent className="pt-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Acesso ao Catálogo</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Permitir venda de produtos online
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.catalog_access}
+                  onCheckedChange={(checked) => 
+                    setFormData({ ...formData, catalog_access: checked })
+                  }
+                />
+              </div>
+
+              {formData.catalog_access && (
+                <div className="space-y-6 border-t pt-6">
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Taxa Stripe: {formData.stripe_fee.toFixed(2)}%</Label>
+                      <Badge variant="outline">{formData.stripe_fee.toFixed(2)}%</Badge>
+                    </div>
+                    <Slider
+                      value={[formData.stripe_fee]}
+                      onValueChange={([value]) => 
+                        setFormData({ ...formData, stripe_fee: value })
+                      }
+                      min={0}
+                      max={15}
+                      step={0.01}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Taxa ASAAS: {formData.asaas_fee.toFixed(2)}%</Label>
+                      <Badge variant="outline">{formData.asaas_fee.toFixed(2)}%</Badge>
+                    </div>
+                    <Slider
+                      value={[formData.asaas_fee]}
+                      onValueChange={([value]) => 
+                        setFormData({ ...formData, asaas_fee: value })
+                      }
+                      min={0}
+                      max={15}
+                      step={0.01}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Taxa Mercado Pago: {formData.mercadopago_fee.toFixed(2)}%</Label>
+                      <Badge variant="outline">{formData.mercadopago_fee.toFixed(2)}%</Badge>
+                    </div>
+                    <Slider
+                      value={[formData.mercadopago_fee]}
+                      onValueChange={([value]) => 
+                        setFormData({ ...formData, mercadopago_fee: value })
+                      }
+                      min={0}
+                      max={15}
+                      step={0.01}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Taxa InfinitePay: {formData.infinitepay_fee.toFixed(2)}%</Label>
+                      <Badge variant="outline">{formData.infinitepay_fee.toFixed(2)}%</Badge>
+                    </div>
+                    <Slider
+                      value={[formData.infinitepay_fee]}
+                      onValueChange={([value]) => 
+                        setFormData({ ...formData, infinitepay_fee: value })
+                      }
+                      min={0}
+                      max={15}
+                      step={0.01}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>Taxa Média Total:</span>
+                      <span className="text-primary">{totalFee}%</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {plan ? "Atualizar" : "Salvar"}
+            <Button onClick={handleSave} disabled={loading}>
+              {loading ? "Salvando..." : plan ? "Atualizar" : "Criar Plano"}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

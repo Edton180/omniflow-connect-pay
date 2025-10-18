@@ -132,7 +132,7 @@ async function handleChargePaid(supabase: any, charge: any) {
     .insert({
       tenant_id: metadata.tenant_id,
       subscription_id: metadata.subscription_id || null,
-      amount: charge.amount / 100, // Convert from cents
+      amount: charge.amount / 100,
       currency: charge.currency?.toUpperCase() || 'BRL',
       status: 'completed',
       payment_gateway: 'infinitepay',
@@ -147,14 +147,12 @@ async function handleChargePaid(supabase: any, charge: any) {
     throw error;
   }
 
-  // If there's an invoice, mark it as paid
   if (metadata.invoice_id) {
     await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
     });
   }
 
-  // If there's a catalog order, mark it as paid
   if (metadata.order_id) {
     await supabase.rpc('process_catalog_order_payment', {
       order_id_param: metadata.order_id

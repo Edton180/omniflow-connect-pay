@@ -74,7 +74,6 @@ serve(async (req) => {
 async function handlePaymentReceived(supabase: any, payment: any) {
   console.log('Processing received payment:', payment.id);
 
-  // Extract metadata from payment description or externalReference
   let metadata: any = {};
   try {
     if (payment.externalReference) {
@@ -122,14 +121,12 @@ async function handlePaymentReceived(supabase: any, payment: any) {
     throw error;
   }
 
-  // If there's an invoice, mark it as paid
   if (metadata.invoice_id) {
     await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
     });
   }
 
-  // If there's a catalog order, mark it as paid
   if (metadata.order_id) {
     await supabase.rpc('process_catalog_order_payment', {
       order_id_param: metadata.order_id
