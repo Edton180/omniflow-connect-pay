@@ -15,8 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ProductVariationsDialog } from "@/components/catalog/ProductVariationsDialog";
 import { ProductOptionalsDialog } from "@/components/catalog/ProductOptionalsDialog";
+import { RoleGuard } from "@/components/catalog/RoleGuard";
 
-export default function Catalog() {
+function CatalogContent() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
@@ -542,5 +543,13 @@ export default function Catalog() {
         </>
       )}
     </div>
+  );
+}
+
+export default function Catalog() {
+  return (
+    <RoleGuard allowedRoles={['super_admin', 'tenant_admin']}>
+      <CatalogContent />
+    </RoleGuard>
   );
 }
