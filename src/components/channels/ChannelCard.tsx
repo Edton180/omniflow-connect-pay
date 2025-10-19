@@ -129,13 +129,13 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
 
   const getWebhookUrl = () => {
     const baseUrl = import.meta.env.VITE_SUPABASE_URL;
-    if (channel.type === 'telegram') {
-      return `${baseUrl}/functions/v1/telegram-webhook`;
-    }
-    if (channel.type === 'whatsapp') {
-      return `${baseUrl}/functions/v1/whatsapp-webhook`;
-    }
-    return null;
+    const webhookMap: Record<string, string> = {
+      'telegram': `${baseUrl}/functions/v1/telegram-webhook`,
+      'whatsapp': `${baseUrl}/functions/v1/waba-webhook`,
+      'facebook': `${baseUrl}/functions/v1/facebook-webhook`,
+      'instagram': `${baseUrl}/functions/v1/facebook-webhook`,
+    };
+    return webhookMap[channel.type] || null;
   };
 
   const webhookUrl = getWebhookUrl();
