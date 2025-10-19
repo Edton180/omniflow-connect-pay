@@ -53,6 +53,9 @@ export function EvolutionConnection({ channel, onStatusChange }: EvolutionConnec
       }
     } catch (error: any) {
       console.error('Error loading status:', error);
+      if (error.message?.includes('credentials not configured')) {
+        toast.error('Configure as credenciais da Evolution API nas Configurações de Canais');
+      }
     }
   };
 
@@ -76,7 +79,10 @@ export function EvolutionConnection({ channel, onStatusChange }: EvolutionConnec
       toast.success('Conexão iniciada! Escaneie o QR Code.');
     } catch (error: any) {
       console.error('Error starting connection:', error);
-      toast.error('Erro ao iniciar conexão: ' + error.message);
+      const message = error.message?.includes('credentials not configured')
+        ? 'Configure as credenciais primeiro'
+        : error.message;
+      toast.error('Erro ao iniciar conexão: ' + message);
     } finally {
       setLoading(false);
     }

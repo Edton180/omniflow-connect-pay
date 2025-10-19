@@ -27,12 +27,36 @@ serve(async (req) => {
 
     console.log('Evolution API action:', action, 'channelId:', channelId)
 
-    // Get Evolution API credentials from environment
-    const EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL')
-    const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')
+    // Get tenant_id from channel
+    const { data: channel } = await supabaseClient
+      .from('channels')
+      .select('tenant_id')
+      .eq('id', channelId)
+      .single()
+
+    if (!channel) {
+      throw new Error('Channel not found')
+    }
+
+    // Try to get credentials from channel_configs table first
+    let EVOLUTION_API_URL = Deno.env.get('EVOLUTION_API_URL')
+    let EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_API_KEY')
+
+    const { data: config } = await supabaseClient
+      .from('channel_configs')
+      .select('*')
+      .eq('tenant_id', channel.tenant_id)
+      .eq('config_type', 'evolution_api')
+      .eq('is_active', true)
+      .maybeSingle()
+
+    if (config) {
+      EVOLUTION_API_URL = config.api_url || EVOLUTION_API_URL
+      EVOLUTION_API_KEY = config.api_key_encrypted || EVOLUTION_API_KEY
+    }
 
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
-      throw new Error('Evolution API credentials not configured. Please set EVOLUTION_API_URL and EVOLUTION_API_KEY in Supabase secrets.')
+      throw new Error('Evolution API credentials not configured. Please configure in Channel Settings.')
     }
 
     switch (action) {

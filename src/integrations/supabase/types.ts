@@ -676,6 +676,50 @@ export type Database = {
           },
         ]
       }
+      channel_configs: {
+        Row: {
+          api_key_encrypted: string | null
+          api_url: string | null
+          config: Json | null
+          config_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          tenant_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          api_url?: string | null
+          config?: Json | null
+          config_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          api_url?: string | null
+          config?: Json | null
+          config_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_queues: {
         Row: {
           channel_id: string
@@ -1900,6 +1944,10 @@ export type Database = {
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
+      }
+      notify_overdue_invoices: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       process_catalog_order_payment: {
         Args: { order_id_param: string }

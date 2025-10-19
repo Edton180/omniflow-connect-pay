@@ -13,6 +13,7 @@ import TicketDetail from "./pages/TicketDetail";
 import Contacts from "./pages/Contacts";
 import Queues from "./pages/Queues";
 import Channels from "./pages/Channels";
+import ChannelSettings from "./pages/ChannelSettings";
 import Payments from "./pages/Payments";
 import Branding from "./pages/Branding";
 import BaileysTest from "./pages/BaileysTest";
@@ -63,6 +64,7 @@ const App = () => (
           <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
           <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
+          <Route path="/channel-settings" element={<AuthGuard requireAuth><ChannelSettings /></AuthGuard>} />
           <Route path="/baileys-test" element={<AuthGuard requireAuth><BaileysTest /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />

@@ -32,6 +32,11 @@ export default function Channels() {
           </div>
           <div className="flex gap-2">
             <ThemeToggle />
+            <Link to="/channel-settings">
+              <Button variant="outline" size="sm">
+                Configurações
+              </Button>
+            </Link>
             <Link to="/tickets-improved">
               <Button variant="outline" size="sm">
                 Ver Atendimentos
