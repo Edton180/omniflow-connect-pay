@@ -274,13 +274,31 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
                   <SelectContent>
                     {plans.map((plan) => (
                       <SelectItem key={plan.id} value={plan.id}>
-                        {plan.name} - R$ {plan.price?.toFixed(2)}
+                        {plan.name} - {plan.billing_period === 'yearly' ? 'Anual' : 'Mensal'} - R$ {plan.price?.toFixed(2)}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
             )}
+
+            <div className="space-y-2">
+              <Label htmlFor="status">Status da Assinatura</Label>
+              <Select
+                value={formData.subscription_status}
+                onValueChange={(value) => setFormData({ ...formData, subscription_status: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="trial">Trial</SelectItem>
+                  <SelectItem value="active">Ativa</SelectItem>
+                  <SelectItem value="expired">Vencida</SelectItem>
+                  <SelectItem value="cancelled">Cancelada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {!tenant && (
