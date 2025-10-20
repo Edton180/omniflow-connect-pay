@@ -33,14 +33,7 @@ import InternalChat from "./pages/InternalChat";
 import SuperAdminTickets from "./pages/SuperAdminTickets";
 import ViewTickets from "./pages/ViewTickets";
 import SuperAdminInvoices from "./pages/SuperAdminInvoices";
-import Catalog from "./pages/Catalog";
-import Withdrawals from "./pages/Withdrawals";
-import AdminWithdrawals from "./pages/AdminWithdrawals";
-import CatalogLandingEditor from "./pages/CatalogLandingEditor";
 import LandingPageEditor from "./pages/LandingPageEditor";
-import Categories from "./pages/Categories";
-import Orders from "./pages/Orders";
-import OrderSettings from "./pages/OrderSettings";
 
 const queryClient = new QueryClient();
 
@@ -79,13 +72,6 @@ const App = () => (
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
-          <Route path="/catalog" element={<AuthGuard requireAuth><Catalog /></AuthGuard>} />
-          <Route path="/categories" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Categories /></AuthGuard>} />
-          <Route path="/orders" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Orders /></AuthGuard>} />
-          <Route path="/order-settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><OrderSettings /></AuthGuard>} />
-          <Route path="/catalog-landing-editor" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><CatalogLandingEditor /></AuthGuard>} />
-          <Route path="/withdrawals" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Withdrawals /></AuthGuard>} />
-          <Route path="/admin/withdrawals" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AdminWithdrawals /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

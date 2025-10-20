@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard, TrendingUp, DollarSign, Palette, ShoppingBag, Package, FolderOpen, Wallet, FileText } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard, TrendingUp, DollarSign, Palette, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,9 +17,6 @@ export const SuperAdminDashboard = () => {
     todayMessages: 0,
     totalRevenue: 0,
     pendingInvoices: 0,
-    totalProducts: 0,
-    totalOrders: 0,
-    pendingWithdrawals: 0,
   });
 
   useEffect(() => {
@@ -66,22 +63,6 @@ export const SuperAdminDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('status', 'pending');
 
-      // Fetch products count
-      const { count: productsCount } = await supabase
-        .from('catalog_products')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch orders count
-      const { count: ordersCount } = await supabase
-        .from('catalog_orders')
-        .select('*', { count: 'exact', head: true });
-
-      // Fetch pending withdrawals count
-      const { count: withdrawalsCount } = await supabase
-        .from('withdrawal_requests')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending');
-
       setStats({
         totalTenants: tenantsCount || 0,
         totalUsers: usersCount || 0,
@@ -89,9 +70,6 @@ export const SuperAdminDashboard = () => {
         todayMessages: messagesCount || 0,
         totalRevenue,
         pendingInvoices: pendingInvoicesCount || 0,
-        totalProducts: productsCount || 0,
-        totalOrders: ordersCount || 0,
-        pendingWithdrawals: withdrawalsCount || 0,
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -215,45 +193,6 @@ export const SuperAdminDashboard = () => {
               </p>
             </CardContent>
           </Card>
-
-          <Card className="gradient-card hover-scale">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Produtos Cadastrados</CardTitle>
-              <ShoppingBag className="h-5 w-5 text-purple-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.totalProducts}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total no catálogo
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card hover-scale">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pedidos Totais</CardTitle>
-              <Package className="h-5 w-5 text-blue-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.totalOrders}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Pedidos realizados
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="gradient-card hover-scale">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Saques Pendentes</CardTitle>
-              <Wallet className="h-5 w-5 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats.pendingWithdrawals}</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                Aguardando aprovação
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         <Card className="gradient-card">
@@ -325,38 +264,6 @@ export const SuperAdminDashboard = () => {
             >
               <Settings className="mr-2 h-5 w-5" />
               Configurações do Sistema
-            </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/catalog')}
-            >
-              <ShoppingBag className="mr-2 h-5 w-5" />
-              Gerenciar Catálogos
-            </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/orders')}
-            >
-              <Package className="mr-2 h-5 w-5" />
-              Todos os Pedidos
-            </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/categories')}
-            >
-              <FolderOpen className="mr-2 h-5 w-5" />
-              Gerenciar Categorias
-            </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/admin/withdrawals')}
-            >
-              <Wallet className="mr-2 h-5 w-5" />
-              Aprovar Saques
             </Button>
           </CardContent>
         </Card>

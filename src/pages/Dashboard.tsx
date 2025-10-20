@@ -17,13 +17,9 @@ import {
   FileText,
   Users2,
   MessageCircle,
-  ShoppingBag,
   Globe,
   DollarSign,
-  Wallet,
-  Layout,
-  FolderOpen,
-  Package
+  Layout
 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
@@ -295,54 +291,6 @@ const Dashboard = () => {
                 </div>
               </Button>
 
-              <Button 
-                variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
-                onClick={() => navigate("/catalog")}
-              >
-                <div className="flex items-start gap-4 text-left">
-                  <div className="w-10 h-10 rounded-lg bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                    <ShoppingBag className="w-5 h-5 text-secondary" />
-                  </div>
-                  <div>
-                    <div className="font-semibold mb-1">Catálogo Online</div>
-                    <div className="text-sm text-foreground/60">
-                      Gerencie produtos e vendas
-                    </div>
-                  </div>
-                </div>
-              </Button>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="justify-start"
-                  onClick={() => navigate("/categories")}
-                >
-                  <FolderOpen className="mr-2 h-4 w-4" />
-                  Categorias
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="justify-start"
-                  onClick={() => navigate("/orders")}
-                >
-                  <Package className="mr-2 h-4 w-4" />
-                  Pedidos
-                </Button>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="justify-start"
-                  onClick={() => navigate("/order-settings")}
-                >
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurações
-                </Button>
-              </div>
-
               {hasRole('tenant_admin') && !hasRole('super_admin') && (
                 <>
                   <Button 
@@ -376,42 +324,6 @@ const Dashboard = () => {
                         <div className="font-semibold mb-1">Faturas</div>
                         <div className="text-sm text-foreground/60">
                           Visualize e pague suas faturas
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="justify-start h-auto py-4 px-6 hover-scale"
-                    onClick={() => navigate("/withdrawals")}
-                  >
-                    <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <Wallet className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <div className="font-semibold mb-1">Saques</div>
-                        <div className="text-sm text-foreground/60">
-                          Solicite e acompanhe saques
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="justify-start h-auto py-4 px-6 hover-scale"
-                    onClick={() => navigate("/catalog-landing-editor")}
-                  >
-                    <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                        <Layout className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <div className="font-semibold mb-1">Editar Landing Page</div>
-                        <div className="text-sm text-foreground/60">
-                          Personalize seu catálogo online
                         </div>
                       </div>
                     </div>
@@ -470,24 +382,6 @@ const Dashboard = () => {
                         <div className="font-semibold mb-1">Editar Landing Geral</div>
                         <div className="text-sm text-foreground/60">
                           Personalize a página principal
-                        </div>
-                      </div>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="justify-start h-auto py-4 px-6 hover-scale"
-                    onClick={() => navigate("/admin/withdrawals")}
-                  >
-                    <div className="flex items-start gap-4 text-left">
-                      <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-                        <Wallet className="w-5 h-5 text-accent" />
-                      </div>
-                      <div>
-                        <div className="font-semibold mb-1">Gerenciar Saques</div>
-                        <div className="text-sm text-foreground/60">
-                          Aprovar e processar solicitações
                         </div>
                       </div>
                     </div>
