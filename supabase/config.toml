@@ -12,6 +12,12 @@ verify_jwt = false
 [functions.telegram-auto-webhook]
 verify_jwt = true
 
+[functions.send-telegram-message]
+verify_jwt = true
+
+[functions.send-evolution-message]
+verify_jwt = true
+
 [functions.waba-webhook]
 verify_jwt = false
 

@@ -29,27 +29,38 @@ export function MessageTester({ channel }: MessageTesterProps) {
 
     try {
       let functionName = "";
-      let body: any = {
-        to: phoneNumber,
-        message: message,
-      };
+      let body: any = {};
 
       switch (channel.type) {
         case "telegram":
-          functionName = "telegram-webhook";
-          body.chat_id = phoneNumber;
+          functionName = "send-telegram-message";
+          body = {
+            chatId: phoneNumber,
+            message: message,
+          };
           break;
         case "waba":
           functionName = "send-waba-message";
+          body = {
+            to: phoneNumber,
+            message: message,
+          };
           break;
         case "facebook":
+        case "instagram":
           functionName = "send-facebook-message";
-          body.recipient_id = phoneNumber;
+          body = {
+            recipientId: phoneNumber,
+            message: message,
+            platform: channel.type,
+          };
           break;
         case "evolution":
-          functionName = "evolution-whatsapp";
-          body.action = "send";
-          body.channelId = channel.id;
+          functionName = "send-evolution-message";
+          body = {
+            to: phoneNumber,
+            message: message,
+          };
           break;
         default:
           throw new Error("Tipo de canal não suportado");
