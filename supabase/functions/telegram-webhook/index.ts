@@ -24,30 +24,50 @@ serve(async (req) => {
     if (update.message) {
       const message = update.message;
       const chatId = message.chat.id.toString();
-      const text = message.text || "";
+      const text = message.text || message.caption || "";
       const from = message.from;
+
+      console.log("Processando mensagem do chat:", chatId, "de:", from.username || from.first_name);
 
       // Buscar ou criar contato
       const contactName = from.first_name + (from.last_name ? ` ${from.last_name}` : "");
       const contactPhone = from.username ? `@${from.username}` : chatId;
 
-      // Buscar canal do Telegram configurado
-      const { data: channels } = await supabaseAdmin
+      // Buscar canal do Telegram configurado - tentar primeiro pelo bot username se disponível
+      let channel;
+      let tenantId;
+
+      // Buscar todos os canais Telegram ativos
+      const { data: channels, error: channelsError } = await supabaseAdmin
         .from("channels")
-        .select("*, tenants(id)")
+        .select("*")
         .eq("type", "telegram")
-        .eq("status", "active")
-        .limit(1);
+        .eq("status", "active");
+
+      if (channelsError) {
+        console.error("Erro ao buscar canais:", channelsError);
+        throw channelsError;
+      }
 
       if (!channels || channels.length === 0) {
-        console.log("No active Telegram channel found");
+        console.log("Nenhum canal Telegram ativo encontrado");
         return new Response(JSON.stringify({ ok: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const channel = channels[0];
-      const tenantId = channel.tenant_id;
+      // Se há apenas um canal, usar ele
+      if (channels.length === 1) {
+        channel = channels[0];
+        tenantId = channel.tenant_id;
+        console.log("Usando único canal Telegram encontrado:", channel.id);
+      } else {
+        // Se há múltiplos canais, tentar identificar pelo bot token
+        // Por enquanto, usar o primeiro canal ativo
+        channel = channels[0];
+        tenantId = channel.tenant_id;
+        console.log("Múltiplos canais encontrados, usando o primeiro:", channel.id);
+      }
 
       // Buscar ou criar contato
       let contact;

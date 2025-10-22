@@ -257,6 +257,8 @@ export const ChannelList = () => {
         status: "active",
       };
 
+      let channelId: string | undefined;
+
       if (selectedChannel) {
         const { error } = await supabase
           .from("channels")
@@ -264,22 +266,59 @@ export const ChannelList = () => {
           .eq("id", selectedChannel.id);
 
         if (error) throw error;
+        channelId = selectedChannel.id;
 
         toast({
           title: "Canal atualizado",
           description: `Canal ${formData.name} atualizado com sucesso.`,
         });
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("channels")
-          .insert([channelData]);
+          .insert([channelData])
+          .select()
+          .single();
 
         if (error) throw error;
+        channelId = data?.id;
 
         toast({
           title: "Canal criado",
           description: `Canal ${formData.name} criado com sucesso.`,
         });
+      }
+
+      // Se for Telegram, registrar webhook automaticamente
+      if (formData.type === "telegram" && formData.config.bot_token && channelId) {
+        console.log("Registrando webhook do Telegram...");
+        
+        try {
+          const { data: webhookResult, error: webhookError } = await supabase.functions.invoke(
+            "telegram-auto-webhook",
+            {
+              body: {
+                botToken: formData.config.bot_token,
+              },
+            }
+          );
+
+          if (webhookError) {
+            console.error("Erro ao registrar webhook:", webhookError);
+            toast({
+              title: "Atenção",
+              description: "Canal salvo, mas houve erro ao configurar o webhook. Verifique o token.",
+              variant: "destructive",
+            });
+          } else if (webhookResult?.success) {
+            console.log("Webhook registrado com sucesso:", webhookResult);
+            toast({
+              title: "Sucesso!",
+              description: "Canal Telegram configurado e webhook registrado com sucesso!",
+            });
+          }
+        } catch (webhookError) {
+          console.error("Erro ao registrar webhook:", webhookError);
+        }
       }
 
       setDialogOpen(false);
