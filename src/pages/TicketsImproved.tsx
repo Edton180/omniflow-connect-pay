@@ -27,7 +27,7 @@ export default function TicketsImproved() {
   const [selectedTicket, setSelectedTicket] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("open");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [messageText, setMessageText] = useState("");
   const [sending, setSending] = useState(false);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
@@ -118,6 +118,7 @@ export default function TicketsImproved() {
 
     setSending(true);
     try {
+      // Insert message into database
       const { error } = await supabase.from("messages").insert([
         {
           ticket_id: selectedTicket.id,
@@ -131,6 +132,7 @@ export default function TicketsImproved() {
 
       if (error) throw error;
 
+      // Update ticket
       await supabase
         .from("tickets")
         .update({ 
@@ -139,11 +141,62 @@ export default function TicketsImproved() {
         })
         .eq("id", selectedTicket.id);
 
+      // Send message through the appropriate channel
+      if (selectedTicket.channel === 'telegram') {
+        const chatId = selectedTicket.contact?.metadata?.telegram_chat_id || 
+                       selectedTicket.contact?.phone;
+        
+        if (chatId) {
+          try {
+            const { data: channels } = await supabase
+              .from("channels")
+              .select("config")
+              .eq("type", "telegram")
+              .eq("status", "active")
+              .limit(1);
+
+            if (channels && channels.length > 0) {
+              const config = channels[0].config as any;
+              const botToken = config?.bot_token;
+              
+              if (botToken) {
+                const { error: sendError } = await supabase.functions.invoke(
+                  "send-telegram-message",
+                  {
+                    body: {
+                      chatId: chatId,
+                      message: messageText.trim() || '[Mídia]',
+                      botToken: botToken,
+                    },
+                  }
+                );
+
+                if (sendError) {
+                  console.error("Error sending Telegram message:", sendError);
+                  toast({
+                    title: "Mensagem salva",
+                    description: "Mas não foi possível enviar pelo Telegram. Verifique a configuração.",
+                    variant: "destructive",
+                  });
+                }
+              }
+            }
+          } catch (sendError) {
+            console.error("Error invoking send-telegram-message:", sendError);
+          }
+        }
+      }
+
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
       loadMessages(selectedTicket.id);
       loadTickets();
+
+      toast({
+        title: "Mensagem enviada",
+        description: "Sua mensagem foi enviada com sucesso.",
+      });
     } catch (error: any) {
       toast({
         title: "Erro ao enviar",
@@ -210,15 +263,18 @@ export default function TicketsImproved() {
             </div>
 
             <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="all" className="text-xs">
+                  Todos
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {tickets.length}
+                  </Badge>
+                </TabsTrigger>
                 <TabsTrigger value="open" className="text-xs">
-                  <div className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    Abertos
-                    <Badge variant="secondary" className="ml-1 text-xs">
-                      {tickets.filter(t => t.status === 'open').length}
-                    </Badge>
-                  </div>
+                  Abertos
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {tickets.filter(t => t.status === 'open').length}
+                  </Badge>
                 </TabsTrigger>
                 <TabsTrigger value="pending" className="text-xs">
                   Pendentes
