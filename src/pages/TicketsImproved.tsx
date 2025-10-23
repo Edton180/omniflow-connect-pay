@@ -61,7 +61,7 @@ export default function TicketsImproved() {
         .from("tickets")
         .select(`
           *,
-          contact:contacts(name, phone, avatar_url),
+          contact:contacts(name, phone, avatar_url, metadata),
           queue:queues(name, color)
         `)
         .eq("tenant_id", userRole.tenant_id)
@@ -146,6 +146,8 @@ export default function TicketsImproved() {
         const chatId = selectedTicket.contact?.metadata?.telegram_chat_id || 
                        selectedTicket.contact?.phone;
         
+        console.log('Telegram send - chatId:', chatId, 'metadata:', selectedTicket.contact?.metadata);
+        
         if (chatId) {
           try {
             const { data: channels } = await supabase
@@ -155,35 +157,74 @@ export default function TicketsImproved() {
               .eq("status", "active")
               .limit(1);
 
+            console.log('Telegram channels found:', channels);
+
             if (channels && channels.length > 0) {
               const config = channels[0].config as any;
               const botToken = config?.bot_token;
               
+              console.log('Bot token exists:', !!botToken);
+              
               if (botToken) {
-                const { error: sendError } = await supabase.functions.invoke(
-                  "send-telegram-message",
-                  {
-                    body: {
-                      chatId: chatId,
-                      message: messageText.trim() || '[Mídia]',
-                      botToken: botToken,
-                    },
-                  }
-                );
+                // Send via Telegram API directly
+                const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                
+                const response = await fetch(telegramApiUrl, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    chat_id: chatId,
+                    text: messageText.trim() || '[Mídia]',
+                    parse_mode: 'HTML',
+                  }),
+                });
 
-                if (sendError) {
-                  console.error("Error sending Telegram message:", sendError);
+                const result = await response.json();
+                console.log('Telegram API response:', result);
+
+                if (!response.ok) {
+                  console.error('Telegram API error:', result);
                   toast({
-                    title: "Mensagem salva",
-                    description: "Mas não foi possível enviar pelo Telegram. Verifique a configuração.",
+                    title: "Erro ao enviar",
+                    description: result.description || "Não foi possível enviar pelo Telegram.",
                     variant: "destructive",
                   });
+                } else {
+                  console.log('Message sent successfully to Telegram');
                 }
+              } else {
+                console.error('Bot token not found in channel config');
+                toast({
+                  title: "Erro de configuração",
+                  description: "Token do bot não encontrado. Configure o canal Telegram.",
+                  variant: "destructive",
+                });
               }
+            } else {
+              console.error('No active Telegram channels found');
+              toast({
+                title: "Canal não configurado",
+                description: "Configure um canal Telegram ativo.",
+                variant: "destructive",
+              });
             }
           } catch (sendError) {
-            console.error("Error invoking send-telegram-message:", sendError);
+            console.error("Error sending Telegram message:", sendError);
+            toast({
+              title: "Erro ao enviar",
+              description: "Erro ao comunicar com o Telegram.",
+              variant: "destructive",
+            });
           }
+        } else {
+          console.error('Chat ID not found for contact');
+          toast({
+            title: "Erro",
+            description: "ID do chat não encontrado para este contato.",
+            variant: "destructive",
+          });
         }
       }
 
