@@ -34,10 +34,14 @@ export default function TicketsImproved() {
   const [mediaType, setMediaType] = useState<string | null>(null);
 
   useEffect(() => {
-    loadTickets();
-  }, []);
+    console.log("TicketsImproved montado, user:", user?.id);
+    if (user?.id) {
+      loadTickets();
+    }
+  }, [user?.id]);
 
   useEffect(() => {
+    console.log("Filtros mudaram - tickets:", tickets.length, "filter:", statusFilter, "search:", searchTerm);
     filterTickets();
   }, [tickets, searchTerm, statusFilter]);
 
@@ -49,13 +53,25 @@ export default function TicketsImproved() {
 
   const loadTickets = async () => {
     try {
-      const { data: userRole } = await supabase
+      if (!user?.id) {
+        console.log("Usuário não autenticado");
+        return;
+      }
+
+      console.log("Carregando tickets para user:", user.id);
+
+      const { data: userRole, error: roleError } = await supabase
         .from("user_roles")
         .select("tenant_id")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!userRole?.tenant_id) return;
+      console.log("User role:", userRole, "Error:", roleError);
+
+      if (!userRole?.tenant_id) {
+        console.log("Sem tenant_id");
+        return;
+      }
 
       const { data, error } = await supabase
         .from("tickets")
@@ -67,12 +83,18 @@ export default function TicketsImproved() {
         .eq("tenant_id", userRole.tenant_id)
         .order("updated_at", { ascending: false });
 
+      console.log("Tickets carregados:", data?.length, "Error:", error);
+
       if (error) throw error;
+      
       setTickets(data || []);
+      console.log("Estado tickets atualizado:", data?.length);
+      
       if (data && data.length > 0 && !selectedTicket) {
         setSelectedTicket(data[0]);
       }
     } catch (error: any) {
+      console.error("Erro ao carregar tickets:", error);
       toast({
         title: "Erro ao carregar tickets",
         description: error.message,
@@ -83,6 +105,12 @@ export default function TicketsImproved() {
 
   const filterTickets = () => {
     let filtered = tickets;
+
+    console.log("Filtrando tickets:", {
+      total: tickets.length,
+      statusFilter,
+      searchTerm
+    });
 
     if (statusFilter !== "all") {
       filtered = filtered.filter(t => t.status === statusFilter);
@@ -95,6 +123,7 @@ export default function TicketsImproved() {
       );
     }
 
+    console.log("Tickets filtrados:", filtered.length);
     setFilteredTickets(filtered);
   };
 
@@ -143,10 +172,14 @@ export default function TicketsImproved() {
 
       // Send message through the appropriate channel
       if (selectedTicket.channel === 'telegram') {
-        const chatId = selectedTicket.contact?.metadata?.telegram_chat_id || 
-                       selectedTicket.contact?.phone;
+        // Get chat_id - must be a number, not a string with @
+        const chatId = selectedTicket.contact?.metadata?.telegram_chat_id;
         
-        console.log('Telegram send - chatId:', chatId, 'metadata:', selectedTicket.contact?.metadata);
+        console.log('Telegram send attempt:', {
+          chatId,
+          metadata: selectedTicket.contact?.metadata,
+          messageText: messageText.trim()
+        });
         
         if (chatId) {
           try {
@@ -166,63 +199,52 @@ export default function TicketsImproved() {
               console.log('Bot token exists:', !!botToken);
               
               if (botToken) {
-                // Send via Telegram API directly
+                // Send via Telegram Bot API
                 const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                
+                const payload = {
+                  chat_id: Number(chatId), // Ensure it's a number
+                  text: messageText.trim() || '[Mídia]'
+                };
+
+                console.log('Sending to Telegram:', payload);
                 
                 const response = await fetch(telegramApiUrl, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({
-                    chat_id: chatId,
-                    text: messageText.trim() || '[Mídia]',
-                    parse_mode: 'HTML',
-                  }),
+                  body: JSON.stringify(payload),
                 });
 
                 const result = await response.json();
                 console.log('Telegram API response:', result);
 
-                if (!response.ok) {
+                if (!response.ok || !result.ok) {
                   console.error('Telegram API error:', result);
-                  toast({
-                    title: "Erro ao enviar",
-                    description: result.description || "Não foi possível enviar pelo Telegram.",
-                    variant: "destructive",
-                  });
-                } else {
-                  console.log('Message sent successfully to Telegram');
+                  throw new Error(result.description || 'Erro ao enviar mensagem');
                 }
+                
+                console.log('✅ Mensagem enviada com sucesso para o Telegram');
               } else {
-                console.error('Bot token not found in channel config');
-                toast({
-                  title: "Erro de configuração",
-                  description: "Token do bot não encontrado. Configure o canal Telegram.",
-                  variant: "destructive",
-                });
+                throw new Error('Token do bot não encontrado');
               }
             } else {
-              console.error('No active Telegram channels found');
-              toast({
-                title: "Canal não configurado",
-                description: "Configure um canal Telegram ativo.",
-                variant: "destructive",
-              });
+              throw new Error('Canal Telegram não configurado');
             }
-          } catch (sendError) {
-            console.error("Error sending Telegram message:", sendError);
+          } catch (sendError: any) {
+            console.error("❌ Erro ao enviar para Telegram:", sendError);
             toast({
-              title: "Erro ao enviar",
-              description: "Erro ao comunicar com o Telegram.",
+              title: "Erro ao enviar para Telegram",
+              description: sendError.message || "Não foi possível enviar a mensagem.",
               variant: "destructive",
             });
           }
         } else {
-          console.error('Chat ID not found for contact');
+          console.error('❌ Chat ID não encontrado');
           toast({
             title: "Erro",
-            description: "ID do chat não encontrado para este contato.",
+            description: "ID do chat Telegram não encontrado para este contato.",
             variant: "destructive",
           });
         }
@@ -332,7 +354,15 @@ export default function TicketsImproved() {
 
           {/* Lista de Tickets */}
           <div className="flex-1 overflow-y-auto">
-            {filteredTickets.map((ticket) => (
+            {filteredTickets.length === 0 ? (
+              <div className="p-4 text-center text-muted-foreground">
+                <p className="text-sm">Nenhum ticket encontrado</p>
+                {tickets.length > 0 && (
+                  <p className="text-xs mt-1">Total: {tickets.length} tickets</p>
+                )}
+              </div>
+            ) : (
+              filteredTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 onClick={() => setSelectedTicket(ticket)}
@@ -378,7 +408,8 @@ export default function TicketsImproved() {
                   </div>
                 </div>
               </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
