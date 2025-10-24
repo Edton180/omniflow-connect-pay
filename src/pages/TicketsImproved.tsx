@@ -172,12 +172,12 @@ export default function TicketsImproved() {
 
       // Send message through the appropriate channel
       if (selectedTicket.channel === 'telegram') {
-        // Get chat_id - must be a number, not a string with @
         const chatId = selectedTicket.contact?.metadata?.telegram_chat_id;
         
         console.log('Telegram send attempt:', {
           chatId,
-          metadata: selectedTicket.contact?.metadata,
+          hasMedia: !!mediaUrl,
+          mediaType,
           messageText: messageText.trim()
         });
         
@@ -190,24 +190,40 @@ export default function TicketsImproved() {
               .eq("status", "active")
               .limit(1);
 
-            console.log('Telegram channels found:', channels);
-
             if (channels && channels.length > 0) {
               const config = channels[0].config as any;
               const botToken = config?.bot_token;
               
-              console.log('Bot token exists:', !!botToken);
-              
               if (botToken) {
-                // Send via Telegram Bot API
-                const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                
-                const payload = {
-                  chat_id: Number(chatId), // Ensure it's a number
-                  text: messageText.trim() || '[Mídia]'
-                };
+                let telegramApiUrl = '';
+                let payload: any = { chat_id: Number(chatId) };
 
-                console.log('Sending to Telegram:', payload);
+                // Determinar método e payload baseado no tipo de mídia
+                if (mediaUrl && mediaType) {
+                  if (mediaType === 'image') {
+                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
+                    payload.photo = mediaUrl;
+                    if (messageText.trim()) payload.caption = messageText.trim();
+                  } else if (mediaType === 'audio') {
+                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendAudio`;
+                    payload.audio = mediaUrl;
+                    if (messageText.trim()) payload.caption = messageText.trim();
+                  } else if (mediaType === 'document') {
+                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendDocument`;
+                    payload.document = mediaUrl;
+                    if (messageText.trim()) payload.caption = messageText.trim();
+                  } else if (mediaType === 'video') {
+                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendVideo`;
+                    payload.video = mediaUrl;
+                    if (messageText.trim()) payload.caption = messageText.trim();
+                  }
+                } else {
+                  // Apenas texto
+                  telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+                  payload.text = messageText.trim() || '[Mensagem]';
+                }
+
+                console.log('Sending to Telegram:', { url: telegramApiUrl, payload });
                 
                 const response = await fetch(telegramApiUrl, {
                   method: 'POST',

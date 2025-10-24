@@ -24,10 +24,46 @@ serve(async (req) => {
     if (update.message) {
       const message = update.message;
       const chatId = message.chat.id.toString();
-      const text = message.text || message.caption || "";
       const from = message.from;
 
       console.log("Processando mensagem do chat:", chatId, "de:", from.username || from.first_name);
+
+      // Determinar tipo e conteúdo da mensagem
+      let messageContent = "";
+      let mediaUrl = null;
+      let mediaType = null;
+
+      if (message.text) {
+        messageContent = message.text;
+      } else if (message.photo && message.photo.length > 0) {
+        // Pegar a maior resolução da foto
+        const photo = message.photo[message.photo.length - 1];
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${photo.file_id}`;
+        mediaType = "image";
+        messageContent = message.caption || "[Imagem]";
+      } else if (message.audio) {
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.audio.file_id}`;
+        mediaType = "audio";
+        messageContent = message.caption || "[Áudio]";
+      } else if (message.voice) {
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.voice.file_id}`;
+        mediaType = "audio";
+        messageContent = message.caption || "[Mensagem de voz]";
+      } else if (message.document) {
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.document.file_id}`;
+        mediaType = "document";
+        messageContent = message.caption || `[Documento: ${message.document.file_name || "arquivo"}]`;
+      } else if (message.sticker) {
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.sticker.file_id}`;
+        mediaType = "sticker";
+        messageContent = message.sticker.emoji || "[Sticker]";
+      } else if (message.video) {
+        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.video.file_id}`;
+        mediaType = "video";
+        messageContent = message.caption || "[Vídeo]";
+      }
+
+      console.log("Tipo de mensagem:", mediaType || "text", "Conteúdo:", messageContent);
 
       // Buscar ou criar contato
       const contactName = from.first_name + (from.last_name ? ` ${from.last_name}` : "");
@@ -117,7 +153,7 @@ serve(async (req) => {
         // Atualizar última mensagem
         await supabaseAdmin
           .from("tickets")
-          .update({ last_message: text, updated_at: new Date().toISOString() })
+          .update({ last_message: messageContent, updated_at: new Date().toISOString() })
           .eq("id", ticket.id);
       } else {
         // Criar novo ticket
@@ -129,7 +165,7 @@ serve(async (req) => {
             channel: "telegram",
             status: "open",
             priority: "medium",
-            last_message: text,
+            last_message: messageContent,
           })
           .select()
           .single();
@@ -147,8 +183,10 @@ serve(async (req) => {
         .insert({
           ticket_id: ticket.id,
           contact_id: contact.id,
-          content: text,
+          content: messageContent,
           is_from_contact: true,
+          media_url: mediaUrl,
+          media_type: mediaType,
         });
 
       console.log(`Message processed for ticket ${ticket.id}`);
