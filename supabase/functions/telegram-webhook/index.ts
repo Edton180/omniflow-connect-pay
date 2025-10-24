@@ -32,35 +32,66 @@ serve(async (req) => {
       let messageContent = "";
       let mediaUrl = null;
       let mediaType = null;
+      let fileId = null;
 
       if (message.text) {
         messageContent = message.text;
       } else if (message.photo && message.photo.length > 0) {
         // Pegar a maior resolução da foto
         const photo = message.photo[message.photo.length - 1];
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${photo.file_id}`;
+        fileId = photo.file_id;
         mediaType = "image";
         messageContent = message.caption || "[Imagem]";
       } else if (message.audio) {
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.audio.file_id}`;
+        fileId = message.audio.file_id;
         mediaType = "audio";
         messageContent = message.caption || "[Áudio]";
       } else if (message.voice) {
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.voice.file_id}`;
+        fileId = message.voice.file_id;
         mediaType = "audio";
         messageContent = message.caption || "[Mensagem de voz]";
       } else if (message.document) {
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.document.file_id}`;
+        fileId = message.document.file_id;
         mediaType = "document";
         messageContent = message.caption || `[Documento: ${message.document.file_name || "arquivo"}]`;
       } else if (message.sticker) {
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.sticker.file_id}`;
+        fileId = message.sticker.file_id;
         mediaType = "sticker";
         messageContent = message.sticker.emoji || "[Sticker]";
       } else if (message.video) {
-        mediaUrl = `https://api.telegram.org/file/bot${Deno.env.get("TELEGRAM_BOT_TOKEN")}/${message.video.file_id}`;
+        fileId = message.video.file_id;
         mediaType = "video";
         messageContent = message.caption || "[Vídeo]";
+      }
+
+      // Buscar bot token para baixar arquivos
+      let botToken = null;
+      if (fileId) {
+        const { data: channelsConfig } = await supabaseAdmin
+          .from("channels")
+          .select("config")
+          .eq("type", "telegram")
+          .eq("status", "active")
+          .limit(1);
+
+        if (channelsConfig && channelsConfig.length > 0) {
+          botToken = channelsConfig[0].config?.bot_token;
+          
+          // Obter URL real do arquivo usando getFile
+          try {
+            const fileResponse = await fetch(
+              `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
+            );
+            const fileData = await fileResponse.json();
+            
+            if (fileData.ok && fileData.result.file_path) {
+              mediaUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+              console.log("Media URL obtida:", mediaUrl);
+            }
+          } catch (error) {
+            console.error("Erro ao obter URL do arquivo:", error);
+          }
+        }
       }
 
       console.log("Tipo de mensagem:", mediaType || "text", "Conteúdo:", messageContent);

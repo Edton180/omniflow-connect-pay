@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
-import { BaileysConnection } from "./BaileysConnection";
-import { BaileysSetupGuide } from "./BaileysSetupGuide";
-import { EvolutionConnection } from "./EvolutionConnection";
 import { QrCode, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -114,20 +111,6 @@ export const ChannelList = () => {
   };
 
   const availableChannelTypes = [
-    {
-      type: "baileys-qr",
-      name: "WhatsApp (Baileys QR)",
-      icon: "qr-code",
-      description: "Conexão via QR Code - Multi-dispositivo (Não oficial)",
-      isBaileys: true,
-    },
-    {
-      type: "evolution-api",
-      name: "WhatsApp (Evolution API)",
-      icon: "zap",
-      description: "Conexão profissional via Evolution API (Não oficial)",
-      isEvolution: true,
-    },
     {
       type: "whatsapp",
       name: "WhatsApp Business API (WABA)",
@@ -361,78 +344,12 @@ export const ChannelList = () => {
         </Button>
       </div>
 
-      {/* Baileys Connections Section */}
-      {channels.some(channel => channel.type === 'baileys-qr') && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <QrCode className="w-5 h-5" />
-            WhatsApp via QR Code (Baileys)
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {channels
-              .filter(channel => channel.type === 'baileys-qr')
-              .map((channel) => (
-                <div key={channel.id} className="relative group">
-                  <BaileysConnection
-                    channel={channel}
-                    onStatusChange={(status) => {
-                      loadChannels();
-                    }}
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDelete(channel.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
-      {/* Evolution API Connections Section */}
-      {channels.some(channel => channel.type === 'evolution-api') && (
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <QrCode className="w-5 h-5" />
-            WhatsApp via Evolution API
-          </h3>
-          <div className="grid gap-4 md:grid-cols-2">
-            {channels
-              .filter(channel => channel.type === 'evolution-api')
-              .map((channel) => (
-                <div key={channel.id} className="relative group">
-                  <EvolutionConnection
-                    channel={channel}
-                    onStatusChange={(status) => {
-                      loadChannels();
-                    }}
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleDelete(channel.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* Other Channels Section */}
-      {channels.filter(channel => channel.type !== 'baileys-qr' && channel.type !== 'evolution-api').length > 0 && (
+      {channels.length > 0 && (
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Outros Canais</h3>
+          <h3 className="text-lg font-semibold">Canais Configurados</h3>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-            {channels
-              .filter(channel => channel.type !== 'baileys-qr' && channel.type !== 'evolution-api')
-              .map((channel) => (
+            {channels.map((channel) => (
                 <ChannelCard
                   key={channel.id}
                   channel={{
@@ -448,8 +365,6 @@ export const ChannelList = () => {
           </div>
         </div>
       )}
-
-      <BaileysSetupGuide />
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl">

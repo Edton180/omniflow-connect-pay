@@ -174,7 +174,7 @@ export default function TicketsImproved() {
       if (selectedTicket.channel === 'telegram') {
         const chatId = selectedTicket.contact?.metadata?.telegram_chat_id;
         
-        console.log('Telegram send attempt:', {
+        console.log('🔵 Telegram send attempt:', {
           chatId,
           hasMedia: !!mediaUrl,
           mediaType,
@@ -183,70 +183,37 @@ export default function TicketsImproved() {
         
         if (chatId) {
           try {
-            const { data: channels } = await supabase
-              .from("channels")
-              .select("config")
-              .eq("type", "telegram")
-              .eq("status", "active")
-              .limit(1);
-
-            if (channels && channels.length > 0) {
-              const config = channels[0].config as any;
-              const botToken = config?.bot_token;
-              
-              if (botToken) {
-                let telegramApiUrl = '';
-                let payload: any = { chat_id: Number(chatId) };
-
-                // Determinar método e payload baseado no tipo de mídia
-                if (mediaUrl && mediaType) {
-                  if (mediaType === 'image') {
-                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendPhoto`;
-                    payload.photo = mediaUrl;
-                    if (messageText.trim()) payload.caption = messageText.trim();
-                  } else if (mediaType === 'audio') {
-                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendAudio`;
-                    payload.audio = mediaUrl;
-                    if (messageText.trim()) payload.caption = messageText.trim();
-                  } else if (mediaType === 'document') {
-                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendDocument`;
-                    payload.document = mediaUrl;
-                    if (messageText.trim()) payload.caption = messageText.trim();
-                  } else if (mediaType === 'video') {
-                    telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendVideo`;
-                    payload.video = mediaUrl;
-                    if (messageText.trim()) payload.caption = messageText.trim();
-                  }
-                } else {
-                  // Apenas texto
-                  telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
-                  payload.text = messageText.trim() || '[Mensagem]';
-                }
-
-                console.log('Sending to Telegram:', { url: telegramApiUrl, payload });
-                
-                const response = await fetch(telegramApiUrl, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify(payload),
-                });
-
-                const result = await response.json();
-                console.log('Telegram API response:', result);
-
-                if (!response.ok || !result.ok) {
-                  console.error('Telegram API error:', result);
-                  throw new Error(result.description || 'Erro ao enviar mensagem');
-                }
-                
-                console.log('✅ Mensagem enviada com sucesso para o Telegram');
-              } else {
-                throw new Error('Token do bot não encontrado');
+            // Chamar edge function de envio de mídia
+            const { data: sendData, error: sendError } = await supabase.functions.invoke(
+              "send-telegram-media",
+              {
+                body: {
+                  chatId: Number(chatId),
+                  message: messageText.trim(),
+                  mediaUrl,
+                  mediaType,
+                },
               }
+            );
+
+            console.log("🔵 Resposta da edge function:", { sendData, sendError });
+
+            if (sendError) {
+              console.error("❌ Erro ao enviar:", sendError);
+              toast({
+                title: "Erro ao enviar",
+                description: sendError.message || "Não foi possível enviar a mensagem",
+                variant: "destructive",
+              });
+            } else if (!sendData?.success) {
+              console.error("❌ Falha no envio:", sendData);
+              toast({
+                title: "Erro ao enviar",
+                description: sendData?.error || "Erro ao enviar mensagem",
+                variant: "destructive",
+              });
             } else {
-              throw new Error('Canal Telegram não configurado');
+              console.log('✅ Mensagem enviada com sucesso para o Telegram');
             }
           } catch (sendError: any) {
             console.error("❌ Erro ao enviar para Telegram:", sendError);
