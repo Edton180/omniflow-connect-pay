@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip } from "lucide-react";
+import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip, Loader2, Check, CheckCheck, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
@@ -147,19 +147,24 @@ export default function TicketsImproved() {
 
     setSending(true);
     try {
-      // Insert message into database
-      const { error } = await supabase.from("messages").insert([
-        {
-          ticket_id: selectedTicket.id,
-          sender_id: user.id,
-          content: messageText.trim() || '[Mídia]',
-          is_from_contact: false,
-          media_url: mediaUrl,
-          media_type: mediaType,
-        },
-      ]);
+      // Insert message into database primeiro para obter o ID
+      const { data: insertedMessage, error: insertError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            ticket_id: selectedTicket.id,
+            sender_id: user.id,
+            content: messageText.trim() || '[Mídia]',
+            is_from_contact: false,
+            media_url: mediaUrl,
+            media_type: mediaType,
+            status: 'sending',
+          },
+        ])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       // Update ticket
       await supabase
@@ -176,6 +181,7 @@ export default function TicketsImproved() {
         
         console.log('🔵 Telegram send attempt:', {
           chatId,
+          messageId: insertedMessage.id,
           hasMedia: !!mediaUrl,
           mediaType,
           messageText: messageText.trim()
@@ -183,15 +189,16 @@ export default function TicketsImproved() {
         
         if (chatId) {
           try {
-            // Chamar edge function de envio de mídia
+            // Chamar edge function de envio de mídia com messageId
             const { data: sendData, error: sendError } = await supabase.functions.invoke(
               "send-telegram-media",
               {
                 body: {
-                  chatId: Number(chatId),
+                  chatId: chatId,
                   message: messageText.trim(),
                   mediaUrl,
                   mediaType,
+                  messageId: insertedMessage.id,
                 },
               }
             );
@@ -205,6 +212,11 @@ export default function TicketsImproved() {
                 description: sendError.message || "Não foi possível enviar a mensagem",
                 variant: "destructive",
               });
+              // Atualizar status para failed
+              await supabase
+                .from("messages")
+                .update({ status: "failed" })
+                .eq("id", insertedMessage.id);
             } else if (!sendData?.success) {
               console.error("❌ Falha no envio:", sendData);
               toast({
@@ -212,6 +224,11 @@ export default function TicketsImproved() {
                 description: sendData?.error || "Erro ao enviar mensagem",
                 variant: "destructive",
               });
+              // Atualizar status para failed
+              await supabase
+                .from("messages")
+                .update({ status: "failed" })
+                .eq("id", insertedMessage.id);
             } else {
               console.log('✅ Mensagem enviada com sucesso para o Telegram');
             }
@@ -222,6 +239,11 @@ export default function TicketsImproved() {
               description: sendError.message || "Não foi possível enviar a mensagem.",
               variant: "destructive",
             });
+            // Atualizar status para failed
+            await supabase
+              .from("messages")
+              .update({ status: "failed" })
+              .eq("id", insertedMessage.id);
           }
         } else {
           console.error('❌ Chat ID não encontrado');
@@ -230,6 +252,11 @@ export default function TicketsImproved() {
             description: "ID do chat Telegram não encontrado para este contato.",
             variant: "destructive",
           });
+          // Atualizar status para failed
+          await supabase
+            .from("messages")
+            .update({ status: "failed" })
+            .eq("id", insertedMessage.id);
         }
       }
 
@@ -436,16 +463,16 @@ export default function TicketsImproved() {
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.is_from_contact ? "justify-start" : "justify-end"}`}
+                  className={`flex ${message.is_from_contact ? "justify-start" : "justify-end"} group`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-2xl px-4 py-2 ${
+                    className={`max-w-[70%] rounded-2xl px-4 py-2 relative ${
                       message.is_from_contact
                         ? "bg-white shadow-sm"
                         : "bg-primary text-primary-foreground"
                     }`}
                   >
-                    {message.media_url && (
+                    {message.media_url && !message.deleted_at && (
                       <div className="mb-2">
                         {message.media_type === 'image' && (
                           <img 
@@ -458,6 +485,18 @@ export default function TicketsImproved() {
                           <audio controls className="w-full">
                             <source src={message.media_url} />
                           </audio>
+                        )}
+                        {message.media_type === 'video' && (
+                          <video controls className="w-full rounded-lg">
+                            <source src={message.media_url} />
+                          </video>
+                        )}
+                        {message.media_type === 'sticker' && (
+                          <img 
+                            src={message.media_url} 
+                            alt="Sticker" 
+                            className="rounded-lg max-w-full h-auto"
+                          />
                         )}
                         {message.media_type === 'document' && (
                           <a 
@@ -472,16 +511,90 @@ export default function TicketsImproved() {
                         )}
                       </div>
                     )}
-                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                    <div className="flex items-center justify-end gap-1 mt-1">
-                      <Clock className="h-3 w-3 opacity-70" />
-                      <span className="text-xs opacity-70">
-                        {formatDistanceToNow(new Date(message.created_at), {
-                          addSuffix: true,
-                          locale: ptBR,
-                        })}
-                      </span>
+                    <p className="text-sm whitespace-pre-wrap break-words">
+                      {message.deleted_at ? (
+                        <span className="italic opacity-60">Mensagem deletada</span>
+                      ) : (
+                        message.content
+                      )}
+                    </p>
+                    <div className="flex items-center justify-between gap-2 mt-1">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3 opacity-70" />
+                        <span className="text-xs opacity-70">
+                          {formatDistanceToNow(new Date(message.created_at), {
+                            addSuffix: true,
+                            locale: ptBR,
+                          })}
+                        </span>
+                      </div>
+                      {!message.is_from_contact && !message.deleted_at && (
+                        <div className="flex items-center gap-1">
+                          {message.status === 'sending' && (
+                            <Loader2 className="h-3 w-3 animate-spin opacity-70" />
+                          )}
+                          {message.status === 'sent' && (
+                            <Check className="h-3 w-3 opacity-70" />
+                          )}
+                          {message.status === 'delivered' && (
+                            <CheckCheck className="h-3 w-3 opacity-70" />
+                          )}
+                          {message.status === 'read' && (
+                            <CheckCheck className="h-3 w-3 text-blue-500" />
+                          )}
+                          {message.status === 'failed' && (
+                            <X className="h-3 w-3 text-red-500" />
+                          )}
+                        </div>
+                      )}
                     </div>
+                    {/* Botão de deletar (só aparece no hover para mensagens não deletadas e enviadas por nós) */}
+                    {!message.is_from_contact && !message.deleted_at && message.telegram_message_id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="absolute -right-12 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={async () => {
+                          try {
+                            const chatId = selectedTicket.contact?.metadata?.telegram_chat_id;
+                            if (!chatId) {
+                              toast({
+                                title: "Erro",
+                                description: "Chat ID não encontrado",
+                                variant: "destructive",
+                              });
+                              return;
+                            }
+
+                            const { error } = await supabase.functions.invoke("delete-telegram-message", {
+                              body: {
+                                messageId: message.id,
+                                chatId: chatId,
+                                telegramMessageId: message.telegram_message_id,
+                              },
+                            });
+
+                            if (error) throw error;
+
+                            toast({
+                              title: "Mensagem deletada",
+                              description: "A mensagem foi deletada com sucesso",
+                            });
+
+                            loadMessages(selectedTicket.id);
+                          } catch (error: any) {
+                            console.error("Erro ao deletar mensagem:", error);
+                            toast({
+                              title: "Erro",
+                              description: error.message || "Não foi possível deletar a mensagem",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}

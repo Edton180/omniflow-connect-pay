@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TelegramQRLogin } from "./TelegramQRLogin";
 
 export const ChannelList = () => {
   const { toast } = useToast();
@@ -550,7 +551,33 @@ export const ChannelList = () => {
                       placeholder="Token do seu bot do Telegram"
                       type="password"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Obtenha seu token com o @BotFather no Telegram
+                    </p>
                   </div>
+                </>
+              )}
+
+              {formData.type === "telegram-qr" && selectedChannel && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-muted rounded-lg">
+                    <p className="text-sm mb-4">
+                      Use o QR Code ou insira o token do bot manualmente para conectar:
+                    </p>
+                    <TelegramQRLogin
+                      channelId={selectedChannel.id}
+                      tenantId={selectedChannel.tenant_id}
+                      onSuccess={() => {
+                        setDialogOpen(false);
+                        loadChannels();
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.type === "facebook" && (
+                <>
                   <div className="space-y-2">
                     <Label htmlFor="telegram_webhook">Webhook URL</Label>
                     <Input

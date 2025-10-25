@@ -568,33 +568,42 @@ export type Database = {
           contact_id: string | null
           content: string
           created_at: string | null
+          deleted_at: string | null
           id: string
           is_from_contact: boolean | null
           media_type: string | null
           media_url: string | null
           sender_id: string | null
+          status: string | null
+          telegram_message_id: number | null
           ticket_id: string
         }
         Insert: {
           contact_id?: string | null
           content: string
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           is_from_contact?: boolean | null
           media_type?: string | null
           media_url?: string | null
           sender_id?: string | null
+          status?: string | null
+          telegram_message_id?: number | null
           ticket_id: string
         }
         Update: {
           contact_id?: string | null
           content?: string
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           is_from_contact?: boolean | null
           media_type?: string | null
           media_url?: string | null
           sender_id?: string | null
+          status?: string | null
+          telegram_message_id?: number | null
           ticket_id?: string
         }
         Relationships: [
@@ -966,6 +975,60 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_qr_sessions: {
+        Row: {
+          bot_token: string | null
+          channel_id: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          login_token: string
+          qr_code_url: string
+          status: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          bot_token?: string | null
+          channel_id: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          login_token: string
+          qr_code_url: string
+          status?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          bot_token?: string | null
+          channel_id?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          login_token?: string
+          qr_code_url?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_qr_sessions_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "telegram_qr_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenants: {
         Row: {
           created_at: string | null
@@ -1178,22 +1241,13 @@ export type Database = {
         Args: { _company_name?: string; _user_id: string }
         Returns: string
       }
-      check_and_generate_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      has_role: {
-        Args: { _role: string; _user_id: string }
-        Returns: boolean
-      }
+      check_and_generate_invoices: { Args: never; Returns: undefined }
+      has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
-      notify_overdue_invoices: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      notify_overdue_invoices: { Args: never; Returns: undefined }
       process_invoice_payment: {
         Args: { invoice_id_param: string }
         Returns: Json

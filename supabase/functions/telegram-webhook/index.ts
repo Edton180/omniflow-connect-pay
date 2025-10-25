@@ -18,93 +18,18 @@ serve(async (req) => {
     );
 
     const update = await req.json();
-    console.log("Telegram webhook received:", JSON.stringify(update));
+    console.log("📨 Telegram webhook recebido:", JSON.stringify(update, null, 2));
 
     // Processar mensagem do Telegram
     if (update.message) {
       const message = update.message;
       const chatId = message.chat.id.toString();
+      const telegramMessageId = message.message_id;
       const from = message.from;
 
-      console.log("Processando mensagem do chat:", chatId, "de:", from.username || from.first_name);
+      console.log("👤 Processando mensagem do chat:", chatId, "de:", from.username || from.first_name, "message_id:", telegramMessageId);
 
-      // Determinar tipo e conteúdo da mensagem
-      let messageContent = "";
-      let mediaUrl = null;
-      let mediaType = null;
-      let fileId = null;
-
-      if (message.text) {
-        messageContent = message.text;
-      } else if (message.photo && message.photo.length > 0) {
-        // Pegar a maior resolução da foto
-        const photo = message.photo[message.photo.length - 1];
-        fileId = photo.file_id;
-        mediaType = "image";
-        messageContent = message.caption || "[Imagem]";
-      } else if (message.audio) {
-        fileId = message.audio.file_id;
-        mediaType = "audio";
-        messageContent = message.caption || "[Áudio]";
-      } else if (message.voice) {
-        fileId = message.voice.file_id;
-        mediaType = "audio";
-        messageContent = message.caption || "[Mensagem de voz]";
-      } else if (message.document) {
-        fileId = message.document.file_id;
-        mediaType = "document";
-        messageContent = message.caption || `[Documento: ${message.document.file_name || "arquivo"}]`;
-      } else if (message.sticker) {
-        fileId = message.sticker.file_id;
-        mediaType = "sticker";
-        messageContent = message.sticker.emoji || "[Sticker]";
-      } else if (message.video) {
-        fileId = message.video.file_id;
-        mediaType = "video";
-        messageContent = message.caption || "[Vídeo]";
-      }
-
-      // Buscar bot token para baixar arquivos
-      let botToken = null;
-      if (fileId) {
-        const { data: channelsConfig } = await supabaseAdmin
-          .from("channels")
-          .select("config")
-          .eq("type", "telegram")
-          .eq("status", "active")
-          .limit(1);
-
-        if (channelsConfig && channelsConfig.length > 0) {
-          botToken = channelsConfig[0].config?.bot_token;
-          
-          // Obter URL real do arquivo usando getFile
-          try {
-            const fileResponse = await fetch(
-              `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
-            );
-            const fileData = await fileResponse.json();
-            
-            if (fileData.ok && fileData.result.file_path) {
-              mediaUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-              console.log("Media URL obtida:", mediaUrl);
-            }
-          } catch (error) {
-            console.error("Erro ao obter URL do arquivo:", error);
-          }
-        }
-      }
-
-      console.log("Tipo de mensagem:", mediaType || "text", "Conteúdo:", messageContent);
-
-      // Buscar ou criar contato
-      const contactName = from.first_name + (from.last_name ? ` ${from.last_name}` : "");
-      const contactPhone = from.username ? `@${from.username}` : chatId;
-
-      // Buscar canal do Telegram configurado - tentar primeiro pelo bot username se disponível
-      let channel;
-      let tenantId;
-
-      // Buscar todos os canais Telegram ativos
+      // Buscar canal do Telegram configurado
       const { data: channels, error: channelsError } = await supabaseAdmin
         .from("channels")
         .select("*")
@@ -112,31 +37,92 @@ serve(async (req) => {
         .eq("status", "active");
 
       if (channelsError) {
-        console.error("Erro ao buscar canais:", channelsError);
+        console.error("❌ Erro ao buscar canais:", channelsError);
         throw channelsError;
       }
 
       if (!channels || channels.length === 0) {
-        console.log("Nenhum canal Telegram ativo encontrado");
+        console.log("⚠️ Nenhum canal Telegram ativo encontrado");
         return new Response(JSON.stringify({ ok: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Se há apenas um canal, usar ele
-      if (channels.length === 1) {
-        channel = channels[0];
-        tenantId = channel.tenant_id;
-        console.log("Usando único canal Telegram encontrado:", channel.id);
+      const channel = channels[0];
+      const tenantId = channel.tenant_id;
+      const botToken = channel.config?.bot_token;
+      
+      console.log("📡 Usando canal:", channel.id, "tenant:", tenantId);
+
+      // Determinar tipo e conteúdo da mensagem
+      let messageContent = "";
+      let mediaUrl: string | null = null;
+      let mediaType: string | null = null;
+      let fileId: string | null = null;
+
+      if (message.text) {
+        messageContent = message.text;
+        console.log("💬 Mensagem de texto recebida");
+      } else if (message.photo && message.photo.length > 0) {
+        const photo = message.photo[message.photo.length - 1];
+        fileId = photo.file_id;
+        mediaType = "image";
+        messageContent = message.caption || "[Imagem]";
+        console.log("🖼️ Foto recebida, file_id:", fileId);
+      } else if (message.audio) {
+        fileId = message.audio.file_id;
+        mediaType = "audio";
+        messageContent = message.caption || "[Áudio]";
+        console.log("🎵 Áudio recebido, file_id:", fileId);
+      } else if (message.voice) {
+        fileId = message.voice.file_id;
+        mediaType = "audio";
+        messageContent = message.caption || "[Mensagem de voz]";
+        console.log("🎤 Mensagem de voz recebida, file_id:", fileId);
+      } else if (message.document) {
+        fileId = message.document.file_id;
+        mediaType = "document";
+        messageContent = message.caption || `[Documento: ${message.document.file_name || "arquivo"}]`;
+        console.log("📄 Documento recebido, file_id:", fileId);
+      } else if (message.sticker) {
+        fileId = message.sticker.file_id;
+        mediaType = "sticker";
+        messageContent = message.sticker.emoji || "[Figurinha]";
+        console.log("😊 Figurinha recebida, file_id:", fileId);
+      } else if (message.video) {
+        fileId = message.video.file_id;
+        mediaType = "video";
+        messageContent = message.caption || "[Vídeo]";
+        console.log("🎥 Vídeo recebido, file_id:", fileId);
       } else {
-        // Se há múltiplos canais, tentar identificar pelo bot token
-        // Por enquanto, usar o primeiro canal ativo
-        channel = channels[0];
-        tenantId = channel.tenant_id;
-        console.log("Múltiplos canais encontrados, usando o primeiro:", channel.id);
+        console.log("⚠️ Tipo de mensagem não suportado");
+        messageContent = "[Mensagem não suportada]";
+      }
+
+      // Obter URL do arquivo se houver
+      if (fileId && botToken) {
+        try {
+          console.log("🔄 Obtendo URL do arquivo via getFile API...");
+          const fileResponse = await fetch(
+            `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
+          );
+          const fileData = await fileResponse.json();
+          
+          if (fileData.ok && fileData.result.file_path) {
+            mediaUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+            console.log("✅ URL do arquivo obtida:", mediaUrl);
+          } else {
+            console.error("❌ Erro ao obter arquivo do Telegram:", fileData);
+          }
+        } catch (error) {
+          console.error("❌ Exceção ao obter URL do arquivo:", error);
+        }
       }
 
       // Buscar ou criar contato
+      const contactName = from.first_name + (from.last_name ? ` ${from.last_name}` : "");
+      const contactPhone = from.username ? `@${from.username}` : chatId;
+
       let contact;
       const { data: existingContacts } = await supabaseAdmin
         .from("contacts")
@@ -147,6 +133,7 @@ serve(async (req) => {
 
       if (existingContacts) {
         contact = existingContacts;
+        console.log("👤 Contato existente encontrado:", contact.id);
       } else {
         const { data: newContact, error: contactError } = await supabaseAdmin
           .from("contacts")
@@ -163,13 +150,14 @@ serve(async (req) => {
           .single();
 
         if (contactError) {
-          console.error("Error creating contact:", contactError);
+          console.error("❌ Erro ao criar contato:", contactError);
           throw contactError;
         }
         contact = newContact;
+        console.log("✅ Novo contato criado:", contact.id);
       }
 
-      // Buscar ticket aberto para este contato
+      // Buscar ou criar ticket
       let ticket;
       const { data: existingTickets } = await supabaseAdmin
         .from("tickets")
@@ -180,14 +168,12 @@ serve(async (req) => {
 
       if (existingTickets) {
         ticket = existingTickets;
-        
-        // Atualizar última mensagem
         await supabaseAdmin
           .from("tickets")
           .update({ last_message: messageContent, updated_at: new Date().toISOString() })
           .eq("id", ticket.id);
+        console.log("📋 Ticket existente atualizado:", ticket.id);
       } else {
-        // Criar novo ticket
         const { data: newTicket, error: ticketError } = await supabaseAdmin
           .from("tickets")
           .insert({
@@ -202,14 +188,15 @@ serve(async (req) => {
           .single();
 
         if (ticketError) {
-          console.error("Error creating ticket:", ticketError);
+          console.error("❌ Erro ao criar ticket:", ticketError);
           throw ticketError;
         }
         ticket = newTicket;
+        console.log("✅ Novo ticket criado:", ticket.id);
       }
 
-      // Criar mensagem
-      await supabaseAdmin
+      // Criar mensagem com status "delivered"
+      const { error: messageError } = await supabaseAdmin
         .from("messages")
         .insert({
           ticket_id: ticket.id,
@@ -218,9 +205,16 @@ serve(async (req) => {
           is_from_contact: true,
           media_url: mediaUrl,
           media_type: mediaType,
+          telegram_message_id: telegramMessageId,
+          status: "delivered",
         });
 
-      console.log(`Message processed for ticket ${ticket.id}`);
+      if (messageError) {
+        console.error("❌ Erro ao criar mensagem:", messageError);
+        throw messageError;
+      }
+
+      console.log(`✅ Mensagem processada com sucesso para o ticket ${ticket.id}`);
     }
 
     return new Response(JSON.stringify({ ok: true }), {
@@ -228,7 +222,7 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    console.error("Error processing Telegram webhook:", error);
+    console.error("❌ Erro ao processar webhook do Telegram:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: errorMessage }),

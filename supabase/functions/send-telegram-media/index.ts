@@ -12,13 +12,13 @@ serve(async (req) => {
   }
 
   try {
-    const { chatId, message, mediaUrl, mediaType, botToken } = await req.json();
+    const { chatId, message, mediaUrl, mediaType, botToken, messageId } = await req.json();
 
-    console.log("Recebido pedido de envio:", { chatId, message, mediaUrl, mediaType });
+    console.log("📤 Pedido de envio recebido:", { chatId, message, mediaUrl, mediaType, messageId });
 
     if (!chatId) {
       return new Response(
-        JSON.stringify({ error: "Missing required field: chatId" }),
+        JSON.stringify({ error: "Campo obrigatório ausente: chatId" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -28,7 +28,15 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // Get bot token from channel_configs if not provided
+    // Atualizar status da mensagem para "sending"
+    if (messageId) {
+      await supabaseAdmin
+        .from("messages")
+        .update({ status: "sending" })
+        .eq("id", messageId);
+    }
+
+    // Obter bot token se não fornecido
     let telegramBotToken = botToken;
 
     if (!telegramBotToken) {
@@ -40,8 +48,14 @@ serve(async (req) => {
         .limit(1);
 
       if (!configs || configs.length === 0) {
+        if (messageId) {
+          await supabaseAdmin
+            .from("messages")
+            .update({ status: "failed" })
+            .eq("id", messageId);
+        }
         return new Response(
-          JSON.stringify({ error: "Telegram not configured" }),
+          JSON.stringify({ error: "Telegram não configurado" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -50,49 +64,63 @@ serve(async (req) => {
     }
 
     if (!telegramBotToken) {
+      if (messageId) {
+        await supabaseAdmin
+          .from("messages")
+          .update({ status: "failed" })
+          .eq("id", messageId);
+      }
       return new Response(
-        JSON.stringify({ error: "Bot token not found" }),
+        JSON.stringify({ error: "Token do bot não encontrado" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     let endpoint = "";
     let body: any = {
-      chat_id: Number(chatId),
+      chat_id: chatId,
     };
 
     // Determinar endpoint e payload baseado no tipo de mídia
     if (!mediaUrl || !mediaType) {
-      // Mensagem de texto simples
       endpoint = "sendMessage";
       body.text = message || "Mensagem sem conteúdo";
       body.parse_mode = "HTML";
+      console.log("💬 Enviando mensagem de texto");
     } else if (mediaType === "image") {
       endpoint = "sendPhoto";
       body.photo = mediaUrl;
       if (message) body.caption = message;
+      console.log("🖼️ Enviando foto");
     } else if (mediaType === "audio") {
       endpoint = "sendAudio";
       body.audio = mediaUrl;
       if (message) body.caption = message;
+      console.log("🎵 Enviando áudio");
     } else if (mediaType === "video") {
       endpoint = "sendVideo";
       body.video = mediaUrl;
       if (message) body.caption = message;
-    } else if (mediaType === "document" || mediaType === "sticker") {
+      console.log("🎥 Enviando vídeo");
+    } else if (mediaType === "sticker") {
+      endpoint = "sendSticker";
+      body.sticker = mediaUrl;
+      console.log("😊 Enviando figurinha");
+    } else if (mediaType === "document") {
       endpoint = "sendDocument";
       body.document = mediaUrl;
       if (message) body.caption = message;
+      console.log("📄 Enviando documento");
     } else {
-      // Fallback para documento
       endpoint = "sendDocument";
       body.document = mediaUrl;
       if (message) body.caption = message;
+      console.log("📎 Enviando como documento (fallback)");
     }
 
-    console.log(`Enviando para Telegram via ${endpoint}:`, body);
+    console.log(`🚀 Enviando para Telegram via ${endpoint}:`, JSON.stringify(body, null, 2));
 
-    // Send message via Telegram Bot API
+    // Enviar mensagem via Telegram Bot API
     const response = await fetch(
       `https://api.telegram.org/bot${telegramBotToken}/${endpoint}`,
       {
@@ -107,25 +135,49 @@ serve(async (req) => {
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Telegram API error:", data);
+      console.error("❌ Erro da API do Telegram:", data);
+      
+      // Atualizar status da mensagem para "failed"
+      if (messageId) {
+        await supabaseAdmin
+          .from("messages")
+          .update({ status: "failed" })
+          .eq("id", messageId);
+      }
+      
       return new Response(
         JSON.stringify({ 
-          error: data.description || "Failed to send message",
+          error: data.description || "Falha ao enviar mensagem",
           details: data 
         }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Telegram message sent successfully:", data);
+    console.log("✅ Mensagem enviada com sucesso:", data);
 
-    return new Response(JSON.stringify({ success: true, data }), {
+    // Atualizar status da mensagem para "sent" e salvar telegram_message_id
+    if (messageId && data.result?.message_id) {
+      await supabaseAdmin
+        .from("messages")
+        .update({ 
+          status: "sent",
+          telegram_message_id: data.result.message_id
+        })
+        .eq("id", messageId);
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      data,
+      telegram_message_id: data.result?.message_id
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
   } catch (error) {
-    console.error("Error sending Telegram message:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("❌ Erro ao enviar mensagem do Telegram:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
     return new Response(
       JSON.stringify({ error: errorMessage }),
       {
