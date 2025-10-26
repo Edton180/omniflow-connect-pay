@@ -120,9 +120,15 @@ export const ChannelList = () => {
     },
     {
       type: "telegram",
-      name: "Telegram",
+      name: "Telegram Bot",
       icon: "send",
-      description: "Telegram Bot oficial",
+      description: "Telegram Bot com token manual",
+    },
+    {
+      type: "telegram-qr",
+      name: "Telegram (QR Code)",
+      icon: "qr-code",
+      description: "Login via QR Code do Telegram",
     },
     {
       type: "facebook",
@@ -199,6 +205,71 @@ export const ChannelList = () => {
 
   const handleSave = async () => {
     try {
+      // Para telegram-qr, precisamos criar o canal primeiro antes de mostrar o QR
+      if (formData.type === "telegram-qr" && !selectedChannel) {
+        let tenantId: string;
+
+        if (isSuperAdmin) {
+          if (!formData.tenant_id) {
+            toast({
+              title: "Erro",
+              description: "Selecione uma empresa para criar o canal",
+              variant: "destructive",
+            });
+            return;
+          }
+          tenantId = formData.tenant_id;
+        } else {
+          const { data: userRole, error: roleError } = await supabase
+            .from("user_roles")
+            .select("tenant_id")
+            .eq("user_id", session?.user?.id)
+            .maybeSingle();
+
+          if (roleError) throw roleError;
+
+          if (!userRole?.tenant_id) {
+            toast({
+              title: "Erro",
+              description: "Você precisa estar associado a uma empresa para criar canais",
+              variant: "destructive",
+            });
+            return;
+          }
+          tenantId = userRole.tenant_id;
+        }
+
+        const channelData = {
+          name: formData.name || "Telegram QR",
+          type: "telegram",
+          config: {},
+          tenant_id: tenantId,
+          status: "inactive",
+        };
+
+        const { data, error } = await supabase
+          .from("channels")
+          .insert([channelData])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Atualizar selectedChannel para mostrar o QR
+        setSelectedChannel(data);
+        setFormData({
+          ...formData,
+          tenant_id: tenantId,
+        });
+
+        toast({
+          title: "Canal criado",
+          description: "Agora faça login com QR Code ou token manual",
+        });
+
+        return; // Não fechar o diálogo, mostrar o QR
+      }
+
       let tenantId: string;
 
       // Se for super_admin, usa o tenant_id selecionado
@@ -556,6 +627,26 @@ export const ChannelList = () => {
                     </p>
                   </div>
                 </>
+              )}
+
+              {formData.type === "telegram-qr" && !selectedChannel && (
+                <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <QrCode className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="space-y-2">
+                      <h4 className="font-semibold">Login via QR Code</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Após salvar, você poderá fazer login no Telegram escaneando um QR Code
+                        ou inserindo o token do bot manualmente.
+                      </p>
+                      <p className="text-xs text-amber-600 font-medium mt-2">
+                        ⚠️ Clique em "Salvar Configuração" para continuar
+                      </p>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {formData.type === "telegram-qr" && selectedChannel && (
