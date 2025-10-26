@@ -184,7 +184,8 @@ export default function TicketsImproved() {
           messageId: insertedMessage.id,
           hasMedia: !!mediaUrl,
           mediaType,
-          messageText: messageText.trim()
+          messageText: messageText.trim(),
+          contactMetadata: selectedTicket.contact?.metadata
         });
         
         if (chatId) {
@@ -194,10 +195,10 @@ export default function TicketsImproved() {
               "send-telegram-media",
               {
                 body: {
-                  chatId: chatId,
+                  chatId: String(chatId),
                   message: messageText.trim(),
-                  mediaUrl,
-                  mediaType,
+                  mediaUrl: mediaUrl || null,
+                  mediaType: mediaType || null,
                   messageId: insertedMessage.id,
                 },
               }
@@ -231,6 +232,10 @@ export default function TicketsImproved() {
                 .eq("id", insertedMessage.id);
             } else {
               console.log('✅ Mensagem enviada com sucesso para o Telegram');
+              toast({
+                title: "Mensagem enviada",
+                description: "Sua mensagem foi enviada com sucesso.",
+              });
             }
           } catch (sendError: any) {
             console.error("❌ Erro ao enviar para Telegram:", sendError);
@@ -265,11 +270,6 @@ export default function TicketsImproved() {
       setMediaType(null);
       loadMessages(selectedTicket.id);
       loadTickets();
-
-      toast({
-        title: "Mensagem enviada",
-        description: "Sua mensagem foi enviada com sucesso.",
-      });
     } catch (error: any) {
       toast({
         title: "Erro ao enviar",
@@ -436,8 +436,16 @@ export default function TicketsImproved() {
                       <User className="h-5 w-5" />
                     </AvatarFallback>
                   </Avatar>
-                  <div>
-                    <h3 className="font-semibold">{selectedTicket.contact?.name}</h3>
+                    <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{selectedTicket.contact?.name}</h3>
+                      {selectedTicket.contact?.metadata?.online && (
+                        <div className="flex items-center gap-1">
+                          <div className="h-2 w-2 bg-green-500 rounded-full" />
+                          <span className="text-xs text-green-600 dark:text-green-400">Online</span>
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       {selectedTicket.contact?.phone && (
                         <span className="flex items-center gap-1">
@@ -468,7 +476,7 @@ export default function TicketsImproved() {
                   <div
                     className={`max-w-[70%] rounded-2xl px-4 py-2 relative ${
                       message.is_from_contact
-                        ? "bg-white shadow-sm"
+                        ? "bg-card text-card-foreground shadow-sm border"
                         : "bg-primary text-primary-foreground"
                     }`}
                   >

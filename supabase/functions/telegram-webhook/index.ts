@@ -134,6 +134,19 @@ serve(async (req) => {
       if (existingContacts) {
         contact = existingContacts;
         console.log("👤 Contato existente encontrado:", contact.id);
+        // Atualizar status online
+        await supabaseAdmin
+          .from("contacts")
+          .update({
+            metadata: {
+              ...existingContacts.metadata,
+              telegram_chat_id: chatId,
+              telegram_username: from.username,
+              online: true,
+              last_seen: new Date().toISOString(),
+            },
+          })
+          .eq("id", contact.id);
       } else {
         const { data: newContact, error: contactError } = await supabaseAdmin
           .from("contacts")
@@ -144,6 +157,8 @@ serve(async (req) => {
             metadata: {
               telegram_chat_id: chatId,
               telegram_username: from.username,
+              online: true,
+              last_seen: new Date().toISOString(),
             },
           })
           .select()

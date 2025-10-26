@@ -203,7 +203,7 @@ const Dashboard = () => {
 
               <Button 
                 variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
+                className="justify-start h-auto py-4 px-6 hover-scale bg-card border-border hover:bg-accent/10"
                 onClick={() => navigate("/contacts")}
               >
                 <div className="flex items-start gap-4 text-left">
@@ -211,8 +211,8 @@ const Dashboard = () => {
                     <Users className="w-5 h-5 text-secondary" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Gerenciar Contatos</div>
-                    <div className="text-sm text-foreground/60">
+                    <div className="font-semibold mb-1 text-foreground">Gerenciar Contatos</div>
+                    <div className="text-sm text-muted-foreground">
                       Adicione e organize seus contatos
                     </div>
                   </div>
@@ -221,7 +221,7 @@ const Dashboard = () => {
 
               <Button 
                 variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
+                className="justify-start h-auto py-4 px-6 hover-scale bg-card border-border hover:bg-accent/10"
                 onClick={() => navigate("/queues")}
               >
                 <div className="flex items-start gap-4 text-left">
@@ -229,8 +229,8 @@ const Dashboard = () => {
                     <Workflow className="w-5 h-5 text-accent" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Configurar Filas</div>
-                    <div className="text-sm text-foreground/60">
+                    <div className="font-semibold mb-1 text-foreground">Configurar Filas</div>
+                    <div className="text-sm text-muted-foreground">
                       Organize o fluxo de atendimento
                     </div>
                   </div>
@@ -239,7 +239,7 @@ const Dashboard = () => {
 
               <Button 
                 variant="outline" 
-                className="justify-start h-auto py-4 px-6 hover-scale"
+                className="justify-start h-auto py-4 px-6 hover-scale bg-card border-border hover:bg-accent/10"
                 onClick={() => navigate("/channels")}
               >
                 <div className="flex items-start gap-4 text-left">
@@ -247,7 +247,7 @@ const Dashboard = () => {
                     <MessageSquare className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1">Conectar Canais</div>
+                    <div className="font-semibold mb-1 text-foreground">Conectar Canais</div>
                     <div className="text-sm text-foreground/60">
                       WhatsApp, Instagram e mais
                     </div>

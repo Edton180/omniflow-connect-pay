@@ -131,18 +131,18 @@ export const DashboardStats = () => {
 
   return (
     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/95 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
-            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Ativo
             </CardDescription>
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <MessageSquare className="w-6 h-6 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-4xl font-bold">{stats.openTickets}</CardTitle>
+          <CardTitle className="text-4xl font-bold text-foreground">{stats.openTickets}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
           <div className="flex items-center gap-2 text-xs">
@@ -152,24 +152,24 @@ export const DashboardStats = () => {
                 <span className="text-green-500 font-medium">+{stats.ticketsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-foreground/60">Sem novos tickets</span>
+              <span className="text-muted-foreground">Sem novos tickets</span>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/95 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-secondary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
-            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Novos Contatos
             </CardDescription>
             <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center">
               <Users className="w-6 h-6 text-secondary" />
             </div>
           </div>
-          <CardTitle className="text-4xl font-bold">{stats.totalContacts}</CardTitle>
+          <CardTitle className="text-4xl font-bold text-foreground">{stats.totalContacts}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
           <div className="flex items-center gap-2 text-xs">
@@ -179,47 +179,47 @@ export const DashboardStats = () => {
                 <span className="text-green-500 font-medium">+{stats.contactsTrend} esta semana</span>
               </>
             ) : (
-              <span className="text-foreground/60">Sem novos contatos</span>
+              <span className="text-muted-foreground">Sem novos contatos</span>
             )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/95 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
-            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Tempo Médio Atendimento
             </CardDescription>
             <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
               <Clock className="w-6 h-6 text-accent" />
             </div>
           </div>
-          <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
+          <CardTitle className="text-4xl font-bold text-foreground">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-foreground/60">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             Tempo médio de resposta
           </div>
         </CardContent>
       </Card>
 
-      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-card to-card/50 backdrop-blur-sm overflow-hidden group">
+      <Card className="relative border-border/50 shadow-md hover:shadow-xl transition-all duration-300 bg-card/95 backdrop-blur-sm overflow-hidden group">
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-500"></div>
         <CardHeader className="pb-3 relative z-10">
           <div className="flex items-start justify-between mb-2">
-            <CardDescription className="text-xs font-semibold uppercase tracking-wider">
+            <CardDescription className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Tempo Médio 1ª Resposta
             </CardDescription>
             <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
               <Clock className="w-6 h-6 text-primary" />
             </div>
           </div>
-          <CardTitle className="text-4xl font-bold">{stats.avgResponseTime}</CardTitle>
+          <CardTitle className="text-4xl font-bold text-foreground">{stats.avgResponseTime}</CardTitle>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-foreground/60">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             Primeira resposta média
           </div>
         </CardContent>
