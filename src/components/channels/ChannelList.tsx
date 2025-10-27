@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
-import { QrCode, Trash2 } from "lucide-react";
+import { QrCode, Trash2, MessageSquare } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -18,7 +18,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TelegramQRLogin } from "./TelegramQRLogin";
 
 export const ChannelList = () => {
   const { toast } = useToast();
@@ -125,12 +124,6 @@ export const ChannelList = () => {
       description: "Telegram Bot com token manual",
     },
     {
-      type: "telegram-qr",
-      name: "Telegram (QR Code)",
-      icon: "qr-code",
-      description: "Login via QR Code do Telegram",
-    },
-    {
       type: "facebook",
       name: "Facebook Messenger",
       icon: "facebook",
@@ -205,71 +198,6 @@ export const ChannelList = () => {
 
   const handleSave = async () => {
     try {
-      // Para telegram-qr, precisamos criar o canal primeiro antes de mostrar o QR
-      if (formData.type === "telegram-qr" && !selectedChannel) {
-        let tenantId: string;
-
-        if (isSuperAdmin) {
-          if (!formData.tenant_id) {
-            toast({
-              title: "Erro",
-              description: "Selecione uma empresa para criar o canal",
-              variant: "destructive",
-            });
-            return;
-          }
-          tenantId = formData.tenant_id;
-        } else {
-          const { data: userRole, error: roleError } = await supabase
-            .from("user_roles")
-            .select("tenant_id")
-            .eq("user_id", session?.user?.id)
-            .maybeSingle();
-
-          if (roleError) throw roleError;
-
-          if (!userRole?.tenant_id) {
-            toast({
-              title: "Erro",
-              description: "Você precisa estar associado a uma empresa para criar canais",
-              variant: "destructive",
-            });
-            return;
-          }
-          tenantId = userRole.tenant_id;
-        }
-
-        const channelData = {
-          name: formData.name || "Telegram QR",
-          type: "telegram",
-          config: {},
-          tenant_id: tenantId,
-          status: "inactive",
-        };
-
-        const { data, error } = await supabase
-          .from("channels")
-          .insert([channelData])
-          .select()
-          .single();
-
-        if (error) throw error;
-
-        // Atualizar selectedChannel para mostrar o QR
-        setSelectedChannel(data);
-        setFormData({
-          ...formData,
-          tenant_id: tenantId,
-        });
-
-        toast({
-          title: "Canal criado",
-          description: "Agora faça login com QR Code ou token manual",
-        });
-
-        return; // Não fechar o diálogo, mostrar o QR
-      }
-
       let tenantId: string;
 
       // Se for super_admin, usa o tenant_id selecionado
@@ -629,40 +557,35 @@ export const ChannelList = () => {
                 </>
               )}
 
-              {formData.type === "telegram-qr" && !selectedChannel && (
-                <div className="space-y-4 p-4 bg-primary/5 rounded-lg border border-primary/20">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <QrCode className="w-5 h-5 text-primary" />
+              {formData.type === "telegram" && selectedChannel && (
+                <div className="space-y-4">
+                  <div className="p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MessageSquare className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="space-y-2">
+                        <h4 className="font-semibold">Configurar Bot do Telegram</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Insira o token do bot do Telegram para conectar. <a href="https://core.telegram.org/bots#botfather" target="_blank" rel="noopener noreferrer" className="text-primary underline">Obtenha um token no BotFather</a>.
+                        </p>
+                      </div>
                     </div>
                     <div className="space-y-2">
-                      <h4 className="font-semibold">Login via QR Code</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Após salvar, você poderá fazer login no Telegram escaneando um QR Code
-                        ou inserindo o token do bot manualmente.
-                      </p>
-                      <p className="text-xs text-amber-600 font-medium mt-2">
-                        ⚠️ Clique em "Salvar Configuração" para continuar
-                      </p>
+                      <Label htmlFor="bot_token">Token do Bot</Label>
+                      <Input
+                        id="bot_token"
+                        type="text"
+                        placeholder="1234567890:ABCdefGhIJKlmNoPQRsTUVwxyZ"
+                        value={formData.config?.bot_token || ""}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            config: { ...formData.config, bot_token: e.target.value },
+                          })
+                        }
+                      />
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {formData.type === "telegram-qr" && selectedChannel && (
-                <div className="space-y-4">
-                  <div className="p-4 bg-muted rounded-lg">
-                    <p className="text-sm mb-4">
-                      Use o QR Code ou insira o token do bot manualmente para conectar:
-                    </p>
-                    <TelegramQRLogin
-                      channelId={selectedChannel.id}
-                      tenantId={selectedChannel.tenant_id}
-                      onSuccess={() => {
-                        setDialogOpen(false);
-                        loadChannels();
-                      }}
-                    />
                   </div>
                 </div>
               )}

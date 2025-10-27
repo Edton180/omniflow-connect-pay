@@ -14,7 +14,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function CRM() {
   const navigate = useNavigate();
-  const { signOut, user } = useAuth();
+  const { signOut, user, loading } = useAuth();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [columnDialogOpen, setColumnDialogOpen] = useState(false);
@@ -27,9 +27,11 @@ export default function CRM() {
   const [editingLead, setEditingLead] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
-    setupRealtimeSubscription();
-  }, []);
+    if (!loading && user) {
+      loadData();
+      setupRealtimeSubscription();
+    }
+  }, [loading, user]);
 
   const setupRealtimeSubscription = () => {
     const leadsChannel = supabase
@@ -59,11 +61,7 @@ export default function CRM() {
   const loadData = async () => {
     try {
       if (!user?.id) {
-        toast({
-          title: "Erro",
-          description: "Usuário não autenticado",
-          variant: "destructive",
-        });
+        console.log("Aguardando autenticação do usuário...");
         return;
       }
 
@@ -354,6 +352,28 @@ export default function CRM() {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground mb-4">Você precisa estar autenticado</p>
+          <Button onClick={() => navigate("/auth")}>Fazer Login</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
