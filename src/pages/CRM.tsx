@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ArrowLeft, Plus, LogOut, Users, Pencil, X } from "lucide-react";
+import { ArrowLeft, Plus, LogOut, Users, Pencil, X, MessageSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -445,29 +445,54 @@ export default function CRM() {
                   .map(lead => (
                      <Card 
                       key={lead.id} 
-                      className="p-3 cursor-move hover:shadow-lg transition-shadow group"
+                      className="p-3 cursor-pointer hover:shadow-lg transition-shadow group"
                       draggable
                       onDragStart={() => handleDragStart(lead)}
+                      onClick={() => {
+                        if (lead.ticket_id) {
+                          navigate(`/ticket/${lead.ticket_id}`);
+                        }
+                      }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
                           <h4 className="font-semibold text-sm">{lead.name}</h4>
                           {lead.email && <p className="text-xs text-muted-foreground">{lead.email}</p>}
                           {lead.phone && <p className="text-xs text-muted-foreground">{lead.phone}</p>}
+                          {lead.ticket_id && (
+                            <p className="text-xs text-primary mt-1">📞 Ticket ativo</p>
+                          )}
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setFormData({ name: lead.name, email: lead.email || "", phone: lead.phone || "" });
-                            setEditingLead(lead.id);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Pencil className="h-3 w-3" />
-                        </Button>
+                        <div className="flex gap-1">
+                          {lead.ticket_id && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/ticket/${lead.ticket_id}`);
+                              }}
+                              title="Abrir conversa"
+                            >
+                              <MessageSquare className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setFormData({ name: lead.name, email: lead.email || "", phone: lead.phone || "" });
+                              setEditingLead(lead.id);
+                              setDialogOpen(true);
+                            }}
+                            title="Editar lead"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     </Card>
                   ))}
