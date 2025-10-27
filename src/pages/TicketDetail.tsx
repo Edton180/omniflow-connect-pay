@@ -84,11 +84,11 @@ export default function TicketDetail() {
     scrollToBottom();
   }, [messages]);
 
-  // Realtime subscription
+  // Realtime subscription for messages and ticket updates
   useEffect(() => {
     if (!id) return;
 
-    const channel = supabase
+    const messagesChannel = supabase
       .channel(`messages-${id}`)
       .on(
         "postgres_changes",
@@ -100,12 +100,44 @@ export default function TicketDetail() {
         },
         (payload) => {
           setMessages((prev) => [...prev, payload.new]);
+          scrollToBottom();
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "messages",
+          filter: `ticket_id=eq.${id}`,
+        },
+        (payload) => {
+          setMessages((prev) =>
+            prev.map((msg) => (msg.id === payload.new.id ? payload.new : msg))
+          );
+        }
+      )
+      .subscribe();
+
+    const ticketChannel = supabase
+      .channel(`ticket-${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "tickets",
+          filter: `id=eq.${id}`,
+        },
+        (payload) => {
+          setTicket((prev: any) => ({ ...prev, ...payload.new }));
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(messagesChannel);
+      supabase.removeChannel(ticketChannel);
     };
   }, [id]);
 

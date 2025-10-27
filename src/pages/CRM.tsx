@@ -448,11 +448,11 @@ export default function CRM() {
                       className="p-3 cursor-pointer hover:shadow-lg transition-shadow group"
                       draggable
                       onDragStart={() => handleDragStart(lead)}
-                      onClick={() => {
-                        if (lead.ticket_id) {
-                          navigate(`/ticket/${lead.ticket_id}`);
-                        }
-                      }}
+            onClick={() => {
+              if (lead.ticket_id) {
+                navigate(`/tickets/${lead.ticket_id}`);
+              }
+            }}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
@@ -471,7 +471,7 @@ export default function CRM() {
                               className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                navigate(`/ticket/${lead.ticket_id}`);
+                                navigate(`/tickets/${lead.ticket_id}`);
                               }}
                               title="Abrir conversa"
                             >

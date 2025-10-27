@@ -59,6 +59,30 @@ export const TicketList = () => {
     fetchTickets();
   }, [statusFilter]);
 
+  // Realtime subscription for tickets
+  useEffect(() => {
+    const channel = supabase
+      .channel('tickets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tickets',
+        },
+        (payload) => {
+          console.log('Ticket change:', payload);
+          // Refresh tickets on any change
+          fetchTickets();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [statusFilter]);
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive", label: string }> = {
       open: { variant: "default", label: "Aberto" },

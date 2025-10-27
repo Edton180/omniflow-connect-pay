@@ -185,16 +185,16 @@ const Dashboard = () => {
             <div className="grid md:grid-cols-2 gap-4">
               <Button 
                 variant="default" 
-                className="justify-start h-auto py-4 px-6 hover-scale bg-gradient-primary shadow-glow hover:shadow-lg border-2 border-primary/20"
+                className="justify-start h-auto py-4 px-6 hover-scale bg-gradient-primary shadow-glow hover:shadow-lg border-2 border-primary/20 text-white"
                 onClick={() => navigate("/view-tickets")}
               >
                 <div className="flex items-start gap-4 text-left">
                   <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0">
-                    <MessageSquare className="w-5 h-5 text-primary-foreground" />
+                    <MessageSquare className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <div className="font-semibold mb-1 text-primary-foreground">📞 Ver Atendimentos</div>
-                    <div className="text-sm text-primary-foreground/90">
+                    <div className="font-semibold mb-1 text-white">📞 Ver Atendimentos</div>
+                    <div className="text-sm text-white/90">
                       Visualize e gerencie atendimentos em destaque
                     </div>
                   </div>
