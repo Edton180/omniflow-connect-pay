@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function TicketsImproved() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
   const [tickets, setTickets] = useState<any[]>([]);
@@ -40,6 +41,16 @@ export default function TicketsImproved() {
     }
   }, [user?.id]);
 
+  // Handle ticket selection from navigation state
+  useEffect(() => {
+    if (location.state?.ticketId && tickets.length > 0) {
+      const ticket = tickets.find(t => t.id === location.state.ticketId);
+      if (ticket) {
+        setSelectedTicket(ticket);
+      }
+    }
+  }, [location.state, tickets]);
+
   useEffect(() => {
     console.log("Filtros mudaram - tickets:", tickets.length, "filter:", statusFilter, "search:", searchTerm);
     filterTickets();
@@ -50,6 +61,65 @@ export default function TicketsImproved() {
       loadMessages(selectedTicket.id);
     }
   }, [selectedTicket]);
+
+  // Realtime subscription for tickets
+  useEffect(() => {
+    const channel = supabase
+      .channel('tickets-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tickets'
+        },
+        (payload) => {
+          console.log('🔄 Ticket change:', payload);
+          loadTickets();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
+
+  // Realtime subscription for messages
+  useEffect(() => {
+    if (!selectedTicket?.id) return;
+
+    const channel = supabase
+      .channel(`messages-${selectedTicket.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'messages',
+          filter: `ticket_id=eq.${selectedTicket.id}`
+        },
+        (payload) => {
+          console.log('🔄 Message change:', payload);
+          if (payload.eventType === 'INSERT') {
+            setMessages((prev) => [...prev, payload.new]);
+          } else if (payload.eventType === 'UPDATE') {
+            setMessages((prev) => 
+              prev.map((msg) => msg.id === payload.new.id ? payload.new : msg)
+            );
+          } else if (payload.eventType === 'DELETE') {
+            setMessages((prev) => 
+              prev.filter((msg) => msg.id !== payload.old.id)
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket?.id]);
 
   const loadTickets = async () => {
     try {

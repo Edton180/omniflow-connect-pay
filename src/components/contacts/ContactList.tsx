@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Search, Plus, User, Mail, Phone, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Search, Plus, User, Mail, Phone, Pencil, Trash2, MessageSquare, PlusCircle } from "lucide-react";
 import { ContactDialog } from "./ContactDialog";
+import { useAuth } from "@/hooks/useAuth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +21,8 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export const ContactList = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,110 @@ export const ContactList = () => {
     }
   };
 
+  const handleViewConversation = async (contact: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    try {
+      // Get user's tenant_id
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Tenant não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Find existing open ticket for this contact
+      const { data: existingTicket } = await supabase
+        .from("tickets")
+        .select("*")
+        .eq("contact_id", contact.id)
+        .eq("tenant_id", userRole.tenant_id)
+        .in("status", ["open", "pending"])
+        .maybeSingle();
+
+      if (existingTicket) {
+        // Navigate to tickets page with this ticket selected
+        navigate("/tickets-improved", { state: { ticketId: existingTicket.id } });
+      } else {
+        toast({
+          title: "Nenhuma conversa",
+          description: "Este contato não possui conversas abertas",
+          variant: "default",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStartConversation = async (contact: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      // Get user's tenant_id
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Tenant não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Check if contact has channel information
+      const channel = contact.metadata?.telegram_chat_id ? "telegram" : 
+                     contact.phone ? "whatsapp" : "email";
+
+      // Create new ticket
+      const { data: newTicket, error } = await supabase
+        .from("tickets")
+        .insert({
+          contact_id: contact.id,
+          tenant_id: userRole.tenant_id,
+          channel: channel,
+          status: "open",
+          priority: "medium",
+          assigned_to: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Conversa iniciada",
+        description: "Nova conversa criada com sucesso",
+      });
+
+      // Navigate to the new ticket
+      navigate("/tickets-improved", { state: { ticketId: newTicket.id } });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao iniciar conversa",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredContacts = contacts.filter(contact =>
     contact.name?.toLowerCase().includes(search.toLowerCase()) ||
     contact.phone?.includes(search) ||
@@ -173,7 +281,7 @@ export const ContactList = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-3">
                 {contact.phone && (
                   <div className="flex items-center gap-2 text-sm">
                     <Phone className="h-4 w-4 text-muted-foreground" />
@@ -187,7 +295,7 @@ export const ContactList = () => {
                   </div>
                 )}
                 {contact.tags && contact.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
+                  <div className="flex flex-wrap gap-1">
                     {contact.tags.map((tag: string, index: number) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {tag}
@@ -195,6 +303,26 @@ export const ContactList = () => {
                     ))}
                   </div>
                 )}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={(e) => handleViewConversation(contact, e)}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-1" />
+                    Ver Conversa
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    className="flex-1"
+                    onClick={(e) => handleStartConversation(contact, e)}
+                  >
+                    <PlusCircle className="h-4 w-4 mr-1" />
+                    Nova Conversa
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           ))}
