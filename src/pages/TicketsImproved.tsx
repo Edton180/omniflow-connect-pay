@@ -89,34 +89,76 @@ export default function TicketsImproved() {
   useEffect(() => {
     if (!selectedTicket?.id) return;
 
+    console.log('🔌 Configurando subscrição realtime para ticket:', selectedTicket.id);
+
     const channel = supabase
-      .channel(`messages-${selectedTicket.id}`)
+      .channel(`messages-${selectedTicket.id}`, {
+        config: {
+          broadcast: { self: true },
+        },
+      })
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'messages',
           filter: `ticket_id=eq.${selectedTicket.id}`
         },
         (payload) => {
-          console.log('🔄 Message change:', payload);
-          if (payload.eventType === 'INSERT') {
-            setMessages((prev) => [...prev, payload.new]);
-          } else if (payload.eventType === 'UPDATE') {
-            setMessages((prev) => 
-              prev.map((msg) => msg.id === payload.new.id ? payload.new : msg)
-            );
-          } else if (payload.eventType === 'DELETE') {
-            setMessages((prev) => 
-              prev.filter((msg) => msg.id !== payload.old.id)
-            );
-          }
+          console.log('✅ Nova mensagem recebida:', payload.new);
+          setMessages((prev) => {
+            // Evita duplicatas
+            if (prev.some(msg => msg.id === payload.new.id)) {
+              return prev;
+            }
+            return [...prev, payload.new];
+          });
+          // Auto scroll para nova mensagem
+          setTimeout(() => {
+            const chatArea = document.getElementById('chat-messages');
+            if (chatArea) {
+              chatArea.scrollTop = chatArea.scrollHeight;
+            }
+          }, 100);
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'messages',
+          filter: `ticket_id=eq.${selectedTicket.id}`
+        },
+        (payload) => {
+          console.log('🔄 Mensagem atualizada:', payload.new);
+          setMessages((prev) => 
+            prev.map((msg) => msg.id === payload.new.id ? payload.new : msg)
+          );
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'messages',
+          filter: `ticket_id=eq.${selectedTicket.id}`
+        },
+        (payload) => {
+          console.log('🗑️ Mensagem deletada:', payload.old);
+          setMessages((prev) => 
+            prev.filter((msg) => msg.id !== payload.old.id)
+          );
+        }
+      )
+      .subscribe((status) => {
+        console.log('📡 Status da subscrição:', status);
+      });
 
     return () => {
+      console.log('🔌 Removendo subscrição realtime');
       supabase.removeChannel(channel);
     };
   }, [selectedTicket?.id]);
@@ -338,7 +380,7 @@ export default function TicketsImproved() {
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
-      loadMessages(selectedTicket.id);
+      // Não recarrega mensagens pois o realtime cuida disso
       loadTickets();
     } catch (error: any) {
       toast({
@@ -537,7 +579,7 @@ export default function TicketsImproved() {
             </div>
 
             {/* Mensagens */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
+            <div id="chat-messages" className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/20">
               {messages.map((message) => (
                 <div
                   key={message.id}

@@ -88,8 +88,14 @@ export default function TicketDetail() {
   useEffect(() => {
     if (!id) return;
 
+    console.log('🔌 Configurando subscrição realtime para ticket:', id);
+
     const messagesChannel = supabase
-      .channel(`messages-${id}`)
+      .channel(`messages-${id}`, {
+        config: {
+          broadcast: { self: true },
+        },
+      })
       .on(
         "postgres_changes",
         {
@@ -99,8 +105,15 @@ export default function TicketDetail() {
           filter: `ticket_id=eq.${id}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new]);
-          scrollToBottom();
+          console.log('✅ Nova mensagem recebida:', payload.new);
+          setMessages((prev) => {
+            // Evita duplicatas
+            if (prev.some(msg => msg.id === payload.new.id)) {
+              return prev;
+            }
+            return [...prev, payload.new];
+          });
+          setTimeout(scrollToBottom, 100);
         }
       )
       .on(
@@ -112,12 +125,15 @@ export default function TicketDetail() {
           filter: `ticket_id=eq.${id}`,
         },
         (payload) => {
+          console.log('🔄 Mensagem atualizada:', payload.new);
           setMessages((prev) =>
             prev.map((msg) => (msg.id === payload.new.id ? payload.new : msg))
           );
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Status da subscrição de mensagens:', status);
+      });
 
     const ticketChannel = supabase
       .channel(`ticket-${id}`)
@@ -130,12 +146,16 @@ export default function TicketDetail() {
           filter: `id=eq.${id}`,
         },
         (payload) => {
+          console.log('🎫 Ticket atualizado:', payload.new);
           setTicket((prev: any) => ({ ...prev, ...payload.new }));
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Status da subscrição de ticket:', status);
+      });
 
     return () => {
+      console.log('🔌 Removendo subscrições realtime');
       supabase.removeChannel(messagesChannel);
       supabase.removeChannel(ticketChannel);
     };
