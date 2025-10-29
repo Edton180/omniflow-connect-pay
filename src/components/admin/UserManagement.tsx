@@ -49,6 +49,8 @@ export const UserManagement = () => {
     tenant_id: "",
     role: "agent",
     queue_ids: [] as string[],
+    queue_role: "agent" as "agent" | "supervisor" | "admin",
+    can_takeover_ai: false,
   });
   const [queues, setQueues] = useState<any[]>([]);
 
