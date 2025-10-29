@@ -102,6 +102,72 @@ export type Database = {
           },
         ]
       }
+      channel_menus: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          description: string | null
+          greeting_message: string | null
+          id: string
+          is_active: boolean | null
+          level: number
+          name: string
+          offline_message: string | null
+          parent_menu_id: string | null
+          position: number | null
+          timeout_message: string | null
+          timeout_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number
+          name: string
+          offline_message?: string | null
+          parent_menu_id?: string | null
+          position?: number | null
+          timeout_message?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          description?: string | null
+          greeting_message?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number
+          name?: string
+          offline_message?: string | null
+          parent_menu_id?: string | null
+          position?: number | null
+          timeout_message?: string | null
+          timeout_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_menus_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_menus_parent_menu_id_fkey"
+            columns: ["parent_menu_id"]
+            isOneToOne: false
+            referencedRelation: "channel_menus"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_queues: {
         Row: {
           channel_id: string
@@ -140,6 +206,8 @@ export type Database = {
       }
       channels: {
         Row: {
+          business_hours: Json | null
+          chatbot_config: Json | null
           config: Json | null
           created_at: string | null
           credentials_encrypted: string | null
@@ -153,6 +221,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          business_hours?: Json | null
+          chatbot_config?: Json | null
           config?: Json | null
           created_at?: string | null
           credentials_encrypted?: string | null
@@ -166,6 +236,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          business_hours?: Json | null
+          chatbot_config?: Json | null
           config?: Json | null
           created_at?: string | null
           credentials_encrypted?: string | null
@@ -238,6 +310,87 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_metadata: {
+        Row: {
+          channel_id: string
+          contact_id: string
+          created_at: string | null
+          id: string
+          menu_id: string | null
+          menu_item_id: string | null
+          metadata: Json | null
+          routed_target_id: string | null
+          routed_to: string | null
+          routed_via: string | null
+          ticket_id: string
+          user_choice: string | null
+        }
+        Insert: {
+          channel_id: string
+          contact_id: string
+          created_at?: string | null
+          id?: string
+          menu_id?: string | null
+          menu_item_id?: string | null
+          metadata?: Json | null
+          routed_target_id?: string | null
+          routed_to?: string | null
+          routed_via?: string | null
+          ticket_id: string
+          user_choice?: string | null
+        }
+        Update: {
+          channel_id?: string
+          contact_id?: string
+          created_at?: string | null
+          id?: string
+          menu_id?: string | null
+          menu_item_id?: string | null
+          metadata?: Json | null
+          routed_target_id?: string | null
+          routed_to?: string | null
+          routed_via?: string | null
+          ticket_id?: string
+          user_choice?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_metadata_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_metadata_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_metadata_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "channel_menus"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_metadata_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_metadata_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -562,6 +715,56 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      menu_items: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          menu_id: string
+          option_key: string
+          option_label: string
+          position: number | null
+          target_data: Json | null
+          target_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_id: string
+          option_key: string
+          option_label: string
+          position?: number | null
+          target_data?: Json | null
+          target_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          menu_id?: string
+          option_key?: string
+          option_label?: string
+          position?: number | null
+          target_data?: Json | null
+          target_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_menu_id_fkey"
+            columns: ["menu_id"]
+            isOneToOne: false
+            referencedRelation: "channel_menus"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       messages: {
         Row: {
@@ -1173,21 +1376,30 @@ export type Database = {
       }
       user_queues: {
         Row: {
+          can_takeover_ai: boolean | null
           created_at: string | null
           id: string
+          is_active: boolean | null
           queue_id: string
+          role: string | null
           user_id: string
         }
         Insert: {
+          can_takeover_ai?: boolean | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           queue_id: string
+          role?: string | null
           user_id: string
         }
         Update: {
+          can_takeover_ai?: boolean | null
           created_at?: string | null
           id?: string
+          is_active?: boolean | null
           queue_id?: string
+          role?: string | null
           user_id?: string
         }
         Relationships: [
