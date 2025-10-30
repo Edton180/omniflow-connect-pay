@@ -87,12 +87,12 @@ serve(async (req) => {
       body.text = message || "Mensagem sem conteúdo";
       body.parse_mode = "HTML";
       console.log("💬 Enviando mensagem de texto");
-    } else if (mediaType === "image") {
+    } else if (mediaType === "image" || mediaType === "img") {
       endpoint = "sendPhoto";
       body.photo = mediaUrl;
       if (message) body.caption = message;
       console.log("🖼️ Enviando foto");
-    } else if (mediaType === "audio") {
+    } else if (mediaType === "audio" || mediaType === "voice") {
       endpoint = "sendAudio";
       body.audio = mediaUrl;
       if (message) body.caption = message;
@@ -106,16 +106,17 @@ serve(async (req) => {
       endpoint = "sendSticker";
       body.sticker = mediaUrl;
       console.log("😊 Enviando figurinha");
-    } else if (mediaType === "document") {
+    } else if (mediaType === "document" || mediaType.includes("pdf") || mediaType.includes("doc")) {
       endpoint = "sendDocument";
       body.document = mediaUrl;
       if (message) body.caption = message;
       console.log("📄 Enviando documento");
     } else {
+      // Usar sendDocument como fallback para tipos não reconhecidos
       endpoint = "sendDocument";
       body.document = mediaUrl;
       if (message) body.caption = message;
-      console.log("📎 Enviando como documento (fallback)");
+      console.log("📎 Enviando como documento (fallback) - tipo:", mediaType);
     }
 
     console.log(`🚀 Enviando para Telegram via ${endpoint}:`, JSON.stringify(body, null, 2));

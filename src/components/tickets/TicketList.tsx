@@ -7,11 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Search, Plus, MessageSquare, Clock, User } from "lucide-react";
+import { Loader2, Search, Plus, MessageSquare, Clock, User, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { NewTicketDialog } from "./NewTicketDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const TicketList = () => {
   const { toast } = useToast();
@@ -22,6 +32,8 @@ export const TicketList = () => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -110,6 +122,36 @@ export const TicketList = () => {
     );
   };
 
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete) return;
+
+    try {
+      // Deletar mensagens associadas
+      await supabase.from("messages").delete().eq("ticket_id", ticketToDelete);
+
+      // Deletar o ticket
+      const { error } = await supabase.from("tickets").delete().eq("id", ticketToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ticket deletado",
+        description: "O ticket e suas mensagens foram removidos com sucesso.",
+      });
+
+      fetchTickets();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar ticket",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setTicketToDelete(null);
+    }
+  };
+
   const filteredTickets = tickets.filter(ticket =>
     ticket.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
     ticket.contact?.phone?.includes(search) ||
@@ -166,12 +208,14 @@ export const TicketList = () => {
           {filteredTickets.map((ticket) => (
             <Card
               key={ticket.id}
-              className="gradient-card hover-scale cursor-pointer"
-              onClick={() => navigate(`/tickets/${ticket.id}`)}
+              className="gradient-card hover-scale"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div 
+                    className="space-y-1 flex-1 cursor-pointer"
+                    onClick={() => navigate(`/tickets/${ticket.id}`)}
+                  >
                     <CardTitle className="text-base flex items-center gap-2">
                       <span className="text-muted-foreground">#{ticket.id.slice(0, 8)}</span>
                       {ticket.contact?.name}
@@ -188,7 +232,21 @@ export const TicketList = () => {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    {getStatusBadge(ticket.status)}
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(ticket.status)}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTicketToDelete(ticket.id);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                     {getPriorityBadge(ticket.priority)}
                   </div>
                 </div>
@@ -232,6 +290,23 @@ export const TicketList = () => {
       )}
 
       <NewTicketDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja deletar este ticket? Esta ação não pode ser desfeita e todas as mensagens associadas também serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Deletar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

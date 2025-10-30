@@ -9,7 +9,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
@@ -29,6 +40,7 @@ export default function TicketDetail() {
   const [messageText, setMessageText] = useState("");
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -228,6 +240,31 @@ export default function TicketDetail() {
     }
   };
 
+  const handleDeleteTicket = async () => {
+    try {
+      // Deletar mensagens associadas
+      await supabase.from("messages").delete().eq("ticket_id", id);
+
+      // Deletar o ticket
+      const { error } = await supabase.from("tickets").delete().eq("id", id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ticket deletado",
+        description: "O ticket e suas mensagens foram removidos com sucesso.",
+      });
+
+      navigate("/tickets");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao deletar ticket",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: Record<string, { variant: "default" | "secondary" | "destructive", label: string }> = {
       open: { variant: "default", label: "Aberto" },
@@ -279,6 +316,27 @@ export default function TicketDetail() {
                 </SelectContent>
               </Select>
               {getStatusBadge(ticket.status)}
+              <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="icon">
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem certeza que deseja deletar este ticket? Esta ação não pode ser desfeita e todas as mensagens associadas também serão removidas.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteTicket} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Deletar
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <ThemeToggle />
             </div>
           </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy, Plus, Sliders } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy, Plus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +21,6 @@ interface ChannelCardProps {
     status?: string;
     tenant_id: string;
   };
-  onConfigure: () => void;
   onDelete?: () => void;
 }
 
@@ -49,7 +48,7 @@ const getColor = (type: string) => {
   return colors[type] || "bg-gray-500";
 };
 
-export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps) => {
+export const ChannelCard = ({ channel, onDelete }: ChannelCardProps) => {
   const Icon = getIcon(channel.type);
   const colorClass = getColor(channel.type);
   const { toast } = useToast();
@@ -246,23 +245,13 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
 
         <div className="flex gap-2">
           <Button
-            variant={channel.connected ? "outline" : "default"}
+            variant="secondary"
             className="flex-1"
-            onClick={onConfigure}
+            onClick={() => navigate(`/channels/${channel.id}/config`)}
           >
             <Settings className="mr-2 h-4 w-4" />
-            {channel.connected ? "Configurar" : "Conectar"}
+            Configurações Avançadas
           </Button>
-          {channel.connected && (
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={() => navigate(`/channels/${channel.id}/config`)}
-              title="Configurações Avançadas"
-            >
-              <Sliders className="h-4 w-4" />
-            </Button>
-          )}
           {onDelete && (
             <Button
               variant="destructive"
