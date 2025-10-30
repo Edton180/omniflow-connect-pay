@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy, Plus } from "lucide-react";
+import { MessageCircle, Instagram, Facebook, Globe, Settings, CheckCircle, XCircle, Mail, Send, Trash2, Copy, Plus, Sliders } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useNavigate } from "react-router-dom";
 
 interface ChannelCardProps {
   channel: {
@@ -52,6 +53,7 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
   const Icon = getIcon(channel.type);
   const colorClass = getColor(channel.type);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [queues, setQueues] = useState<any[]>([]);
   const [channelQueues, setChannelQueues] = useState<string[]>([]);
   const [showQueueSelect, setShowQueueSelect] = useState(false);
@@ -251,6 +253,16 @@ export const ChannelCard = ({ channel, onConfigure, onDelete }: ChannelCardProps
             <Settings className="mr-2 h-4 w-4" />
             {channel.connected ? "Configurar" : "Conectar"}
           </Button>
+          {channel.connected && (
+            <Button
+              variant="secondary"
+              size="icon"
+              onClick={() => navigate(`/channels/${channel.id}/config`)}
+              title="Configurações Avançadas"
+            >
+              <Sliders className="h-4 w-4" />
+            </Button>
+          )}
           {onDelete && (
             <Button
               variant="destructive"

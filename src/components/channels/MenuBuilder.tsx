@@ -113,7 +113,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
         .order("position");
 
       if (error) throw error;
-      setMenuItems(data || []);
+      setMenuItems((data || []) as MenuItem[]);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar itens",

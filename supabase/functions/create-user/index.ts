@@ -64,7 +64,9 @@ serve(async (req) => {
       phone,
       tenant_id,
       role,
-      queue_ids
+      queue_ids,
+      queue_role,
+      can_takeover_ai
     } = body;
 
     // Validate required fields
@@ -140,6 +142,9 @@ serve(async (req) => {
       const queueAssignments = queue_ids.map((queue_id: string) => ({
         user_id: userId,
         queue_id: queue_id,
+        role: queue_role || 'agent',
+        can_takeover_ai: can_takeover_ai || false,
+        is_active: true,
       }));
 
       const { error: queueError } = await supabaseAdmin

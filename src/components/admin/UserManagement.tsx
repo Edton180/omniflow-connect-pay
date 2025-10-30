@@ -150,12 +150,24 @@ export const UserManagement = () => {
       tenant_id: "",
       role: "agent",
       queue_ids: [],
+      queue_role: "agent",
+      can_takeover_ai: false,
     });
     setDialogOpen(true);
   };
 
-  const handleEdit = (user: UserWithProfile) => {
+  const handleEdit = async (user: UserWithProfile) => {
     setSelectedUser(user);
+    
+    // Carregar filas do usuário
+    const { data: userQueues } = await supabase
+      .from("user_queues")
+      .select("queue_id, role, can_takeover_ai")
+      .eq("user_id", user.id);
+    
+    const queueIds = userQueues?.map(q => q.queue_id) || [];
+    const firstQueue = userQueues?.[0];
+    
     setFormData({
       full_name: user.full_name,
       email: user.email,
@@ -163,7 +175,9 @@ export const UserManagement = () => {
       password: "",
       tenant_id: user.tenant_id || "",
       role: user.roles[0]?.role || "agent",
-      queue_ids: [],
+      queue_ids: queueIds,
+      queue_role: (firstQueue?.role as "agent" | "supervisor" | "admin") || "agent",
+      can_takeover_ai: firstQueue?.can_takeover_ai || false,
     });
     setDialogOpen(true);
   };
@@ -211,6 +225,9 @@ export const UserManagement = () => {
           const queueAssignments = formData.queue_ids.map(queue_id => ({
             user_id: selectedUser.id,
             queue_id: queue_id,
+            role: formData.queue_role,
+            can_takeover_ai: formData.can_takeover_ai,
+            is_active: true,
           }));
 
           const { error: queueError } = await supabase
@@ -235,6 +252,8 @@ export const UserManagement = () => {
             tenant_id: formData.tenant_id || null,
             role: formData.role,
             queue_ids: formData.queue_ids,
+            queue_role: formData.queue_role,
+            can_takeover_ai: formData.can_takeover_ai,
           }
         });
 
@@ -533,6 +552,40 @@ export const UserManagement = () => {
                 )}
               </div>
             </div>
+
+            {formData.queue_ids.length > 0 && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="queue_role">Função nas Filas</Label>
+                  <Select
+                    value={formData.queue_role}
+                    onValueChange={(value: any) => setFormData({ ...formData, queue_role: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="agent">Atendente</SelectItem>
+                      <SelectItem value="supervisor">Supervisor</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="can_takeover_ai"
+                    checked={formData.can_takeover_ai}
+                    onChange={(e) => setFormData({ ...formData, can_takeover_ai: e.target.checked })}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="can_takeover_ai" className="cursor-pointer">
+                    Pode assumir conversas do ChatGPT
+                  </Label>
+                </div>
+              </>
+            )}
 
             <div className="flex gap-2 justify-end">
               <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
