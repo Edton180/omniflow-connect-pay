@@ -15,6 +15,21 @@ verify_jwt = true
 [functions.send-telegram-message]
 verify_jwt = true
 
+[functions.send-telegram-media]
+verify_jwt = true
+
+[functions.send-auto-message]
+verify_jwt = true
+
+[functions.delete-telegram-message]
+verify_jwt = true
+
+[functions.telegram-check-online]
+verify_jwt = true
+
+[functions.update-contacts-online-status]
+verify_jwt = true
+
 [functions.send-evolution-message]
 verify_jwt = true
 

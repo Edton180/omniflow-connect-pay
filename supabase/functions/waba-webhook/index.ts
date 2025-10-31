@@ -177,6 +177,23 @@ serve(async (req) => {
             await supabaseAdmin.from("messages").insert(messageData);
 
             console.log(`WABA message processed for ticket ${ticket.id}`);
+
+            // Enviar mensagem automática se for novo ticket
+            if (!existingTickets) {
+              console.log("🤖 Novo ticket detectado, enviando mensagem de boas-vindas");
+              try {
+                await supabaseAdmin.functions.invoke("send-auto-message", {
+                  body: {
+                    channelId: channel.id,
+                    contactId: contact.id,
+                    ticketId: ticket.id,
+                    messageType: "greeting",
+                  },
+                });
+              } catch (autoError) {
+                console.error("⚠️ Erro ao enviar mensagem automática:", autoError);
+              }
+            }
           }
         }
       }

@@ -230,6 +230,24 @@ serve(async (req) => {
       }
 
       console.log(`✅ Mensagem processada com sucesso para o ticket ${ticket.id}`);
+
+      // Enviar mensagem automática se for novo ticket
+      if (!existingTickets) {
+        console.log("🤖 Novo ticket detectado, enviando mensagem de boas-vindas");
+        try {
+          await supabaseAdmin.functions.invoke("send-auto-message", {
+            body: {
+              channelId: channel.id,
+              contactId: contact.id,
+              ticketId: ticket.id,
+              messageType: "greeting",
+            },
+          });
+        } catch (autoError) {
+          console.error("⚠️ Erro ao enviar mensagem automática:", autoError);
+          // Não falhar o webhook por causa de erro em mensagem automática
+        }
+      }
     }
 
     return new Response(JSON.stringify({ ok: true }), {

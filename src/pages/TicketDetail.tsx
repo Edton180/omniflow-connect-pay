@@ -179,24 +179,106 @@ export default function TicketDetail() {
 
     setSending(true);
     try {
-      const { error } = await supabase.from("messages").insert([
-        {
-          ticket_id: id,
-          sender_id: user.id,
-          content: messageText.trim() || "[Mídia]",
-          is_from_contact: false,
-          media_url: mediaUrl,
-          media_type: mediaType,
-        },
-      ]);
+      // Insert message into database
+      const { data: insertedMessage, error: insertError } = await supabase
+        .from("messages")
+        .insert([
+          {
+            ticket_id: id,
+            sender_id: user.id,
+            content: messageText.trim() || "[Mídia]",
+            is_from_contact: false,
+            media_url: mediaUrl,
+            media_type: mediaType,
+            status: "sending",
+          },
+        ])
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       // Update ticket's last_message
       await supabase
         .from("tickets")
         .update({ last_message: messageText.trim() || "[Mídia enviada]" })
         .eq("id", id);
+
+      // Send message through the appropriate channel
+      if (ticket?.channel === "telegram") {
+        const chatId = ticket?.contact?.metadata?.telegram_chat_id;
+
+        if (chatId) {
+          try {
+            const { data: sendData, error: sendError } = await supabase.functions.invoke(
+              "send-telegram-media",
+              {
+                body: {
+                  chatId: String(chatId),
+                  message: messageText.trim(),
+                  mediaUrl: mediaUrl || null,
+                  mediaType: mediaType || null,
+                  messageId: insertedMessage.id,
+                },
+              }
+            );
+
+            if (sendError || !sendData?.success) {
+              console.error("Erro ao enviar:", sendError || sendData);
+              await supabase
+                .from("messages")
+                .update({ status: "failed" })
+                .eq("id", insertedMessage.id);
+              
+              toast({
+                title: "Erro ao enviar",
+                description: sendError?.message || sendData?.error || "Erro ao enviar mensagem",
+                variant: "destructive",
+              });
+            } else {
+              console.log("Mensagem enviada com sucesso");
+            }
+          } catch (sendErr: any) {
+            console.error("Exceção ao enviar:", sendErr);
+            await supabase
+              .from("messages")
+              .update({ status: "failed" })
+              .eq("id", insertedMessage.id);
+          }
+        }
+      } else if (ticket?.channel === "whatsapp") {
+        // WhatsApp sending logic
+        const phoneNumber = ticket?.contact?.phone;
+        if (phoneNumber) {
+          try {
+            const { error: sendError } = await supabase.functions.invoke(
+              "send-waba-message",
+              {
+                body: {
+                  to: phoneNumber,
+                  message: messageText.trim(),
+                  mediaUrl: mediaUrl || null,
+                  mediaType: mediaType || null,
+                },
+              }
+            );
+
+            if (sendError) {
+              console.error("Erro ao enviar WhatsApp:", sendError);
+              await supabase
+                .from("messages")
+                .update({ status: "failed" })
+                .eq("id", insertedMessage.id);
+            }
+          } catch (sendErr: any) {
+            console.error("Exceção ao enviar WhatsApp:", sendErr);
+            await supabase
+              .from("messages")
+              .update({ status: "failed" })
+              .eq("id", insertedMessage.id);
+          }
+        }
+      }
 
       setMessageText("");
       setMediaUrl(null);

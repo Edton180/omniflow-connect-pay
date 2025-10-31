@@ -6,6 +6,22 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const ChannelList = () => {
   const { toast } = useToast();
@@ -13,6 +29,12 @@ export const ChannelList = () => {
   const [channels, setChannels] = useState<any[]>([]);
   const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    type: "",
+    config: {} as any,
+  });
 
   useEffect(() => {
     if (session?.user) {
@@ -130,11 +152,61 @@ export const ChannelList = () => {
   ];
 
   const handleNewChannel = () => {
-    // Agora apenas redireciona para a página de configuração
-    toast({
-      title: "Novo canal",
-      description: "Adicione um novo canal nas configurações de canais",
-    });
+    setFormData({ name: "", type: "", config: {} });
+    setDialogOpen(true);
+  };
+
+  const handleSaveChannel = async () => {
+    try {
+      if (!formData.name || !formData.type) {
+        toast({
+          title: "Campos obrigatórios",
+          description: "Preencha o nome e tipo do canal",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Buscar tenant_id do usuário
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", session?.user?.id)
+        .single();
+
+      if (!userRole?.tenant_id) {
+        toast({
+          title: "Erro",
+          description: "Usuário não possui tenant associado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase.from("channels").insert({
+        tenant_id: userRole.tenant_id,
+        name: formData.name,
+        type: formData.type,
+        status: "pending",
+        config: formData.config,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Canal criado",
+        description: "Canal criado com sucesso. Configure-o nas configurações avançadas.",
+      });
+
+      setDialogOpen(false);
+      loadChannels();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar canal",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (channelId: string) => {
@@ -201,6 +273,100 @@ export const ChannelList = () => {
         </div>
       )}
 
+      {/* Dialog para criar novo canal */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Criar Novo Canal</DialogTitle>
+            <DialogDescription>
+              Configure um novo canal de atendimento
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome do Canal</Label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Atendimento Principal"
+              />
+            </div>
+            <div>
+              <Label>Tipo de Canal</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => setFormData({ ...formData, type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="telegram">Telegram Bot</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp Business API</SelectItem>
+                  <SelectItem value="webchat">Web Chat</SelectItem>
+                  <SelectItem value="facebook">Facebook Messenger</SelectItem>
+                  <SelectItem value="instagram">Instagram Direct</SelectItem>
+                  <SelectItem value="email">Email</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {formData.type === "telegram" && (
+              <div>
+                <Label>Token do Bot</Label>
+                <Input
+                  value={formData.config.bot_token || ""}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      config: { ...formData.config, bot_token: e.target.value },
+                    })
+                  }
+                  placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                />
+              </div>
+            )}
+
+            {formData.type === "whatsapp" && (
+              <>
+                <div>
+                  <Label>Phone Number ID</Label>
+                  <Input
+                    value={formData.config.phone_number_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, phone_number_id: e.target.value },
+                      })
+                    }
+                    placeholder="ID do número de telefone"
+                  />
+                </div>
+                <div>
+                  <Label>Access Token</Label>
+                  <Input
+                    value={formData.config.access_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, access_token: e.target.value },
+                      })
+                    }
+                    placeholder="Token de acesso da API"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleSaveChannel}>Criar Canal</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
