@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -187,8 +188,14 @@ export const ChannelList = () => {
         tenant_id: userRole.tenant_id,
         name: formData.name,
         type: formData.type,
-        status: "pending",
+        status: "inactive",
         config: formData.config,
+        chatbot_config: {
+          greeting_message: "Olá! Bem-vindo ao nosso atendimento.",
+          main_menu_message: "Como posso ajudar você hoje?",
+          timeout_message: "Não recebi resposta. Encerrando atendimento.",
+          outside_hours_message: "Estamos fora do horário de atendimento.",
+        },
       });
 
       if (error) throw error;
@@ -353,6 +360,261 @@ export const ChannelList = () => {
                       })
                     }
                     placeholder="Token de acesso da API"
+                  />
+                </div>
+                <div>
+                  <Label>Verify Token</Label>
+                  <Input
+                    value={formData.config.verify_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, verify_token: e.target.value },
+                      })
+                    }
+                    placeholder="Token de verificação do webhook"
+                  />
+                </div>
+                <div>
+                  <Label>App Secret</Label>
+                  <Input
+                    value={formData.config.app_secret || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, app_secret: e.target.value },
+                      })
+                    }
+                    placeholder="Segredo da aplicação"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.type === "facebook" && (
+              <>
+                <div>
+                  <Label>Page ID</Label>
+                  <Input
+                    value={formData.config.page_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, page_id: e.target.value },
+                      })
+                    }
+                    placeholder="ID da página do Facebook"
+                  />
+                </div>
+                <div>
+                  <Label>Page Access Token</Label>
+                  <Input
+                    value={formData.config.page_access_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, page_access_token: e.target.value },
+                      })
+                    }
+                    placeholder="Token de acesso da página"
+                  />
+                </div>
+                <div>
+                  <Label>App Secret</Label>
+                  <Input
+                    value={formData.config.app_secret || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, app_secret: e.target.value },
+                      })
+                    }
+                    placeholder="Segredo da aplicação"
+                  />
+                </div>
+                <div>
+                  <Label>Verify Token</Label>
+                  <Input
+                    value={formData.config.verify_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, verify_token: e.target.value },
+                      })
+                    }
+                    placeholder="Token de verificação do webhook"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.type === "instagram" && (
+              <>
+                <div>
+                  <Label>Page ID</Label>
+                  <Input
+                    value={formData.config.page_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, page_id: e.target.value },
+                      })
+                    }
+                    placeholder="ID da página conectada ao Instagram"
+                  />
+                </div>
+                <div>
+                  <Label>Access Token</Label>
+                  <Input
+                    value={formData.config.access_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, access_token: e.target.value },
+                      })
+                    }
+                    placeholder="Token de acesso"
+                  />
+                </div>
+                <div>
+                  <Label>Instagram Account ID</Label>
+                  <Input
+                    value={formData.config.instagram_account_id || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, instagram_account_id: e.target.value },
+                      })
+                    }
+                    placeholder="ID da conta do Instagram"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.type === "email" && (
+              <>
+                <div>
+                  <Label>IMAP Host</Label>
+                  <Input
+                    value={formData.config.imap_host || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, imap_host: e.target.value },
+                      })
+                    }
+                    placeholder="imap.gmail.com"
+                  />
+                </div>
+                <div>
+                  <Label>IMAP Port</Label>
+                  <Input
+                    value={formData.config.imap_port || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, imap_port: e.target.value },
+                      })
+                    }
+                    placeholder="993"
+                  />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input
+                    value={formData.config.email || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, email: e.target.value },
+                      })
+                    }
+                    placeholder="suporte@empresa.com"
+                  />
+                </div>
+                <div>
+                  <Label>Senha</Label>
+                  <Input
+                    type="password"
+                    value={formData.config.password || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, password: e.target.value },
+                      })
+                    }
+                    placeholder="Senha ou App Password"
+                  />
+                </div>
+                <div>
+                  <Label>SMTP Host</Label>
+                  <Input
+                    value={formData.config.smtp_host || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, smtp_host: e.target.value },
+                      })
+                    }
+                    placeholder="smtp.gmail.com"
+                  />
+                </div>
+                <div>
+                  <Label>SMTP Port</Label>
+                  <Input
+                    value={formData.config.smtp_port || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, smtp_port: e.target.value },
+                      })
+                    }
+                    placeholder="587"
+                  />
+                </div>
+              </>
+            )}
+
+            {formData.type === "webchat" && (
+              <>
+                <div>
+                  <Label>Cor Primária</Label>
+                  <Input
+                    type="color"
+                    value={formData.config.primary_color || "#8B5CF6"}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, primary_color: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Título do Widget</Label>
+                  <Input
+                    value={formData.config.widget_title || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, widget_title: e.target.value },
+                      })
+                    }
+                    placeholder="Atendimento Online"
+                  />
+                </div>
+                <div>
+                  <Label>Mensagem de Boas-vindas</Label>
+                  <Textarea
+                    value={formData.config.welcome_message || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, welcome_message: e.target.value },
+                      })
+                    }
+                    placeholder="Olá! Como podemos ajudar?"
                   />
                 </div>
               </>

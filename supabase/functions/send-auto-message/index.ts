@@ -87,10 +87,6 @@ serve(async (req) => {
         content: messageToSend,
         is_from_contact: false,
         status: "sending",
-        metadata: {
-          automated: true,
-          type: messageType,
-        },
       })
       .select()
       .single();
@@ -140,6 +136,12 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
+
+    // Atualizar status para enviado
+    await supabaseAdmin
+      .from("messages")
+      .update({ status: "sent" })
+      .eq("id", message.id);
 
     console.log("✅ Mensagem automática enviada com sucesso");
 
