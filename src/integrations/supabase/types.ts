@@ -1303,6 +1303,7 @@ export type Database = {
       tickets: {
         Row: {
           assigned_to: string | null
+          bot_state: Json | null
           channel: string
           closed_at: string | null
           contact_id: string
@@ -1317,6 +1318,7 @@ export type Database = {
         }
         Insert: {
           assigned_to?: string | null
+          bot_state?: Json | null
           channel: string
           closed_at?: string | null
           contact_id: string
@@ -1331,6 +1333,7 @@ export type Database = {
         }
         Update: {
           assigned_to?: string | null
+          bot_state?: Json | null
           channel?: string
           closed_at?: string | null
           contact_id?: string
