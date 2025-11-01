@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
-import { QrCode, Trash2, MessageSquare } from "lucide-react";
+import { QrCode, Trash2, MessageSquare, Info, Globe } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -616,6 +616,16 @@ export const ChannelList = () => {
                     }
                     placeholder="Olá! Como podemos ajudar?"
                   />
+                </div>
+                <div className="rounded-lg bg-primary/5 p-4 space-y-2">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <Globe className="h-4 w-4" />
+                    Após criar o canal
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Você receberá o código de instalação para adicionar o widget ao seu site. 
+                    Também pode acessá-lo em "Configurações Avançadas" do canal.
+                  </p>
                 </div>
               </>
             )}
