@@ -6,6 +6,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Função para verificar horário de atendimento
+function isWithinBusinessHours(businessHours: any): boolean {
+  if (!businessHours?.enabled) return true;
+  
+  const now = new Date();
+  const dayOfWeek = now.getDay(); // 0 = domingo, 1 = segunda, etc
+  const currentTime = now.getHours() * 60 + now.getMinutes();
+  
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const daySchedule = businessHours[dayNames[dayOfWeek]];
+  
+  if (!daySchedule?.enabled) return false;
+  
+  const [startHour, startMin] = daySchedule.start.split(':').map(Number);
+  const [endHour, endMin] = daySchedule.end.split(':').map(Number);
+  const startTime = startHour * 60 + startMin;
+  const endTime = endHour * 60 + endMin;
+  
+  return currentTime >= startTime && currentTime <= endTime;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -51,6 +72,7 @@ serve(async (req) => {
       const channel = channels[0];
       const tenantId = channel.tenant_id;
       const botToken = channel.config?.bot_token;
+      const chatbotConfig = channel.chatbot_config || {};
       
       console.log("📡 Usando canal:", channel.id, "tenant:", tenantId);
 
@@ -174,9 +196,10 @@ serve(async (req) => {
 
       // Buscar ou criar ticket
       let ticket;
+      let isNewTicket = false;
       const { data: existingTickets } = await supabaseAdmin
         .from("tickets")
-        .select("*")
+        .select("*, bot_state")
         .eq("contact_id", contact.id)
         .in("status", ["open", "in_progress", "pending"])
         .maybeSingle();
@@ -189,6 +212,7 @@ serve(async (req) => {
           .eq("id", ticket.id);
         console.log("📋 Ticket existente atualizado:", ticket.id);
       } else {
+        isNewTicket = true;
         const { data: newTicket, error: ticketError } = await supabaseAdmin
           .from("tickets")
           .insert({
@@ -198,6 +222,7 @@ serve(async (req) => {
             status: "open",
             priority: "medium",
             last_message: messageContent,
+            bot_state: { step: "initial", timestamp: new Date().toISOString() }
           })
           .select()
           .single();
@@ -231,21 +256,119 @@ serve(async (req) => {
 
       console.log(`✅ Mensagem processada com sucesso para o ticket ${ticket.id}`);
 
-      // Enviar mensagem automática se for novo ticket
-      if (!existingTickets) {
-        console.log("🤖 Novo ticket detectado, enviando mensagem de boas-vindas");
-        try {
-          await supabaseAdmin.functions.invoke("send-auto-message", {
-            body: {
-              channelId: channel.id,
-              contactId: contact.id,
-              ticketId: ticket.id,
-              messageType: "greeting",
-            },
+      // Lógica do bot
+      if (chatbotConfig.is_active) {
+        // Verificar horário de atendimento
+        if (!isWithinBusinessHours(chatbotConfig.business_hours)) {
+          console.log("⏰ Fora do horário de atendimento");
+          if (chatbotConfig.offline_message && isNewTicket) {
+            try {
+              await supabaseAdmin.functions.invoke("send-auto-message", {
+                body: {
+                  channelId: channel.id,
+                  contactId: contact.id,
+                  ticketId: ticket.id,
+                  messageType: "outside_hours",
+                },
+              });
+            } catch (autoError) {
+              console.error("⚠️ Erro ao enviar mensagem de horário:", autoError);
+            }
+          }
+          return new Response(JSON.stringify({ ok: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
           });
-        } catch (autoError) {
-          console.error("⚠️ Erro ao enviar mensagem automática:", autoError);
-          // Não falhar o webhook por causa de erro em mensagem automática
+        }
+
+        // Novo ticket: enviar saudação + menu
+        if (isNewTicket) {
+          console.log("🤖 Novo ticket: enviando saudação e menu");
+          try {
+            // Enviar saudação
+            await supabaseAdmin.functions.invoke("send-auto-message", {
+              body: {
+                channelId: channel.id,
+                contactId: contact.id,
+                ticketId: ticket.id,
+                messageType: "greeting",
+              },
+            });
+
+            // Aguardar um pouco e enviar menu
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            if (chatbotConfig.main_menu_message) {
+              await supabaseAdmin.functions.invoke("send-auto-message", {
+                body: {
+                  channelId: channel.id,
+                  contactId: contact.id,
+                  ticketId: ticket.id,
+                  messageType: "menu",
+                },
+              });
+              
+              // Atualizar estado do bot
+              await supabaseAdmin
+                .from("tickets")
+                .update({ 
+                  bot_state: { 
+                    step: "awaiting_menu_response", 
+                    timestamp: new Date().toISOString() 
+                  }
+                })
+                .eq("id", ticket.id);
+            }
+          } catch (autoError) {
+            console.error("⚠️ Erro ao enviar mensagens automáticas:", autoError);
+          }
+        } else if (ticket.bot_state?.step === "awaiting_menu_response" && message.text) {
+          // Processar resposta do menu
+          console.log("🔄 Processando resposta do menu:", message.text);
+          
+          const menuOptions = chatbotConfig.menu_options || [];
+          const selectedOption = menuOptions.find((opt: any) => opt.key === message.text.trim());
+          
+          if (selectedOption) {
+            console.log("✅ Opção válida selecionada:", selectedOption);
+            
+            if (selectedOption.action === "route_to_queue" && selectedOption.queue_id) {
+              // Atribuir à fila
+              await supabaseAdmin
+                .from("tickets")
+                .update({ 
+                  queue_id: selectedOption.queue_id,
+                  bot_state: { step: "routed", timestamp: new Date().toISOString() }
+                })
+                .eq("id", ticket.id);
+              
+              // Enviar mensagem de confirmação
+              if (selectedOption.response_message) {
+                try {
+                  await supabaseAdmin.functions.invoke("send-telegram-media", {
+                    body: {
+                      chatId: chatId,
+                      message: selectedOption.response_message,
+                    },
+                  });
+                } catch (err) {
+                  console.error("⚠️ Erro ao enviar confirmação:", err);
+                }
+              }
+            } else if (selectedOption.action === "send_submenu" && selectedOption.submenu_message) {
+              // Enviar submenu
+              try {
+                await supabaseAdmin.functions.invoke("send-telegram-media", {
+                  body: {
+                    chatId: chatId,
+                    message: selectedOption.submenu_message,
+                  },
+                });
+              } catch (err) {
+                console.error("⚠️ Erro ao enviar submenu:", err);
+              }
+            }
+          }
         }
       }
     }

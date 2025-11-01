@@ -52,13 +52,24 @@ serve(async (req) => {
         messageToSend = chatbotConfig.greeting_message || "Olá! Bem-vindo ao nosso atendimento.";
         break;
       case "menu":
-        messageToSend = chatbotConfig.main_menu_message || "Como posso ajudar você hoje?";
+        if (chatbotConfig.main_menu_message) {
+          messageToSend = chatbotConfig.main_menu_message;
+        } else if (chatbotConfig.menu_options && chatbotConfig.menu_options.length > 0) {
+          // Construir menu a partir das opções
+          let menuText = "Escolha uma opção:\n\n";
+          chatbotConfig.menu_options.forEach((opt: any) => {
+            menuText += `${opt.key} - ${opt.label}\n`;
+          });
+          messageToSend = menuText;
+        } else {
+          messageToSend = "Como posso ajudar você hoje?";
+        }
         break;
       case "timeout":
         messageToSend = chatbotConfig.timeout_message || "Não recebi resposta. Encerrando atendimento.";
         break;
       case "outside_hours":
-        messageToSend = chatbotConfig.outside_hours_message || "Estamos fora do horário de atendimento.";
+        messageToSend = chatbotConfig.offline_message || "Estamos fora do horário de atendimento.";
         break;
       default:
         messageToSend = "Mensagem automática";

@@ -179,6 +179,29 @@ export default function TicketDetail() {
 
     setSending(true);
     try {
+      // Se houver mídia do storage, criar signed URL
+      let publicMediaUrl = mediaUrl;
+      if (mediaUrl && mediaUrl.includes('supabase.co/storage')) {
+        try {
+          const urlParts = mediaUrl.split('/');
+          const bucketIndex = urlParts.findIndex(part => part === 'object') + 2;
+          const bucket = urlParts[bucketIndex];
+          const path = urlParts.slice(bucketIndex + 1).join('/');
+          
+          const { data: signedData, error: signError } = await supabase.storage
+            .from(bucket)
+            .createSignedUrl(path, 3600); // 1 hora
+          
+          if (!signError && signedData?.signedUrl) {
+            publicMediaUrl = signedData.signedUrl;
+            console.log("✅ Signed URL criada:", publicMediaUrl);
+          }
+        } catch (signErr) {
+          console.error("⚠️ Erro ao criar signed URL:", signErr);
+          // Continua com a URL original se falhar
+        }
+      }
+
       // Insert message into database
       const { data: insertedMessage, error: insertError } = await supabase
         .from("messages")
@@ -216,7 +239,7 @@ export default function TicketDetail() {
                 body: {
                   chatId: String(chatId),
                   message: messageText.trim(),
-                  mediaUrl: mediaUrl || null,
+                  mediaUrl: publicMediaUrl || null,
                   mediaType: mediaType || null,
                   messageId: insertedMessage.id,
                 },
@@ -237,6 +260,10 @@ export default function TicketDetail() {
               });
             } else {
               console.log("Mensagem enviada com sucesso");
+              toast({
+                title: "Mensagem enviada",
+                description: "Sua mensagem foi enviada com sucesso.",
+              });
             }
           } catch (sendErr: any) {
             console.error("Exceção ao enviar:", sendErr);
@@ -244,6 +271,12 @@ export default function TicketDetail() {
               .from("messages")
               .update({ status: "failed" })
               .eq("id", insertedMessage.id);
+            
+            toast({
+              title: "Erro ao enviar",
+              description: sendErr.message || "Erro ao enviar mensagem",
+              variant: "destructive",
+            });
           }
         }
       } else if (ticket?.channel === "whatsapp") {
@@ -257,7 +290,7 @@ export default function TicketDetail() {
                 body: {
                   to: phoneNumber,
                   message: messageText.trim(),
-                  mediaUrl: mediaUrl || null,
+                  mediaUrl: publicMediaUrl || null,
                   mediaType: mediaType || null,
                 },
               }
@@ -269,6 +302,17 @@ export default function TicketDetail() {
                 .from("messages")
                 .update({ status: "failed" })
                 .eq("id", insertedMessage.id);
+              
+              toast({
+                title: "Erro ao enviar",
+                description: sendError.message || "Erro ao enviar mensagem",
+                variant: "destructive",
+              });
+            } else {
+              toast({
+                title: "Mensagem enviada",
+                description: "Sua mensagem foi enviada com sucesso.",
+              });
             }
           } catch (sendErr: any) {
             console.error("Exceção ao enviar WhatsApp:", sendErr);
@@ -276,6 +320,12 @@ export default function TicketDetail() {
               .from("messages")
               .update({ status: "failed" })
               .eq("id", insertedMessage.id);
+            
+            toast({
+              title: "Erro ao enviar",
+              description: sendErr.message || "Erro ao enviar mensagem",
+              variant: "destructive",
+            });
           }
         }
       }
