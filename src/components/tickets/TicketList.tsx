@@ -258,23 +258,25 @@ export const TicketList = () => {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <div className="flex items-center gap-4">
-                    {ticket.queue && (
-                      <div className="flex items-center gap-1">
-                        <div
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: ticket.queue.color }}
-                        />
-                        {ticket.queue.name}
-                      </div>
-                    )}
-                    {ticket.assigned && (
-                      <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {ticket.assigned.full_name}
-                      </div>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-2">
+                      {ticket.queue && (
+                        <Badge 
+                          className="flex items-center gap-1"
+                          style={{ 
+                            backgroundColor: ticket.queue.color,
+                            color: '#ffffff'
+                          }}
+                        >
+                          {ticket.queue.name}
+                        </Badge>
+                      )}
+                      {ticket.assigned && (
+                        <div className="flex items-center gap-1 text-muted-foreground">
+                          <User className="h-3 w-3" />
+                          {ticket.assigned.full_name}
+                        </div>
+                      )}
+                    </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-3 w-3" />
                     {formatDistanceToNow(new Date(ticket.created_at), {

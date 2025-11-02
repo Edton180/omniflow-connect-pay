@@ -81,40 +81,62 @@ serve(async (req) => {
       chat_id: chatId,
     };
 
+    // Criar signed URL se for do Supabase Storage
+    let finalMediaUrl = mediaUrl;
+    if (mediaUrl && mediaUrl.includes('supabase.co/storage')) {
+      try {
+        const urlParts = mediaUrl.split('/');
+        const bucketIndex = urlParts.findIndex((part: string) => part === 'object') + 2;
+        const bucket = urlParts[bucketIndex];
+        const path = urlParts.slice(bucketIndex + 1).join('/');
+        
+        const { data: signedData, error: signError } = await supabaseAdmin.storage
+          .from(bucket)
+          .createSignedUrl(path, 3600); // 1 hora
+        
+        if (!signError && signedData?.signedUrl) {
+          finalMediaUrl = signedData.signedUrl;
+          console.log("✅ Signed URL criada para mídia");
+        }
+      } catch (signErr) {
+        console.error("⚠️ Erro ao criar signed URL, usando URL original:", signErr);
+      }
+    }
+
     // Determinar endpoint e payload baseado no tipo de mídia
-    if (!mediaUrl || !mediaType) {
+    if (!finalMediaUrl || !mediaType) {
       endpoint = "sendMessage";
       body.text = message || "Mensagem sem conteúdo";
       body.parse_mode = "HTML";
       console.log("💬 Enviando mensagem de texto");
     } else if (mediaType === "image" || mediaType === "img") {
       endpoint = "sendPhoto";
-      body.photo = mediaUrl;
+      body.photo = finalMediaUrl;
       if (message) body.caption = message;
       console.log("🖼️ Enviando foto");
     } else if (mediaType === "audio" || mediaType === "voice") {
       endpoint = "sendAudio";
-      body.audio = mediaUrl;
+      body.audio = finalMediaUrl;
       if (message) body.caption = message;
       console.log("🎵 Enviando áudio");
     } else if (mediaType === "video") {
       endpoint = "sendVideo";
-      body.video = mediaUrl;
+      body.video = finalMediaUrl;
       if (message) body.caption = message;
       console.log("🎥 Enviando vídeo");
     } else if (mediaType === "sticker") {
       endpoint = "sendSticker";
-      body.sticker = mediaUrl;
+      body.sticker = finalMediaUrl;
       console.log("😊 Enviando figurinha");
     } else if (mediaType === "document" || mediaType.includes("pdf") || mediaType.includes("doc")) {
       endpoint = "sendDocument";
-      body.document = mediaUrl;
+      body.document = finalMediaUrl;
       if (message) body.caption = message;
       console.log("📄 Enviando documento");
     } else {
       // Usar sendDocument como fallback para tipos não reconhecidos
       endpoint = "sendDocument";
-      body.document = mediaUrl;
+      body.document = finalMediaUrl;
       if (message) body.caption = message;
       console.log("📎 Enviando como documento (fallback) - tipo:", mediaType);
     }

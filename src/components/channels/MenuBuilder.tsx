@@ -37,7 +37,7 @@ interface MenuItem {
   id: string;
   option_key: string;
   option_label: string;
-  action_type: "queue" | "assistant" | "submenu" | "webhook" | "message";
+  action_type: "queue" | "assistant" | "submenu" | "webhook" | "message" | "media";
   target_id: string | null;
   target_data: any;
   position: number;
@@ -474,12 +474,13 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                         <SelectContent>
                           <SelectItem value="queue">Encaminhar para Fila</SelectItem>
                           <SelectItem value="assistant">Assistente Virtual</SelectItem>
                           <SelectItem value="submenu">Submenu</SelectItem>
                           <SelectItem value="webhook">Chamar Webhook</SelectItem>
                           <SelectItem value="message">Enviar Mensagem</SelectItem>
+                          <SelectItem value="media">Enviar Arquivo/Mídia</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -552,6 +553,43 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                           }
                           placeholder="https://..."
                         />
+                      </div>
+                    )}
+
+                    {item.action_type === "media" && (
+                      <div className="space-y-2">
+                        <Label>URL do Arquivo/Mídia</Label>
+                        <Input
+                          value={item.target_data?.media_url || ""}
+                          onChange={(e) =>
+                            updateMenuItem(item.id, {
+                              target_data: {
+                                ...item.target_data,
+                                media_url: e.target.value,
+                              },
+                            })
+                          }
+                          placeholder="https://... ou URL do Supabase Storage"
+                        />
+                        <Label>Tipo de Mídia</Label>
+                        <Select
+                          value={item.target_data?.media_type || "document"}
+                          onValueChange={(value) =>
+                            updateMenuItem(item.id, {
+                              target_data: { ...item.target_data, media_type: value },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="image">Imagem</SelectItem>
+                            <SelectItem value="video">Vídeo</SelectItem>
+                            <SelectItem value="audio">Áudio</SelectItem>
+                            <SelectItem value="document">Documento</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 
