@@ -429,9 +429,21 @@ export default function TicketDetail() {
               <Button variant="ghost" size="icon" onClick={() => navigate("/tickets")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div>
-                <h1 className="text-lg font-bold">#{ticket.id.slice(0, 8)}</h1>
-                <p className="text-xs text-muted-foreground">{ticket.contact?.name}</p>
+              <div className="flex items-center gap-2">
+                <div>
+                  <h1 className="text-lg font-bold">#{ticket.id.slice(0, 8)}</h1>
+                  <p className="text-xs text-muted-foreground">{ticket.contact?.name}</p>
+                </div>
+                {ticket.queue && (
+                  <Badge 
+                    style={{ 
+                      backgroundColor: ticket.queue.color,
+                      color: '#fff'
+                    }}
+                  >
+                    {ticket.queue.name}
+                  </Badge>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-2">

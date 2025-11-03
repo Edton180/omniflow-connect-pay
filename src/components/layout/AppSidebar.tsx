@@ -16,7 +16,8 @@ import {
   LogOut,
   Zap,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { title: "Canais", href: "/channels", icon: Globe },
   { title: "CRM / Kanban", href: "/crm", icon: Users2 },
   { title: "Chat Interno", href: "/internal-chat", icon: MessageCircle },
+  { title: "Avaliações", href: "/evaluation-ranking", icon: TrendingUp },
 ];
 
 const adminItems: NavItem[] = [

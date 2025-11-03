@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_configs: {
+        Row: {
+          api_key_encrypted: string
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          provider: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          api_key_encrypted: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          provider?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       baileys_sessions: {
         Row: {
           channel_id: string
@@ -1234,6 +1272,9 @@ export type Database = {
       }
       tenants: {
         Row: {
+          address: string | null
+          city: string | null
+          cnpj_cpf: string | null
           created_at: string | null
           custom_css: Json | null
           custom_domain: string | null
@@ -1248,11 +1289,16 @@ export type Database = {
           primary_color: string | null
           secondary_color: string | null
           slug: string
+          state: string | null
           subscription_status: string | null
           updated_at: string | null
           whatsapp: string | null
+          zip_code: string | null
         }
         Insert: {
+          address?: string | null
+          city?: string | null
+          cnpj_cpf?: string | null
           created_at?: string | null
           custom_css?: Json | null
           custom_domain?: string | null
@@ -1267,11 +1313,16 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
+          state?: string | null
           subscription_status?: string | null
           updated_at?: string | null
           whatsapp?: string | null
+          zip_code?: string | null
         }
         Update: {
+          address?: string | null
+          city?: string | null
+          cnpj_cpf?: string | null
           created_at?: string | null
           custom_css?: Json | null
           custom_domain?: string | null
@@ -1286,9 +1337,11 @@ export type Database = {
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string
+          state?: string | null
           subscription_status?: string | null
           updated_at?: string | null
           whatsapp?: string | null
+          zip_code?: string | null
         }
         Relationships: [
           {
@@ -1308,6 +1361,9 @@ export type Database = {
           closed_at: string | null
           contact_id: string
           created_at: string | null
+          evaluated_at: string | null
+          evaluation_feedback: string | null
+          evaluation_score: number | null
           id: string
           last_message: string | null
           priority: string | null
@@ -1323,6 +1379,9 @@ export type Database = {
           closed_at?: string | null
           contact_id: string
           created_at?: string | null
+          evaluated_at?: string | null
+          evaluation_feedback?: string | null
+          evaluation_score?: number | null
           id?: string
           last_message?: string | null
           priority?: string | null
@@ -1338,6 +1397,9 @@ export type Database = {
           closed_at?: string | null
           contact_id?: string
           created_at?: string | null
+          evaluated_at?: string | null
+          evaluation_feedback?: string | null
+          evaluation_score?: number | null
           id?: string
           last_message?: string | null
           priority?: string | null

@@ -37,11 +37,16 @@ interface MenuItem {
   id: string;
   option_key: string;
   option_label: string;
-  action_type: "queue" | "assistant" | "submenu" | "webhook" | "message" | "media";
+  action_type: "queue" | "assistant" | "submenu" | "webhook" | "message" | "media" | "forward_to_queue" | "send_file" | "send_evaluation" | "assistant_gpt" | "assistant_gemini" | "assistant_grok";
   target_id: string | null;
   target_data: any;
   position: number;
   is_active: boolean;
+  media_url?: string;
+  media_type?: string;
+  evaluation_message?: string;
+  evaluation_options?: string;
+  assistant_prompt?: string;
 }
 
 export function MenuBuilder({ channelId }: { channelId: string }) {

@@ -1,47 +1,18 @@
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Zap, LogOut, CreditCard, Package } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+import { CreditCard, Package } from "lucide-react";
 import { PaymentGatewayList } from "@/components/payments/PaymentGatewayList";
 import { PlansList } from "@/components/plans/PlansList";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function Payments() {
-  const { signOut } = useAuth();
-  const navigate = useNavigate();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
-              <CreditCard className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">Pagamentos</h1>
-              <p className="text-xs text-muted-foreground">Gerencie gateways e planos</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="outline" size="icon" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
+    <AppLayout>
+      <div className="p-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Pagamentos</h1>
+          <p className="text-muted-foreground">Gerencie gateways e planos</p>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="gateways" className="space-y-6">
           <TabsList>
             <TabsTrigger value="gateways" className="gap-2">
@@ -63,6 +34,6 @@ export default function Payments() {
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </AppLayout>
   );
 }

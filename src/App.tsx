@@ -13,7 +13,6 @@ import TicketDetail from "./pages/TicketDetail";
 import Contacts from "./pages/Contacts";
 import Queues from "./pages/Queues";
 import Channels from "./pages/Channels";
-import ChannelSettings from "./pages/ChannelSettings";
 import ChannelConfig from "./pages/ChannelConfig";
 import Payments from "./pages/Payments";
 import Branding from "./pages/Branding";
@@ -34,6 +33,7 @@ import SuperAdminTickets from "./pages/SuperAdminTickets";
 import ViewTickets from "./pages/ViewTickets";
 import SuperAdminInvoices from "./pages/SuperAdminInvoices";
 import LandingPageEditor from "./pages/LandingPageEditor";
+import EvaluationRanking from "./pages/EvaluationRanking";
 
 const queryClient = new QueryClient();
 
@@ -58,7 +58,7 @@ const App = () => (
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
           <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
           <Route path="/channels/:id/config" element={<AuthGuard requireAuth><ChannelConfig /></AuthGuard>} />
-          <Route path="/channel-settings" element={<AuthGuard requireAuth><ChannelSettings /></AuthGuard>} />
+          <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
           <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />

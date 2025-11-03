@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, Settings, LogOut, Zap, CreditCard, TrendingUp, DollarSign, Palette, FileText } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export const SuperAdminDashboard = () => {
-  const { signOut } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState({
     totalTenants: 0,
@@ -76,40 +74,11 @@ export const SuperAdminDashboard = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
-
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
-              <Zap className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold">OmniFlow</h1>
-              <p className="text-xs text-muted-foreground">Super Admin Panel</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-            <Button variant="outline" onClick={() => navigate('/profile')}>
-              Meu Perfil
-            </Button>
-            <Button variant="outline" size="icon" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <AppLayout>
+      <div className="p-8">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2 text-gradient">Super Admin Dashboard</h2>
+          <h2 className="text-3xl font-bold mb-2">Super Admin Dashboard</h2>
           <p className="text-muted-foreground">Gerenciar todos os tenants e configurações do sistema</p>
         </div>
 
@@ -195,14 +164,13 @@ export const SuperAdminDashboard = () => {
           </Card>
         </div>
 
-        <Card className="gradient-card">
+        <Card>
           <CardHeader>
             <CardTitle>Ações Rápidas</CardTitle>
-            <CardDescription>Gerencie sua plataforma multi-tenant</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/admin/tenants')}
             >
@@ -210,7 +178,7 @@ export const SuperAdminDashboard = () => {
               Gerenciar Tenants
             </Button>
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/admin/users')}
             >
@@ -218,7 +186,7 @@ export const SuperAdminDashboard = () => {
               Gerenciar Usuários
             </Button>
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/admin/all-tickets')}
             >
@@ -226,7 +194,7 @@ export const SuperAdminDashboard = () => {
               Todos os Atendimentos
             </Button>
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/admin/invoices')}
             >
@@ -234,7 +202,7 @@ export const SuperAdminDashboard = () => {
               Gerenciar Faturas
             </Button>
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/payments')}
             >
@@ -242,32 +210,16 @@ export const SuperAdminDashboard = () => {
               Planos e Pagamentos
             </Button>
             <Button 
-              className="h-20 text-lg hover-scale" 
+              className="h-20 text-lg" 
               variant="outline"
               onClick={() => navigate('/admin/revenue')}
             >
               <TrendingUp className="mr-2 h-5 w-5" />
               Receita e Faturamento
             </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/branding')}
-            >
-              <Palette className="mr-2 h-5 w-5" />
-              Marca Branca
-            </Button>
-            <Button 
-              className="h-20 text-lg hover-scale" 
-              variant="outline"
-              onClick={() => navigate('/admin/settings')}
-            >
-              <Settings className="mr-2 h-5 w-5" />
-              Configurações do Sistema
-            </Button>
           </CardContent>
         </Card>
       </div>
-    </div>
+    </AppLayout>
   );
 };

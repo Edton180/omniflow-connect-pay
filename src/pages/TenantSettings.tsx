@@ -1,19 +1,19 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Loader2, Building2, Save } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Invoices from './Invoices';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { Button } from '@/components/ui/button';
+import { AIConfigSection } from '@/components/settings/AIConfigSection';
 
 export default function TenantSettings() {
-  const navigate = useNavigate();
   const { user, roles } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -23,6 +23,11 @@ export default function TenantSettings() {
     logo_url: '',
     primary_color: '#8B5CF6',
     secondary_color: '#3B82F6',
+    cnpj_cpf: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
   });
 
   useEffect(() => {
@@ -37,7 +42,6 @@ export default function TenantSettings() {
       const tenantRole = roles.find((r) => r.tenant_id);
       if (!tenantRole?.tenant_id) {
         toast.error('Você não está associado a nenhuma empresa');
-        navigate('/dashboard');
         return;
       }
 
@@ -55,6 +59,11 @@ export default function TenantSettings() {
         logo_url: data.logo_url || '',
         primary_color: data.primary_color,
         secondary_color: data.secondary_color,
+        cnpj_cpf: data.cnpj_cpf || '',
+        address: data.address || '',
+        city: data.city || '',
+        state: data.state || '',
+        zip_code: data.zip_code || '',
       });
     } catch (error: any) {
       toast.error('Erro ao carregar dados da empresa: ' + error.message);
@@ -78,6 +87,11 @@ export default function TenantSettings() {
           logo_url: formData.logo_url || null,
           primary_color: formData.primary_color,
           secondary_color: formData.secondary_color,
+          cnpj_cpf: formData.cnpj_cpf || null,
+          address: formData.address || null,
+          city: formData.city || null,
+          state: formData.state || null,
+          zip_code: formData.zip_code || null,
         })
         .eq('id', tenant.id);
 
@@ -119,31 +133,18 @@ export default function TenantSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao Dashboard
-          </Button>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <AppLayout>
+      <div className="p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 flex items-center gap-3">
-            <Building2 className="h-8 w-8" />
-            Configurações da Empresa
-          </h1>
-            <p className="text-sm text-foreground/60">
-              Gerencie as configurações e usuários da sua empresa
-            </p>
+          <h1 className="text-3xl font-bold mb-2">Configurações da Empresa</h1>
+          <p className="text-muted-foreground">Gerencie as configurações e usuários da sua empresa</p>
         </div>
 
         <Tabs defaultValue="company" className="space-y-6">
           <TabsList>
             <TabsTrigger value="company">Empresa</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="ai">Assistentes IA</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
 
@@ -151,20 +152,31 @@ export default function TenantSettings() {
             <Card>
               <CardHeader>
                 <CardTitle>Informações da Empresa</CardTitle>
-                <CardDescription className="text-foreground/60">
-                  Atualize as informações básicas da sua empresa
-                </CardDescription>
+                <CardDescription>Atualize as informações básicas da sua empresa</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome da Empresa</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                    />
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Nome da Empresa *</Label>
+                      <Input
+                        id="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cnpj_cpf">CNPJ / CPF *</Label>
+                      <Input
+                        id="cnpj_cpf"
+                        value={formData.cnpj_cpf}
+                        onChange={(e) => setFormData({ ...formData, cnpj_cpf: e.target.value })}
+                        placeholder="00.000.000/0000-00"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -175,6 +187,52 @@ export default function TenantSettings() {
                       onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
                       placeholder="https://exemplo.com/logo.png"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Endereço Completo *</Label>
+                    <Input
+                      id="address"
+                      value={formData.address}
+                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                      placeholder="Rua, número, complemento"
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="city">Cidade *</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="state">Estado *</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                        placeholder="UF"
+                        maxLength={2}
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="zip_code">CEP *</Label>
+                      <Input
+                        id="zip_code"
+                        value={formData.zip_code}
+                        onChange={(e) => setFormData({ ...formData, zip_code: e.target.value })}
+                        placeholder="00000-000"
+                        required
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -247,11 +305,15 @@ export default function TenantSettings() {
             <UserManagement />
           </TabsContent>
 
+          <TabsContent value="ai">
+            <AIConfigSection />
+          </TabsContent>
+
           <TabsContent value="invoices">
             <Invoices />
           </TabsContent>
         </Tabs>
       </div>
-    </div>
+    </AppLayout>
   );
 }
