@@ -56,22 +56,6 @@ export function MessageTester({ channel }: MessageTesterProps) {
             platform: channel.type,
           };
           break;
-        case "evolution":
-          functionName = "send-evolution-message";
-          body = {
-            to: phoneNumber,
-            message: message,
-          };
-          break;
-        case "baileys":
-          functionName = "baileys-whatsapp";
-          body = {
-            action: "sendMessage",
-            channelId: channel.id,
-            to: phoneNumber,
-            message: message,
-          };
-          break;
         default:
           throw new Error("Tipo de canal não suportado");
       }
@@ -107,7 +91,7 @@ export function MessageTester({ channel }: MessageTesterProps) {
             <Label htmlFor="phone">
               {channel.type === "telegram" 
                 ? "Chat ID" 
-                : (channel.type === "waba" || channel.type === "whatsapp" || channel.type === "evolution" || channel.type === "baileys")
+                : (channel.type === "waba" || channel.type === "whatsapp")
                 ? "Número de Telefone"
                 : "ID do Destinatário"}
             </Label>
@@ -118,7 +102,7 @@ export function MessageTester({ channel }: MessageTesterProps) {
               placeholder={
                 channel.type === "telegram"
                   ? "123456789"
-                  : (channel.type === "waba" || channel.type === "whatsapp" || channel.type === "evolution" || channel.type === "baileys")
+                  : (channel.type === "waba" || channel.type === "whatsapp")
                   ? "5511999999999"
                   : "ID do destinatário"
               }
@@ -127,7 +111,7 @@ export function MessageTester({ channel }: MessageTesterProps) {
             <p className="text-xs text-muted-foreground">
               {channel.type === "telegram" &&
                 "Para obter seu Chat ID, envie uma mensagem para @userinfobot"}
-              {(channel.type === "waba" || channel.type === "whatsapp" || channel.type === "evolution" || channel.type === "baileys") &&
+              {(channel.type === "waba" || channel.type === "whatsapp") &&
                 "Digite o número com código do país (ex: 5511999999999)"}
               {(channel.type === "facebook" || channel.type === "instagram") &&
                 "Digite o ID do usuário na plataforma"}

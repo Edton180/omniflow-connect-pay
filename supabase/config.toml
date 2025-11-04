@@ -1,10 +1,7 @@
 project_id = "yfseeexwafzmezufwdxq"
 
-[functions.baileys-whatsapp]
-verify_jwt = false
-
-[functions.evolution-whatsapp]
-verify_jwt = false
+[functions.send-evaluation]
+verify_jwt = true
 
 [functions.telegram-webhook]
 verify_jwt = false
@@ -28,9 +25,6 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.update-contacts-online-status]
-verify_jwt = true
-
-[functions.send-evolution-message]
 verify_jwt = true
 
 [functions.waba-webhook]

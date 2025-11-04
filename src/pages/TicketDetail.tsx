@@ -6,10 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +43,12 @@ export default function TicketDetail() {
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [forwardTarget, setForwardTarget] = useState<"agent" | "queue" | "bot">("agent");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedQueue, setSelectedQueue] = useState("");
+  const [agents, setAgents] = useState<any[]>([]);
+  const [queues, setQueues] = useState<any[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -344,34 +352,6 @@ export default function TicketDetail() {
     }
   };
 
-  const handleStatusChange = async (newStatus: string) => {
-    try {
-      const updates: any = { status: newStatus };
-      if (newStatus === "closed") {
-        updates.closed_at = new Date().toISOString();
-      }
-
-      const { error } = await supabase
-        .from("tickets")
-        .update(updates)
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setTicket({ ...ticket, ...updates });
-      toast({
-        title: "Status atualizado",
-        description: "O status do ticket foi atualizado com sucesso.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleDeleteTicket = async () => {
     try {
       // Deletar mensagens associadas
@@ -391,6 +371,122 @@ export default function TicketDetail() {
     } catch (error: any) {
       toast({
         title: "Erro ao deletar ticket",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async (newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("tickets")
+        .update({ status: newStatus })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      // Send evaluation if status is closed
+      if (newStatus === "closed" && ticket) {
+        try {
+          await supabase.functions.invoke("send-evaluation", {
+            body: {
+              ticketId: ticket.id,
+              channel: ticket.channel,
+              contactPhone: ticket.contact?.phone || ticket.contact?.metadata?.telegram_chat_id,
+              contactId: ticket.contact?.id,
+            },
+          });
+        } catch (evalError) {
+          console.error("Error sending evaluation:", evalError);
+          // Don't block status change if evaluation fails
+        }
+      }
+
+      toast({
+        title: "Status atualizado",
+        description: "O status do ticket foi atualizado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadAgentsAndQueues = async () => {
+    if (!profile?.tenant_id) return;
+
+    try {
+      // Load agents
+      const { data: agentsData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("tenant_id", profile.tenant_id)
+        .order("full_name");
+
+      if (agentsData) setAgents(agentsData);
+
+      // Load queues
+      const { data: queuesData } = await supabase
+        .from("queues")
+        .select("id, name")
+        .eq("tenant_id", profile.tenant_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (queuesData) setQueues(queuesData);
+    } catch (error: any) {
+      console.error("Error loading agents/queues:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (forwardDialogOpen) {
+      loadAgentsAndQueues();
+    }
+  }, [forwardDialogOpen, profile]);
+
+  const handleForward = async () => {
+    if (!id) return;
+
+    try {
+      const updates: any = {};
+
+      if (forwardTarget === "agent" && selectedAgent) {
+        updates.assigned_to = selectedAgent;
+      } else if (forwardTarget === "queue" && selectedQueue) {
+        updates.queue_id = selectedQueue;
+        updates.assigned_to = null;
+      } else if (forwardTarget === "bot") {
+        updates.assigned_to = null;
+        updates.status = "open";
+        updates.bot_state = { step: "initial" };
+      }
+
+      const { error } = await supabase
+        .from("tickets")
+        .update(updates)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setForwardDialogOpen(false);
+      setSelectedAgent("");
+      setSelectedQueue("");
+      
+      toast({
+        title: "Ticket encaminhado",
+        description: "O ticket foi encaminhado com sucesso.",
+      });
+
+      // Reload ticket data
+      await fetchTicketData();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao encaminhar",
         description: error.message,
         variant: "destructive",
       });
@@ -447,6 +543,14 @@ export default function TicketDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setForwardDialogOpen(true)}
+              >
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Encaminhar
+              </Button>
               <Select value={ticket.status} onValueChange={handleStatusChange}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
@@ -654,6 +758,80 @@ export default function TicketDetail() {
           </Card>
         </div>
       </div>
+
+      {/* Forward Dialog */}
+      <Dialog open={forwardDialogOpen} onOpenChange={setForwardDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Encaminhar Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Encaminhar para</Label>
+              <Select value={forwardTarget} onValueChange={(v) => setForwardTarget(v as "agent" | "queue" | "bot")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agent">Agente</SelectItem>
+                  <SelectItem value="queue">Fila</SelectItem>
+                  <SelectItem value="bot">Bot</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {forwardTarget === "agent" && (
+              <div>
+                <Label>Selecionar Agente</Label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um agente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {forwardTarget === "queue" && (
+              <div>
+                <Label>Selecionar Fila</Label>
+                <Select value={selectedQueue} onValueChange={setSelectedQueue}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha uma fila" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {queues.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.id}>
+                        {queue.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {forwardTarget === "bot" && (
+              <p className="text-sm text-muted-foreground">
+                O ticket será encaminhado para o bot e o fluxo será reiniciado.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForwardDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleForward}>
+              Encaminhar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

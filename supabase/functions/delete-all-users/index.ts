@@ -33,7 +33,6 @@ Deno.serve(async (req) => {
     await supabaseAdmin.from('messages').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('tickets').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('contacts').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    await supabaseAdmin.from('baileys_sessions').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('channels').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('queues').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('payments').delete().neq('id', '00000000-0000-0000-0000-000000000000')
