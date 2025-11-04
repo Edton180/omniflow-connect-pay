@@ -37,6 +37,9 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
     billing_period: "monthly",
     max_users: "",
     max_tickets: "",
+    num_connections: "",
+    user_limit: "",
+    ticket_limit: "",
   });
 
   useEffect(() => {
@@ -48,6 +51,9 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         billing_period: plan.billing_period || "monthly",
         max_users: plan.max_users?.toString() || "",
         max_tickets: plan.max_tickets?.toString() || "",
+        num_connections: plan.features?.num_connections?.toString() || "",
+        user_limit: plan.features?.user_limit?.toString() || "",
+        ticket_limit: plan.features?.ticket_limit?.toString() || "",
       });
     } else {
       setFormData({
@@ -57,6 +63,9 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         billing_period: "monthly",
         max_users: "",
         max_tickets: "",
+        num_connections: "",
+        user_limit: "",
+        ticket_limit: "",
       });
     }
   }, [plan]);
@@ -80,6 +89,11 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
         billing_period: formData.billing_period,
         max_users: formData.max_users ? parseInt(formData.max_users) : null,
         max_tickets: formData.max_tickets ? parseInt(formData.max_tickets) : null,
+        features: {
+          num_connections: formData.num_connections ? parseInt(formData.num_connections) : null,
+          user_limit: formData.user_limit ? parseInt(formData.user_limit) : null,
+          ticket_limit: formData.ticket_limit ? parseInt(formData.ticket_limit) : null,
+        },
         currency: "BRL",
         is_active: true,
         tenant_id: null,
@@ -181,24 +195,59 @@ export function PlanDialog({ open, onOpenChange, plan, onSuccess }: PlanDialogPr
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Máx. Usuários</Label>
-              <Input
-                type="number"
-                value={formData.max_users}
-                onChange={(e) => setFormData({ ...formData, max_users: e.target.value })}
-                placeholder="Ilimitado"
-              />
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Máx. Usuários</Label>
+                <Input
+                  type="number"
+                  value={formData.max_users}
+                  onChange={(e) => setFormData({ ...formData, max_users: e.target.value })}
+                  placeholder="Ilimitado"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Máx. Tickets</Label>
+                <Input
+                  type="number"
+                  value={formData.max_tickets}
+                  onChange={(e) => setFormData({ ...formData, max_tickets: e.target.value })}
+                  placeholder="Ilimitado"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Máx. Tickets</Label>
-              <Input
-                type="number"
-                value={formData.max_tickets}
-                onChange={(e) => setFormData({ ...formData, max_tickets: e.target.value })}
-                placeholder="Ilimitado"
-              />
+
+            <div className="border-t pt-4">
+              <h4 className="font-medium mb-3">Limites Adicionais</h4>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Nº Conexões</Label>
+                  <Input
+                    type="number"
+                    value={formData.num_connections}
+                    onChange={(e) => setFormData({ ...formData, num_connections: e.target.value })}
+                    placeholder="Ex: 5"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Limite de Usuários</Label>
+                  <Input
+                    type="number"
+                    value={formData.user_limit}
+                    onChange={(e) => setFormData({ ...formData, user_limit: e.target.value })}
+                    placeholder="Ex: 10"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Limite de Tickets</Label>
+                  <Input
+                    type="number"
+                    value={formData.ticket_limit}
+                    onChange={(e) => setFormData({ ...formData, ticket_limit: e.target.value })}
+                    placeholder="Ex: 100"
+                  />
+                </div>
+              </div>
             </div>
           </div>
 

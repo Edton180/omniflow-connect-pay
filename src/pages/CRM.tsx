@@ -353,6 +353,32 @@ export default function CRM() {
     }
   };
 
+  const handleDeleteLead = async (leadId: string) => {
+    if (!confirm("Tem certeza que deseja excluir este lead?")) return;
+
+    try {
+      const { error } = await supabase
+        .from("crm_leads")
+        .delete()
+        .eq("id", leadId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Lead excluído",
+        description: "Lead removido com sucesso.",
+      });
+
+      await loadLeads();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir lead",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -491,6 +517,18 @@ export default function CRM() {
                             title="Editar lead"
                           >
                             <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteLead(lead.id);
+                            }}
+                            title="Excluir lead"
+                          >
+                            <X className="h-3 w-3" />
                           </Button>
                         </div>
                       </div>
