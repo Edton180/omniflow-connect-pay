@@ -548,6 +548,64 @@ export type Database = {
           },
         ]
       }
+      evaluations: {
+        Row: {
+          agent_id: string | null
+          contact_id: string
+          created_at: string | null
+          feedback: string | null
+          id: string
+          score: number
+          tenant_id: string
+          ticket_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          contact_id: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          score: number
+          tenant_id: string
+          ticket_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          contact_id?: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          score?: number
+          tenant_id?: string
+          ticket_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evaluations_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           content: string
@@ -1511,7 +1569,27 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      evaluation_rankings: {
+        Row: {
+          agent_id: string | null
+          agent_name: string | null
+          average_score: number | null
+          excellent_count: number | null
+          good_count: number | null
+          poor_count: number | null
+          tenant_id: string | null
+          total_evaluations: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_assign_tenant: {
