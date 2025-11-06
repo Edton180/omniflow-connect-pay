@@ -134,19 +134,36 @@ export default function InternalChat() {
       console.log("Setting tenant_id:", userRole.tenant_id);
       setTenantId(userRole.tenant_id);
 
-      const { data, error } = await supabase
+      // Buscar profiles e seus roles
+      const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .eq("tenant_id", userRole.tenant_id)
         .neq("id", user.id);
 
-      if (error) {
-        console.error("Error loading profiles:", error);
-        throw error;
+      if (profilesError) {
+        console.error("Error loading profiles:", profilesError);
+        throw profilesError;
       }
+
+      // Buscar roles de cada usuário
+      const usersWithRoles = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", profile.id)
+            .eq("tenant_id", userRole.tenant_id);
+          
+          return {
+            ...profile,
+            roles: roles?.map(r => r.role) || []
+          };
+        })
+      );
       
-      console.log("Loaded users:", data);
-      setUsers(data || []);
+      console.log("Loaded users with roles:", usersWithRoles);
+      setUsers(usersWithRoles || []);
     } catch (error: any) {
       console.error("Error loading users:", error);
       toast({
@@ -360,9 +377,22 @@ export default function InternalChat() {
                         <span className="font-medium text-sm truncate block">
                           {u.full_name || 'Sem nome'}
                         </span>
-                        <span className="text-xs text-foreground/60 truncate block">
-                          {u.phone || 'Sem telefone'}
-                        </span>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          {u.roles && u.roles.length > 0 ? (
+                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                              {u.roles.includes('tenant_admin') ? 'Admin' : 
+                               u.roles.includes('agent') ? 'Agente' : 
+                               u.roles[0]}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-foreground/40">Sem papel</span>
+                          )}
+                          {u.phone && (
+                            <span className="text-xs text-foreground/60 truncate">
+                              {u.phone}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
