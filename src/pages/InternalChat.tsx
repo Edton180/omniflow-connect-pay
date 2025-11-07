@@ -17,11 +17,19 @@ import { TeamDialog } from "@/components/chat/TeamDialog";
 import { ChatConfigTab } from "@/components/chat/ChatConfigTab";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
+interface UserWithRoles {
+  id: string;
+  full_name: string;
+  avatar_url?: string;
+  phone?: string;
+  roles: string[];
+}
+
 export default function InternalChat() {
   const navigate = useNavigate();
   const { signOut, user } = useAuth();
   const { toast } = useToast();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserWithRoles[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
@@ -300,7 +308,7 @@ export default function InternalChat() {
     setMessageText(messageText + sticker);
   };
 
-  const filteredUsers = users.filter(u => 
+  const filteredUsers = users.filter((u: UserWithRoles) => 
     u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -403,9 +411,20 @@ export default function InternalChat() {
             {activeTab === "teams" && (
               <div className="h-full space-y-2 p-2">
                 <Button
-                  onClick={() => setShowTeamDialog(true)}
+                  onClick={() => {
+                    if (!tenantId) {
+                      toast({
+                        title: "Aguarde",
+                        description: "Carregando informações do tenant...",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setShowTeamDialog(true);
+                  }}
                   className="w-full"
                   size="sm"
+                  disabled={!tenantId}
                 >
                   <UsersIcon className="h-4 w-4 mr-2" />
                   Criar Nova Equipe
@@ -446,7 +465,7 @@ export default function InternalChat() {
           </div>
           
           <TeamDialog
-            open={showTeamDialog}
+            open={showTeamDialog && !!tenantId}
             onOpenChange={setShowTeamDialog}
             tenantId={tenantId || ""}
             onSuccess={() => {

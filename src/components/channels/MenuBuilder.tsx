@@ -37,7 +37,7 @@ interface MenuItem {
   id: string;
   option_key: string;
   option_label: string;
-  action_type: "queue" | "assistant" | "submenu" | "webhook" | "message" | "media" | "forward_to_queue" | "send_file" | "send_evaluation" | "assistant_gpt" | "assistant_gemini" | "assistant_grok";
+  action_type: "send_message" | "send_file" | "forward_to_agent" | "forward_to_queue" | "forward_to_bot" | "send_evaluation" | "assistant_gpt" | "assistant_gemini" | "assistant_grok" | "submenu" | "end_conversation";
   target_id: string | null;
   target_data: any;
   position: number;
@@ -212,7 +212,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
           menu_id: selectedMenu.id,
           option_key: String(menuItems.length + 1),
           option_label: "Nova Opção",
-          action_type: "message",
+          action_type: "send_message",
           position: menuItems.length,
           is_active: true,
           target_data: { message: "Mensagem padrão" },
@@ -267,13 +267,15 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
 
   const getActionIcon = (type: string) => {
     switch (type) {
-      case "queue":
+      case "forward_to_queue":
         return <MessageSquare className="h-4 w-4" />;
-      case "assistant":
+      case "assistant_gpt":
+      case "assistant_gemini":
+      case "assistant_grok":
         return <Bot className="h-4 w-4" />;
       case "submenu":
         return <GitBranch className="h-4 w-4" />;
-      case "webhook":
+      case "send_evaluation":
         return <Webhook className="h-4 w-4" />;
       default:
         return <FileText className="h-4 w-4" />;
@@ -476,21 +478,26 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                           updateMenuItem(item.id, { action_type: value })
                         }
                       >
-                        <SelectTrigger>
+                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                          <SelectContent>
-                          <SelectItem value="queue">Encaminhar para Fila</SelectItem>
-                          <SelectItem value="assistant">Assistente Virtual</SelectItem>
+                          <SelectItem value="send_message">Enviar Mensagem</SelectItem>
+                          <SelectItem value="send_file">Enviar Arquivo</SelectItem>
+                          <SelectItem value="forward_to_agent">Encaminhar para Agente</SelectItem>
+                          <SelectItem value="forward_to_queue">Encaminhar para Fila</SelectItem>
+                          <SelectItem value="forward_to_bot">Encaminhar para Bot</SelectItem>
+                          <SelectItem value="send_evaluation">Enviar Avaliação</SelectItem>
+                          <SelectItem value="assistant_gpt">Assistente GPT</SelectItem>
+                          <SelectItem value="assistant_gemini">Assistente Gemini</SelectItem>
+                          <SelectItem value="assistant_grok">Assistente Grok</SelectItem>
                           <SelectItem value="submenu">Submenu</SelectItem>
-                          <SelectItem value="webhook">Chamar Webhook</SelectItem>
-                          <SelectItem value="message">Enviar Mensagem</SelectItem>
-                          <SelectItem value="media">Enviar Arquivo/Mídia</SelectItem>
+                          <SelectItem value="end_conversation">Encerrar Conversa</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
-                    {item.action_type === "queue" && (
+                    {item.action_type === "forward_to_queue" && (
                       <div className="space-y-2">
                         <Label>Fila de Destino</Label>
                         <Select
@@ -513,7 +520,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       </div>
                     )}
 
-                    {item.action_type === "assistant" && (
+                    {(item.action_type === "assistant_gpt" || item.action_type === "assistant_gemini" || item.action_type === "assistant_grok") && (
                       <div className="space-y-2">
                         <Label>Prompt do Assistente</Label>
                         <Textarea
@@ -528,7 +535,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       </div>
                     )}
 
-                    {item.action_type === "message" && (
+                    {item.action_type === "send_message" && (
                       <div className="space-y-2">
                         <Label>Mensagem</Label>
                         <Textarea
@@ -543,7 +550,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       </div>
                     )}
 
-                    {item.action_type === "webhook" && (
+                    {item.action_type === "send_evaluation" && (
                       <div className="space-y-2">
                         <Label>URL do Webhook</Label>
                         <Input
@@ -561,7 +568,7 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       </div>
                     )}
 
-                    {item.action_type === "media" && (
+                    {item.action_type === "send_file" && (
                       <div className="space-y-2">
                         <Label>URL do Arquivo/Mídia</Label>
                         <Input
