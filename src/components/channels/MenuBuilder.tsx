@@ -236,9 +236,20 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
 
   const updateMenuItem = async (itemId: string, updates: Partial<MenuItem>) => {
     try {
-      const { error } = await supabase.from("menu_items").update(updates).eq("id", itemId);
+      // Validar target_data antes de salvar
+      const validUpdates = { ...updates };
+      
+      // Se mudou o action_type, limpar target_data anterior
+      if (validUpdates.action_type) {
+        validUpdates.target_data = null;
+        validUpdates.target_id = null;
+      }
+      
+      const { error } = await supabase.from("menu_items").update(validUpdates).eq("id", itemId);
 
       if (error) throw error;
+      
+      toast({ title: "Item atualizado!" });
       loadMenuItems(selectedMenu!.id);
     } catch (error: any) {
       toast({
@@ -474,9 +485,16 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       <Label>Tipo de Ação</Label>
                       <Select
                         value={item.action_type}
-                        onValueChange={(value: any) =>
-                          updateMenuItem(item.id, { action_type: value })
-                        }
+                        onValueChange={async (value: any) => {
+                          // Atualizar imediatamente no state local
+                          const updatedItems = menuItems.map(i => 
+                            i.id === item.id ? { ...i, action_type: value, target_data: null, target_id: null } : i
+                          );
+                          setMenuItems(updatedItems as MenuItem[]);
+                          
+                          // Salvar no banco
+                          await updateMenuItem(item.id, { action_type: value });
+                        }}
                       >
                          <SelectTrigger>
                           <SelectValue />

@@ -122,15 +122,44 @@ export default function InternalChat() {
         .from("user_roles")
         .select("tenant_id")
         .eq("user_id", user.id)
-        .maybeSingle();
+        .single();
 
       if (roleError) {
         console.error("Error loading user role:", roleError);
-        throw roleError;
+        
+        // Se não encontrou role, tentar criar um tenant padrão
+        if (roleError.code === 'PGRST116') {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("tenant_id")
+            .eq("id", user.id)
+            .single();
+          
+          if (profile?.tenant_id) {
+            setTenantId(profile.tenant_id);
+            // Criar role para o usuário
+            await supabase
+              .from("user_roles")
+              .insert({
+                user_id: user.id,
+                tenant_id: profile.tenant_id,
+                role: "tenant_admin"
+              });
+          } else {
+            toast({
+              title: "Configuração necessária",
+              description: "Complete o setup inicial da sua conta",
+              variant: "destructive",
+            });
+            return;
+          }
+        } else {
+          throw roleError;
+        }
+        return;
       }
 
       if (!userRole?.tenant_id) {
-        console.warn("User has no tenant_id");
         toast({
           title: "Aviso",
           description: "Você precisa estar associado a uma empresa",
@@ -139,7 +168,6 @@ export default function InternalChat() {
         return;
       }
       
-      console.log("Setting tenant_id:", userRole.tenant_id);
       setTenantId(userRole.tenant_id);
 
       // Buscar profiles e seus roles
@@ -170,7 +198,6 @@ export default function InternalChat() {
         })
       );
       
-      console.log("Loaded users with roles:", usersWithRoles);
       setUsers(usersWithRoles || []);
     } catch (error: any) {
       console.error("Error loading users:", error);
@@ -464,15 +491,17 @@ export default function InternalChat() {
             )}
           </div>
           
-          <TeamDialog
-            open={showTeamDialog && !!tenantId}
-            onOpenChange={setShowTeamDialog}
-            tenantId={tenantId || ""}
-            onSuccess={() => {
-              loadUsers();
-              loadTeams();
-            }}
-          />
+          {tenantId && (
+            <TeamDialog
+              open={showTeamDialog}
+              onOpenChange={setShowTeamDialog}
+              tenantId={tenantId}
+              onSuccess={() => {
+                setShowTeamDialog(false);
+                loadTeams();
+              }}
+            />
+          )}
         </div>
 
         {/* Área de Chat */}
