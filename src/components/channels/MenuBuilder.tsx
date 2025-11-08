@@ -538,6 +538,49 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
                       </div>
                     )}
 
+                    {item.action_type === "forward_to_agent" && (
+                      <div className="space-y-2">
+                        <Label>Agente de Destino</Label>
+                        <Input
+                          value={item.target_data?.agent_name || ""}
+                          onChange={(e) =>
+                            updateMenuItem(item.id, {
+                              target_data: { ...item.target_data, agent_name: e.target.value },
+                            })
+                          }
+                          placeholder="Nome do agente (opcional - deixe vazio para qualquer agente disponível)"
+                        />
+                      </div>
+                    )}
+
+                    {item.action_type === "submenu" && (
+                      <div className="space-y-2">
+                        <Label>Submenu de Destino</Label>
+                        <Select
+                          value={item.target_id || ""}
+                          onValueChange={(value) =>
+                            updateMenuItem(item.id, { target_id: value })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o submenu" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {menus
+                              .filter(m => m.id !== selectedMenu?.id)
+                              .map((menu) => (
+                                <SelectItem key={menu.id} value={menu.id}>
+                                  {menu.name} (Nível {menu.level})
+                                </SelectItem>
+                              ))}
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Redireciona para outro menu quando o usuário seleciona esta opção
+                        </p>
+                      </div>
+                    )}
+
                     {(item.action_type === "assistant_gpt" || item.action_type === "assistant_gemini" || item.action_type === "assistant_grok") && (
                       <div className="space-y-2">
                         <Label>Prompt do Assistente</Label>

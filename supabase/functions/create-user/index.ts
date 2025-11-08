@@ -78,8 +78,24 @@ serve(async (req) => {
     const isSuperAdmin = roles.some(r => r.role === 'super_admin');
     if (!isSuperAdmin) {
       const userTenantId = roles[0]?.tenant_id;
+      if (!tenant_id) {
+        throw new Error('Tenant ID is required');
+      }
       if (tenant_id !== userTenantId) {
         throw new Error('Tenant admins can only create users in their own tenant');
+      }
+    }
+    
+    // Validate tenant exists if provided
+    if (tenant_id) {
+      const { data: tenantExists, error: tenantError } = await supabaseAdmin
+        .from('tenants')
+        .select('id')
+        .eq('id', tenant_id)
+        .maybeSingle();
+        
+      if (tenantError || !tenantExists) {
+        throw new Error('Invalid tenant ID');
       }
     }
 

@@ -185,6 +185,16 @@ export const UserManagement = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validar tenant_id se não for super admin criando outro super admin
+    if (!selectedUser && formData.role !== 'super_admin' && !formData.tenant_id) {
+      toast({
+        title: "Empresa Obrigatória",
+        description: "Selecione uma empresa para associar o usuário",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       if (selectedUser) {
         // Update existing user
@@ -473,10 +483,13 @@ export const UserManagement = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="tenant_id">Empresa</Label>
+              <Label htmlFor="tenant_id">
+                Empresa {!selectedUser && <span className="text-destructive">*</span>}
+              </Label>
               <Select
                 value={formData.tenant_id}
                 onValueChange={(value) => setFormData({ ...formData, tenant_id: value })}
+                required={!selectedUser}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione uma empresa" />
@@ -489,6 +502,11 @@ export const UserManagement = () => {
                   ))}
                 </SelectContent>
               </Select>
+              {!selectedUser && tenants.length === 0 && (
+                <p className="text-sm text-muted-foreground">
+                  Nenhuma empresa cadastrada. Crie uma empresa primeiro.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

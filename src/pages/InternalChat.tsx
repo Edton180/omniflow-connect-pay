@@ -117,64 +117,61 @@ export default function InternalChat() {
       return;
     }
     
+    setLoading(true);
+    
     try {
-      const { data: userRole, error: roleError } = await supabase
-        .from("user_roles")
+      // Primeiro buscar o tenant_id do perfil do usuário
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
         .select("tenant_id")
-        .eq("user_id", user.id)
+        .eq("id", user.id)
         .single();
 
-      if (roleError) {
-        console.error("Error loading user role:", roleError);
-        
-        // Se não encontrou role, tentar criar um tenant padrão
-        if (roleError.code === 'PGRST116') {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("tenant_id")
-            .eq("id", user.id)
-            .single();
-          
-          if (profile?.tenant_id) {
-            setTenantId(profile.tenant_id);
-            // Criar role para o usuário
-            await supabase
-              .from("user_roles")
-              .insert({
-                user_id: user.id,
-                tenant_id: profile.tenant_id,
-                role: "tenant_admin"
-              });
-          } else {
-            toast({
-              title: "Configuração necessária",
-              description: "Complete o setup inicial da sua conta",
-              variant: "destructive",
-            });
-            return;
-          }
-        } else {
-          throw roleError;
-        }
-        return;
+      if (profileError) {
+        console.error("Error loading profile:", profileError);
+        throw profileError;
       }
 
-      if (!userRole?.tenant_id) {
+      if (!profile?.tenant_id) {
         toast({
-          title: "Aviso",
-          description: "Você precisa estar associado a uma empresa",
+          title: "Configuração Incompleta",
+          description: "Você precisa completar o setup inicial da sua conta",
           variant: "destructive",
         });
+        setLoading(false);
         return;
       }
-      
-      setTenantId(userRole.tenant_id);
 
-      // Buscar profiles e seus roles
+      setTenantId(profile.tenant_id);
+
+      // Verificar se usuário tem role
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("tenant_id", profile.tenant_id)
+        .maybeSingle();
+
+      // Se não tiver role, criar uma
+      if (!userRole) {
+        const { error: roleInsertError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: user.id,
+            tenant_id: profile.tenant_id,
+            role: "tenant_admin"
+          });
+
+        if (roleInsertError) {
+          console.error("Error creating role:", roleInsertError);
+        }
+      }
+
+      // Buscar profiles e seus roles do mesmo tenant
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
-        .eq("tenant_id", userRole.tenant_id)
+        .eq("tenant_id", profile.tenant_id)
         .neq("id", user.id);
 
       if (profilesError) {
@@ -184,15 +181,15 @@ export default function InternalChat() {
 
       // Buscar roles de cada usuário
       const usersWithRoles = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (profiles || []).map(async (userProfile) => {
           const { data: roles } = await supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", profile.id)
-            .eq("tenant_id", userRole.tenant_id);
+            .eq("user_id", userProfile.id)
+            .eq("tenant_id", profile.tenant_id);
           
           return {
-            ...profile,
+            ...userProfile,
             roles: roles?.map(r => r.role) || []
           };
         })
@@ -206,6 +203,8 @@ export default function InternalChat() {
         description: error.message,
         variant: "destructive",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
