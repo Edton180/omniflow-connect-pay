@@ -484,7 +484,7 @@ export default function InternalChat() {
             )}
             
             {activeTab === "config" && tenantId && (
-              <div className="p-2">
+              <div className="p-4 h-full overflow-y-auto">
                 <ChatConfigTab tenantId={tenantId} />
               </div>
             )}

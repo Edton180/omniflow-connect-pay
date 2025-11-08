@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Loader2, Search, Plus, MessageSquare, Clock, User, Trash2 } from "lucide-react";
+import { Loader2, Search, Plus, MessageSquare, Clock, User, Trash2, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -22,6 +22,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export const TicketList = () => {
   const { toast } = useToast();
@@ -34,6 +36,13 @@ export const TicketList = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [ticketToForward, setTicketToForward] = useState<any>(null);
+  const [forwardTarget, setForwardTarget] = useState<"agent" | "queue" | "bot">("agent");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedQueue, setSelectedQueue] = useState("");
+  const [agents, setAgents] = useState<any[]>([]);
+  const [queues, setQueues] = useState<any[]>([]);
 
   const fetchTickets = async () => {
     setLoading(true);
@@ -152,6 +161,86 @@ export const TicketList = () => {
     }
   };
 
+  const loadAgentsAndQueues = async () => {
+    if (!user) return;
+
+    try {
+      // Buscar tenant_id do usuário
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tenant_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.tenant_id) return;
+
+      // Load agents
+      const { data: agentsData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("tenant_id", profile.tenant_id)
+        .order("full_name");
+
+      if (agentsData) setAgents(agentsData);
+
+      // Load queues
+      const { data: queuesData } = await supabase
+        .from("queues")
+        .select("id, name")
+        .eq("tenant_id", profile.tenant_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (queuesData) setQueues(queuesData);
+    } catch (error: any) {
+      console.error("Error loading agents/queues:", error);
+    }
+  };
+
+  const handleForward = async () => {
+    if (!ticketToForward) return;
+
+    try {
+      const updates: any = {};
+
+      if (forwardTarget === "agent" && selectedAgent) {
+        updates.assigned_to = selectedAgent;
+      } else if (forwardTarget === "queue" && selectedQueue) {
+        updates.queue_id = selectedQueue;
+        updates.assigned_to = null;
+      } else if (forwardTarget === "bot") {
+        updates.assigned_to = null;
+        updates.status = "open";
+        updates.bot_state = { step: "initial" };
+      }
+
+      const { error } = await supabase
+        .from("tickets")
+        .update(updates)
+        .eq("id", ticketToForward.id);
+
+      if (error) throw error;
+
+      setForwardDialogOpen(false);
+      setTicketToForward(null);
+      setSelectedAgent("");
+      setSelectedQueue("");
+      
+      toast({
+        title: "Ticket encaminhado",
+        description: "O ticket foi encaminhado com sucesso.",
+      });
+
+      fetchTickets();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao encaminhar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const filteredTickets = tickets.filter(ticket =>
     ticket.contact?.name?.toLowerCase().includes(search.toLowerCase()) ||
     ticket.contact?.phone?.includes(search) ||
@@ -234,6 +323,19 @@ export const TicketList = () => {
                   <div className="flex flex-col items-end gap-2">
                     <div className="flex items-center gap-2">
                       {getStatusBadge(ticket.status)}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTicketToForward(ticket);
+                          setForwardDialogOpen(true);
+                          loadAgentsAndQueues();
+                        }}
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

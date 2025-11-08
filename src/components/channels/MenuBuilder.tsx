@@ -613,19 +613,10 @@ export function MenuBuilder({ channelId }: { channelId: string }) {
 
                     {item.action_type === "send_evaluation" && (
                       <div className="space-y-2">
-                        <Label>URL do Webhook</Label>
-                        <Input
-                          value={item.target_data?.webhook_url || ""}
-                          onChange={(e) =>
-                            updateMenuItem(item.id, {
-                              target_data: {
-                                ...item.target_data,
-                                webhook_url: e.target.value,
-                              },
-                            })
-                          }
-                          placeholder="https://..."
-                        />
+                        <p className="text-sm text-muted-foreground">
+                          Enviará uma mensagem de avaliação automaticamente quando o cliente selecionar esta opção.
+                          Configure as mensagens e escalas de avaliação em Configurações da Empresa → Avaliações.
+                        </p>
                       </div>
                     )}
 

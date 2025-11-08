@@ -12,6 +12,7 @@ import Invoices from './Invoices';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { AIConfigSection } from '@/components/settings/AIConfigSection';
+import { EvaluationSettingsTab } from '@/components/settings/EvaluationSettingsTab';
 
 export default function TenantSettings() {
   const { user, roles } = useAuth();
@@ -145,6 +146,7 @@ export default function TenantSettings() {
             <TabsTrigger value="company">Empresa</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
             <TabsTrigger value="ai">Assistentes IA</TabsTrigger>
+            <TabsTrigger value="evaluations">Avaliações</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
 
@@ -307,6 +309,10 @@ export default function TenantSettings() {
 
           <TabsContent value="ai">
             <AIConfigSection />
+          </TabsContent>
+
+          <TabsContent value="evaluations">
+            {tenant && <EvaluationSettingsTab tenantId={tenant.id} />}
           </TabsContent>
 
           <TabsContent value="invoices">

@@ -42,7 +42,33 @@ serve(async (req) => {
       );
     }
 
-    // Find evaluation menu item for this channel
+    // Get evaluation settings
+    const { data: evalSettings } = await supabaseAdmin
+      .from("evaluation_settings")
+      .select("*")
+      .eq("tenant_id", ticket.tenant_id)
+      .maybeSingle();
+
+    if (!evalSettings || !evalSettings.enabled) {
+      console.log("⚠️ Evaluation system disabled or not configured");
+      return new Response(
+        JSON.stringify({ success: true, message: "Evaluation system disabled" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Build evaluation message based on rating scale
+    let evaluationMessage = evalSettings.message_template;
+    
+    if (evalSettings.rating_scale === 3) {
+      evaluationMessage += "\n\n1 - Ruim 😞\n2 - Bom 😊\n3 - Ótimo 🌟";
+    } else if (evalSettings.rating_scale === 5) {
+      evaluationMessage += "\n\n1 ⭐\n2 ⭐⭐\n3 ⭐⭐⭐\n4 ⭐⭐⭐⭐\n5 ⭐⭐⭐⭐⭐";
+    } else if (evalSettings.rating_scale === 10) {
+      evaluationMessage += "\n\nDigite um número de 0 (muito insatisfeito) a 10 (muito satisfeito)";
+    }
+
+    // Find channel
     const { data: channels } = await supabaseAdmin
       .from("channels")
       .select("id, config")
@@ -59,26 +85,6 @@ serve(async (req) => {
     }
 
     const channelData = channels[0];
-
-    // Get evaluation menu
-    const { data: menus } = await supabaseAdmin
-      .from("channel_menus")
-      .select("id, greeting_message")
-      .eq("channel_id", channelData.id)
-      .eq("name", "Avaliação")
-      .limit(1);
-
-    if (!menus || menus.length === 0) {
-      console.log("⚠️ No evaluation menu found, skipping");
-      return new Response(
-        JSON.stringify({ success: true, message: "No evaluation menu configured" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const evaluationMenu = menus[0];
-    const evaluationMessage = evaluationMenu.greeting_message || 
-      "Por favor, avalie nosso atendimento:\n\n1 - Ruim\n2 - Regular\n3 - Bom\n4 - Muito Bom\n5 - Excelente";
 
     // Send evaluation based on channel
     let sendResult;

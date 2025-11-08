@@ -548,6 +548,50 @@ export type Database = {
           },
         ]
       }
+      evaluation_settings: {
+        Row: {
+          auto_send_on_close: boolean | null
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          message_template: string | null
+          rating_scale: number | null
+          tenant_id: string
+          thank_you_message: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          auto_send_on_close?: boolean | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          message_template?: string | null
+          rating_scale?: number | null
+          tenant_id: string
+          thank_you_message?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          auto_send_on_close?: boolean | null
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          message_template?: string | null
+          rating_scale?: number | null
+          tenant_id?: string
+          thank_you_message?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluation_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluations: {
         Row: {
           agent_id: string | null
