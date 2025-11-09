@@ -505,9 +505,19 @@ export default function TicketsImproved() {
     if (!selectedTicket || !newStatus) return;
 
     try {
+      const updates: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add closed_at timestamp when closing ticket
+      if (newStatus === "closed") {
+        updates.closed_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from("tickets")
-        .update({ status: newStatus })
+        .update(updates)
         .eq("id", selectedTicket.id);
 
       if (error) throw error;

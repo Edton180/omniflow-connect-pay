@@ -379,9 +379,19 @@ export default function TicketDetail() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
+      const updates: any = { 
+        status: newStatus,
+        updated_at: new Date().toISOString()
+      };
+      
+      // Add closed_at timestamp when closing ticket
+      if (newStatus === "closed") {
+        updates.closed_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from("tickets")
-        .update({ status: newStatus })
+        .update(updates)
         .eq("id", id);
 
       if (error) throw error;

@@ -267,7 +267,15 @@ export const UserManagement = () => {
           }
         });
 
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating user:", error);
+          throw new Error(error.message || "Erro ao criar usuário");
+        }
+        
+        if (data?.error) {
+          console.error("Function returned error:", data.error);
+          throw new Error(data.error);
+        }
 
         toast({
           title: "Usuário criado",
