@@ -386,17 +386,25 @@ export default function TicketDetail() {
 
       if (error) throw error;
 
-      // Send evaluation if status is closed
+      // Send evaluation if status is closed and auto_send_on_close is enabled
       if (newStatus === "closed" && ticket) {
         try {
-          await supabase.functions.invoke("send-evaluation", {
-            body: {
-              ticketId: ticket.id,
-              channel: ticket.channel,
-              contactPhone: ticket.contact?.phone || ticket.contact?.metadata?.telegram_chat_id,
-              contactId: ticket.contact?.id,
-            },
-          });
+          const { data: evalSettings } = await supabase
+            .from("evaluation_settings")
+            .select("*")
+            .eq("tenant_id", profile?.tenant_id)
+            .maybeSingle();
+
+          if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
+            await supabase.functions.invoke("send-evaluation", {
+              body: {
+                ticketId: ticket.id,
+                channel: ticket.channel,
+                contactPhone: ticket.contact?.phone || ticket.contact?.metadata?.telegram_chat_id,
+                contactId: ticket.contact?.id,
+              },
+            });
+          }
         } catch (evalError) {
           console.error("Error sending evaluation:", evalError);
           // Don't block status change if evaluation fails

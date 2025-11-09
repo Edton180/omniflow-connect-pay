@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip, Loader2, Check, CheckCheck, X, Trash2 } from "lucide-react";
+import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip, Loader2, Check, CheckCheck, X, Trash2, ArrowRight, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
@@ -17,6 +17,9 @@ import { StickerPicker } from "@/components/chat/StickerPicker";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function TicketsImproved() {
   const navigate = useNavigate();
@@ -33,6 +36,14 @@ export default function TicketsImproved() {
   const [sending, setSending] = useState(false);
   const [mediaUrl, setMediaUrl] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string | null>(null);
+  const [forwardDialogOpen, setForwardDialogOpen] = useState(false);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [forwardTarget, setForwardTarget] = useState<"agent" | "queue" | "bot">("agent");
+  const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedQueue, setSelectedQueue] = useState("");
+  const [newStatus, setNewStatus] = useState("");
+  const [agents, setAgents] = useState<any[]>([]);
+  const [queues, setQueues] = useState<any[]>([]);
 
   useEffect(() => {
     console.log("TicketsImproved montado, user:", user?.id);
@@ -414,6 +425,150 @@ export default function TicketsImproved() {
     navigate('/');
   };
 
+  const loadAgentsAndQueues = async () => {
+    try {
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user?.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) return;
+
+      // Load agents
+      const { data: agentsData } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .eq("tenant_id", userRole.tenant_id)
+        .order("full_name");
+
+      if (agentsData) setAgents(agentsData);
+
+      // Load queues
+      const { data: queuesData } = await supabase
+        .from("queues")
+        .select("id, name")
+        .eq("tenant_id", userRole.tenant_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (queuesData) setQueues(queuesData);
+    } catch (error: any) {
+      console.error("Error loading agents/queues:", error);
+    }
+  };
+
+  const handleForward = async () => {
+    if (!selectedTicket) return;
+
+    try {
+      const updates: any = {};
+
+      if (forwardTarget === "agent" && selectedAgent) {
+        updates.assigned_to = selectedAgent;
+      } else if (forwardTarget === "queue" && selectedQueue) {
+        updates.queue_id = selectedQueue;
+        updates.assigned_to = null;
+      } else if (forwardTarget === "bot") {
+        updates.assigned_to = null;
+        updates.status = "open";
+        updates.bot_state = { step: "initial" };
+      }
+
+      const { error } = await supabase
+        .from("tickets")
+        .update(updates)
+        .eq("id", selectedTicket.id);
+
+      if (error) throw error;
+
+      setForwardDialogOpen(false);
+      setSelectedAgent("");
+      setSelectedQueue("");
+      
+      toast({
+        title: "Ticket encaminhado",
+        description: "O ticket foi encaminhado com sucesso.",
+      });
+
+      loadTickets();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao encaminhar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleStatusChange = async () => {
+    if (!selectedTicket || !newStatus) return;
+
+    try {
+      const { error } = await supabase
+        .from("tickets")
+        .update({ status: newStatus })
+        .eq("id", selectedTicket.id);
+
+      if (error) throw error;
+
+      // Send evaluation if status is closed and auto_send_on_close is enabled
+      if (newStatus === "closed") {
+        try {
+          const { data: userRole } = await supabase
+            .from("user_roles")
+            .select("tenant_id")
+            .eq("user_id", user?.id)
+            .maybeSingle();
+
+          if (userRole?.tenant_id) {
+            const { data: evalSettings } = await supabase
+              .from("evaluation_settings")
+              .select("*")
+              .eq("tenant_id", userRole.tenant_id)
+              .maybeSingle();
+
+            if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
+              await supabase.functions.invoke("send-evaluation", {
+                body: {
+                  ticketId: selectedTicket.id,
+                  channel: selectedTicket.channel,
+                  contactPhone: selectedTicket.contact?.phone || selectedTicket.contact?.metadata?.telegram_chat_id,
+                  contactId: selectedTicket.contact?.id,
+                },
+              });
+            }
+          }
+        } catch (evalError) {
+          console.error("Error sending evaluation:", evalError);
+          // Don't block status change if evaluation fails
+        }
+      }
+
+      setStatusDialogOpen(false);
+      setNewStatus("");
+      
+      toast({
+        title: "Status atualizado",
+        description: "O status do ticket foi atualizado com sucesso.",
+      });
+
+      loadTickets();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao atualizar status",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (forwardDialogOpen) {
+      loadAgentsAndQueues();
+    }
+  }, [forwardDialogOpen]);
+
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Header */}
@@ -574,7 +729,25 @@ export default function TicketsImproved() {
                     </div>
                   </div>
                 </div>
-                {getStatusBadge(selectedTicket.status)}
+                <div className="flex items-center gap-2">
+                  {getStatusBadge(selectedTicket.status)}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setStatusDialogOpen(true)}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-1" />
+                    Status
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setForwardDialogOpen(true)}
+                  >
+                    <ArrowRight className="h-4 w-4 mr-1" />
+                    Encaminhar
+                  </Button>
+                </div>
               </div>
             </div>
 
@@ -783,6 +956,118 @@ export default function TicketsImproved() {
           </div>
         )}
       </div>
+
+      {/* Dialog de Encaminhar */}
+      <Dialog open={forwardDialogOpen} onOpenChange={setForwardDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Encaminhar Atendimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Encaminhar para</Label>
+              <Select value={forwardTarget} onValueChange={(value: any) => setForwardTarget(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agent">Agente</SelectItem>
+                  <SelectItem value="queue">Fila</SelectItem>
+                  <SelectItem value="bot">Bot</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {forwardTarget === "agent" && (
+              <div className="space-y-2">
+                <Label>Selecione o Agente</Label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha um agente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>
+                        {agent.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {forwardTarget === "queue" && (
+              <div className="space-y-2">
+                <Label>Selecione a Fila</Label>
+                <Select value={selectedQueue} onValueChange={setSelectedQueue}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Escolha uma fila" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {queues.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.id}>
+                        {queue.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {forwardTarget === "bot" && (
+              <p className="text-sm text-muted-foreground">
+                O atendimento será encaminhado para o bot automático
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForwardDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleForward}>
+              Encaminhar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Mudar Status */}
+      <Dialog open={statusDialogOpen} onOpenChange={setStatusDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Alterar Status do Atendimento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Novo Status</Label>
+              <Select value={newStatus} onValueChange={setNewStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Escolha um status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Aberto</SelectItem>
+                  <SelectItem value="in_progress">Atendendo</SelectItem>
+                  <SelectItem value="pending">Pendente</SelectItem>
+                  <SelectItem value="closed">Fechado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {newStatus === "closed" && (
+              <p className="text-sm text-muted-foreground">
+                Ao fechar o ticket, a avaliação será enviada automaticamente ao cliente (se configurado).
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStatusDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleStatusChange}>
+              Atualizar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
