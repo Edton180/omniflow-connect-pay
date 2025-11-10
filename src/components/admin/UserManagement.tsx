@@ -276,6 +276,11 @@ export const UserManagement = () => {
           console.error("Function returned error:", data.error);
           throw new Error(data.error);
         }
+        
+        if (!data?.success) {
+          console.error("Function returned success=false:", data);
+          throw new Error(data?.error || "Erro ao criar usuário");
+        }
 
         toast({
           title: "Usuário criado",

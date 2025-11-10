@@ -35,6 +35,7 @@ import ViewTickets from "./pages/ViewTickets";
 import SuperAdminInvoices from "./pages/SuperAdminInvoices";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import EvaluationRanking from "./pages/EvaluationRanking";
+import EvaluationDashboard from "./pages/EvaluationDashboard";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => (
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
+          <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />

@@ -14,6 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
+import { QuickReplies } from "@/components/tickets/QuickReplies";
+import { TagsManager } from "@/components/contacts/TagsManager";
+import { useNotifications } from "@/hooks/useNotifications";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -44,11 +47,17 @@ export default function TicketsImproved() {
   const [newStatus, setNewStatus] = useState("");
   const [agents, setAgents] = useState<any[]>([]);
   const [queues, setQueues] = useState<any[]>([]);
+  const [queueFilter, setQueueFilter] = useState<string>("all");
+  const [userTenantId, setUserTenantId] = useState<string>("");
+
+  // Enable push notifications
+  useNotifications();
 
   useEffect(() => {
     console.log("TicketsImproved montado, user:", user?.id);
     if (user?.id) {
       loadTickets();
+      loadQueues();
     }
   }, [user?.id]);
 
@@ -63,9 +72,9 @@ export default function TicketsImproved() {
   }, [location.state, tickets]);
 
   useEffect(() => {
-    console.log("Filtros mudaram - tickets:", tickets.length, "filter:", statusFilter, "search:", searchTerm);
+    console.log("Filtros mudaram - tickets:", tickets.length, "filter:", statusFilter, "queueFilter:", queueFilter, "search:", searchTerm);
     filterTickets();
-  }, [tickets, searchTerm, statusFilter]);
+  }, [tickets, searchTerm, statusFilter, queueFilter]);
 
   useEffect(() => {
     if (selectedTicket) {
@@ -195,9 +204,11 @@ export default function TicketsImproved() {
       console.log("User role:", userRole, "Error:", roleError);
 
       if (!userRole?.tenant_id) {
-        console.log("Sem tenant_id");
+      console.log("Sem tenant_id");
         return;
       }
+
+      setUserTenantId(userRole.tenant_id);
 
       const { data, error } = await supabase
         .from("tickets")
@@ -235,12 +246,18 @@ export default function TicketsImproved() {
     console.log("Filtrando tickets:", {
       total: tickets.length,
       statusFilter,
+      queueFilter,
       searchTerm
     });
 
     if (statusFilter !== "all") {
       filtered = filtered.filter(t => t.status === statusFilter);
       console.log(`Filtrados por status ${statusFilter}:`, filtered.length);
+    }
+
+    if (queueFilter !== "all") {
+      filtered = filtered.filter(t => t.queue_id === queueFilter);
+      console.log(`Filtrados por fila ${queueFilter}:`, filtered.length);
     }
 
     if (searchTerm) {
@@ -252,6 +269,32 @@ export default function TicketsImproved() {
 
     console.log("Tickets filtrados:", filtered.length);
     setFilteredTickets(filtered);
+  };
+
+  const loadQueues = async () => {
+    try {
+      if (!user?.id) return;
+
+      const { data: userRole } = await supabase
+        .from("user_roles")
+        .select("tenant_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!userRole?.tenant_id) return;
+
+      const { data, error } = await supabase
+        .from("queues")
+        .select("id, name, color")
+        .eq("tenant_id", userRole.tenant_id)
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setQueues(data || []);
+    } catch (error: any) {
+      console.error("Error loading queues:", error);
+    }
   };
 
   const loadMessages = async (ticketId: string) => {
@@ -617,6 +660,21 @@ export default function TicketsImproved() {
               />
             </div>
 
+            {/* Filtro por Fila */}
+            <Select value={queueFilter} onValueChange={setQueueFilter}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Filtrar por fila" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as filas</SelectItem>
+                {queues.map((queue) => (
+                  <SelectItem key={queue.id} value={queue.id}>
+                    {queue.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
             <Tabs value={statusFilter} onValueChange={setStatusFilter} className="w-full">
               <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all" className="text-xs">
@@ -697,6 +755,15 @@ export default function TicketsImproved() {
                         </span>
                       )}
                     </div>
+                    {ticket.contact?.tags && ticket.contact.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {ticket.contact.tags.slice(0, 2).map((tag: string) => (
+                          <Badge key={tag} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -742,6 +809,13 @@ export default function TicketsImproved() {
                         </span>
                       )}
                     </div>
+                    {selectedTicket.contact && (
+                      <TagsManager 
+                        contactId={selectedTicket.contact.id}
+                        currentTags={selectedTicket.contact.tags || []}
+                        onTagsChange={loadTickets}
+                      />
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -932,6 +1006,12 @@ export default function TicketsImproved() {
                     setMediaType(type);
                   }}
                 />
+                {userTenantId && (
+                  <QuickReplies
+                    tenantId={userTenantId}
+                    onSelectReply={(message) => setMessageText(messageText + message)}
+                  />
+                )}
                 <StickerPicker onStickerSelect={(sticker) => setMessageText(messageText + sticker)} />
                 <AudioRecorder onAudioRecorded={(url) => {
                   setMediaUrl(url);
