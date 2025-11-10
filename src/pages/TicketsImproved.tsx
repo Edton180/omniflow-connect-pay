@@ -75,6 +75,8 @@ export default function TicketsImproved() {
 
   // Realtime subscription for tickets
   useEffect(() => {
+    if (!user?.id) return;
+    
     const channel = supabase
       .channel('tickets-changes')
       .on(
@@ -86,6 +88,7 @@ export default function TicketsImproved() {
         },
         (payload) => {
           console.log('🔄 Ticket change:', payload);
+          // Reload tickets to get fresh data
           loadTickets();
         }
       )
@@ -227,7 +230,7 @@ export default function TicketsImproved() {
   };
 
   const filterTickets = () => {
-    let filtered = tickets;
+    let filtered = [...tickets]; // Create a new array to ensure React detects the change
 
     console.log("Filtrando tickets:", {
       total: tickets.length,
@@ -237,6 +240,7 @@ export default function TicketsImproved() {
 
     if (statusFilter !== "all") {
       filtered = filtered.filter(t => t.status === statusFilter);
+      console.log(`Filtrados por status ${statusFilter}:`, filtered.length);
     }
 
     if (searchTerm) {
@@ -563,7 +567,8 @@ export default function TicketsImproved() {
         description: "O status do ticket foi atualizado com sucesso.",
       });
 
-      loadTickets();
+      // Force reload and refilter
+      await loadTickets();
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar status",
@@ -1056,7 +1061,6 @@ export default function TicketsImproved() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="open">Aberto</SelectItem>
-                  <SelectItem value="in_progress">Atendendo</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
                   <SelectItem value="closed">Fechado</SelectItem>
                 </SelectContent>

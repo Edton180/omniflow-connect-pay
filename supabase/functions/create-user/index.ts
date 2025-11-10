@@ -185,10 +185,14 @@ serve(async (req) => {
     );
   } catch (error: any) {
     console.error('Function error:', error);
+    // Return 200 with error field to avoid non-2xx status code issues
     return new Response(
-      JSON.stringify({ error: error.message || 'An error occurred' }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message || 'An error occurred' 
+      }),
       { 
-        status: 400, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
