@@ -36,6 +36,7 @@ import SuperAdminInvoices from "./pages/SuperAdminInvoices";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import EvaluationRanking from "./pages/EvaluationRanking";
 import EvaluationDashboard from "./pages/EvaluationDashboard";
+import TicketKanban from "./pages/TicketKanban";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +57,7 @@ const App = () => (
           <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
           <Route path="/tickets-improved" element={<AuthGuard requireAuth><TicketsImproved /></AuthGuard>} />
+          <Route path="/ticket-kanban" element={<AuthGuard requireAuth><TicketKanban /></AuthGuard>} />
           <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
           <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
           <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />

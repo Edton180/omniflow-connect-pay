@@ -241,23 +241,24 @@ export default function TicketsImproved() {
   };
 
   const filterTickets = () => {
-    let filtered = [...tickets]; // Create a new array to ensure React detects the change
-
-    console.log("Filtrando tickets:", {
-      total: tickets.length,
+    console.log("🔍 Filtrando tickets:", {
+      totalTickets: tickets.length,
       statusFilter,
       queueFilter,
       searchTerm
     });
 
+    // Criar nova array para forçar re-render
+    let filtered = [...tickets];
+
     if (statusFilter !== "all") {
       filtered = filtered.filter(t => t.status === statusFilter);
-      console.log(`Filtrados por status ${statusFilter}:`, filtered.length);
+      console.log(`✅ Filtrados por status ${statusFilter}:`, filtered.length);
     }
 
     if (queueFilter !== "all") {
       filtered = filtered.filter(t => t.queue_id === queueFilter);
-      console.log(`Filtrados por fila ${queueFilter}:`, filtered.length);
+      console.log(`✅ Filtrados por fila ${queueFilter}:`, filtered.length);
     }
 
     if (searchTerm) {
@@ -267,7 +268,7 @@ export default function TicketsImproved() {
       );
     }
 
-    console.log("Tickets filtrados:", filtered.length);
+    console.log("📋 Tickets filtrados finais:", filtered.length);
     setFilteredTickets(filtered);
   };
 
@@ -509,7 +510,9 @@ export default function TicketsImproved() {
     if (!selectedTicket) return;
 
     try {
-      const updates: any = {};
+      const updates: any = {
+        updated_at: new Date().toISOString()
+      };
 
       if (forwardTarget === "agent" && selectedAgent) {
         updates.assigned_to = selectedAgent;
@@ -529,6 +532,9 @@ export default function TicketsImproved() {
 
       if (error) throw error;
 
+      // Atualizar ticket local
+      setSelectedTicket({ ...selectedTicket, ...updates });
+
       setForwardDialogOpen(false);
       setSelectedAgent("");
       setSelectedQueue("");
@@ -538,7 +544,9 @@ export default function TicketsImproved() {
         description: "O ticket foi encaminhado com sucesso.",
       });
 
-      loadTickets();
+      // Recarregar tickets e re-aplicar filtros
+      await loadTickets();
+      filterTickets();
     } catch (error: any) {
       toast({
         title: "Erro ao encaminhar",
@@ -569,6 +577,9 @@ export default function TicketsImproved() {
 
       if (error) throw error;
 
+      // Atualizar ticket local antes de recarregar
+      setSelectedTicket({ ...selectedTicket, ...updates });
+
       // Send evaluation if status is closed and auto_send_on_close is enabled
       if (newStatus === "closed") {
         try {
@@ -585,8 +596,12 @@ export default function TicketsImproved() {
               .eq("tenant_id", userRole.tenant_id)
               .maybeSingle();
 
+            console.log("📊 Configurações de avaliação:", evalSettings);
+
             if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
-              await supabase.functions.invoke("send-evaluation", {
+              console.log("📤 Enviando avaliação automática...");
+              
+              const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
                 body: {
                   ticketId: selectedTicket.id,
                   channel: selectedTicket.channel,
@@ -594,6 +609,18 @@ export default function TicketsImproved() {
                   contactId: selectedTicket.contact?.id,
                 },
               });
+
+              if (evalError) {
+                console.error("❌ Erro ao enviar avaliação:", evalError);
+              } else {
+                console.log("✅ Avaliação enviada com sucesso:", evalResponse);
+                toast({
+                  title: "Avaliação enviada",
+                  description: "A solicitação de avaliação foi enviada ao cliente.",
+                });
+              }
+            } else {
+              console.log("⚠️ Avaliação automática desabilitada ou não configurada");
             }
           }
         } catch (evalError) {
@@ -610,8 +637,11 @@ export default function TicketsImproved() {
         description: "O status do ticket foi atualizado com sucesso.",
       });
 
-      // Force reload and refilter
+      // Force reload to update the list with new status
       await loadTickets();
+      
+      // Re-apply filters to ensure ticket appears in correct column
+      filterTickets();
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar status",

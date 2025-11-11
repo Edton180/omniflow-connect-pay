@@ -34,7 +34,7 @@ export default function ViewTickets() {
               <p className="text-foreground/60">Selecione o formato que melhor atende suas necessidades</p>
             </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             <Card 
               className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 hover:border-primary border-2 bg-gradient-to-br from-card to-card/50"
               onClick={() => navigate("/tickets")}
@@ -87,6 +87,34 @@ export default function ViewTickets() {
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Tempo Real</span>
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Chat</span>
                   <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Rápido</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card 
+              className="cursor-pointer hover:shadow-2xl transition-all hover:scale-105 hover:border-primary border-2 bg-gradient-to-br from-card to-card/50"
+              onClick={() => navigate("/ticket-kanban")}
+            >
+              <CardHeader className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-lg">
+                    <PhoneCall className="h-7 w-7 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Visualização Kanban</CardTitle>
+                    <p className="text-sm text-foreground/60 mt-1">Colunas por status</p>
+                  </div>
+                </div>
+                <CardDescription className="text-base">
+                  Visualize tickets organizados em colunas por status, 
+                  arraste e solte para mudar o status facilmente
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Kanban</span>
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Drag & Drop</span>
+                  <span className="px-3 py-1 bg-primary/10 text-primary text-xs rounded-full">Visual</span>
                 </div>
               </CardContent>
             </Card>
