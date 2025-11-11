@@ -86,6 +86,20 @@ serve(async (req) => {
 
     const channelData = channels[0];
 
+    // Get contact data to retrieve correct identifiers
+    const { data: contact } = await supabaseAdmin
+      .from("contacts")
+      .select("*")
+      .eq("id", contactId)
+      .maybeSingle();
+
+    if (!contact) {
+      return new Response(
+        JSON.stringify({ error: "Contact not found" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Send evaluation based on channel
     let sendResult;
     if (channel === "telegram") {
@@ -97,17 +111,27 @@ serve(async (req) => {
         );
       }
 
+      // For Telegram, use telegram_chat_id from contact metadata
+      const telegramChatId = contact.metadata?.telegram_chat_id || contactPhone;
+      
+      console.log("📤 Sending Telegram evaluation:", { telegramChatId, botToken: botToken.substring(0, 10) + "..." });
+
       sendResult = await supabaseAdmin.functions.invoke("send-telegram-message", {
         body: {
-          chatId: contactPhone,
+          chatId: String(telegramChatId),
           message: evaluationMessage,
           botToken,
         },
       });
     } else if (channel === "whatsapp" || channel === "waba") {
+      // For WhatsApp, use phone number
+      const phoneNumber = contact.phone || contactPhone;
+      
+      console.log("📤 Sending WhatsApp evaluation:", { phoneNumber });
+
       sendResult = await supabaseAdmin.functions.invoke("send-waba-message", {
         body: {
-          to: contactPhone,
+          to: phoneNumber,
           message: evaluationMessage,
         },
       });

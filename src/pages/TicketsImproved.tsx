@@ -17,6 +17,9 @@ import { StickerPicker } from "@/components/chat/StickerPicker";
 import { QuickReplies } from "@/components/tickets/QuickReplies";
 import { TagsManager } from "@/components/contacts/TagsManager";
 import { useNotifications } from "@/hooks/useNotifications";
+import { TicketNotifications } from "@/components/tickets/TicketNotifications";
+import { TicketPriorityIndicator } from "@/components/tickets/TicketPriorityIndicator";
+import { TicketTimer } from "@/components/tickets/TicketTimer";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -95,10 +98,12 @@ export default function TicketsImproved() {
           schema: 'public',
           table: 'tickets'
         },
-        (payload) => {
+        async (payload) => {
           console.log('🔄 Ticket change:', payload);
-          // Reload tickets to get fresh data
-          loadTickets();
+          // Reload tickets to get fresh data and re-apply filters
+          await loadTickets();
+          // Small delay to ensure state is updated before filtering
+          setTimeout(() => filterTickets(), 100);
         }
       )
       .subscribe();
@@ -532,9 +537,6 @@ export default function TicketsImproved() {
 
       if (error) throw error;
 
-      // Atualizar ticket local
-      setSelectedTicket({ ...selectedTicket, ...updates });
-
       setForwardDialogOpen(false);
       setSelectedAgent("");
       setSelectedQueue("");
@@ -544,9 +546,12 @@ export default function TicketsImproved() {
         description: "O ticket foi encaminhado com sucesso.",
       });
 
-      // Recarregar tickets e re-aplicar filtros
+      // Update local ticket state
+      setSelectedTicket({ ...selectedTicket, ...updates });
+
+      // Reload tickets and re-apply filters
       await loadTickets();
-      filterTickets();
+      setTimeout(() => filterTickets(), 150);
     } catch (error: any) {
       toast({
         title: "Erro ao encaminhar",
@@ -577,9 +582,6 @@ export default function TicketsImproved() {
 
       if (error) throw error;
 
-      // Atualizar ticket local antes de recarregar
-      setSelectedTicket({ ...selectedTicket, ...updates });
-
       // Send evaluation if status is closed and auto_send_on_close is enabled
       if (newStatus === "closed") {
         try {
@@ -599,7 +601,11 @@ export default function TicketsImproved() {
             console.log("📊 Configurações de avaliação:", evalSettings);
 
             if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
-              console.log("📤 Enviando avaliação automática...");
+              console.log("📤 Enviando avaliação automática...", {
+                ticketId: selectedTicket.id,
+                channel: selectedTicket.channel,
+                contactId: selectedTicket.contact?.id,
+              });
               
               const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
                 body: {
@@ -612,6 +618,11 @@ export default function TicketsImproved() {
 
               if (evalError) {
                 console.error("❌ Erro ao enviar avaliação:", evalError);
+                toast({
+                  title: "Aviso",
+                  description: "Não foi possível enviar a avaliação automaticamente.",
+                  variant: "destructive",
+                });
               } else {
                 console.log("✅ Avaliação enviada com sucesso:", evalResponse);
                 toast({
@@ -620,11 +631,14 @@ export default function TicketsImproved() {
                 });
               }
             } else {
-              console.log("⚠️ Avaliação automática desabilitada ou não configurada");
+              console.log("⚠️ Avaliação automática desabilitada ou não configurada", {
+                enabled: evalSettings?.enabled,
+                autoSend: evalSettings?.auto_send_on_close
+              });
             }
           }
         } catch (evalError) {
-          console.error("Error sending evaluation:", evalError);
+          console.error("❌ Exceção ao enviar avaliação:", evalError);
           // Don't block status change if evaluation fails
         }
       }
@@ -637,11 +651,12 @@ export default function TicketsImproved() {
         description: "O status do ticket foi atualizado com sucesso.",
       });
 
-      // Force reload to update the list with new status
-      await loadTickets();
+      // Update local ticket state immediately
+      setSelectedTicket({ ...selectedTicket, ...updates });
       
-      // Re-apply filters to ensure ticket appears in correct column
-      filterTickets();
+      // Force reload tickets and re-apply filters
+      await loadTickets();
+      setTimeout(() => filterTickets(), 150);
     } catch (error: any) {
       toast({
         title: "Erro ao atualizar status",

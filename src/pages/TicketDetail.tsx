@@ -405,8 +405,16 @@ export default function TicketDetail() {
             .eq("tenant_id", profile?.tenant_id)
             .maybeSingle();
 
+          console.log("📊 Configurações de avaliação:", evalSettings);
+
           if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
-            await supabase.functions.invoke("send-evaluation", {
+            console.log("📤 Enviando avaliação automática...", {
+              ticketId: ticket.id,
+              channel: ticket.channel,
+              contactId: ticket.contact?.id,
+            });
+
+            const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
               body: {
                 ticketId: ticket.id,
                 channel: ticket.channel,
@@ -414,9 +422,29 @@ export default function TicketDetail() {
                 contactId: ticket.contact?.id,
               },
             });
+
+            if (evalError) {
+              console.error("❌ Erro ao enviar avaliação:", evalError);
+              toast({
+                title: "Aviso",
+                description: "Não foi possível enviar a avaliação automaticamente.",
+                variant: "destructive",
+              });
+            } else {
+              console.log("✅ Avaliação enviada com sucesso:", evalResponse);
+              toast({
+                title: "Avaliação enviada",
+                description: "A solicitação de avaliação foi enviada ao cliente.",
+              });
+            }
+          } else {
+            console.log("⚠️ Avaliação automática desabilitada ou não configurada", {
+              enabled: evalSettings?.enabled,
+              autoSend: evalSettings?.auto_send_on_close
+            });
           }
         } catch (evalError) {
-          console.error("Error sending evaluation:", evalError);
+          console.error("❌ Exceção ao enviar avaliação:", evalError);
           // Don't block status change if evaluation fails
         }
       }
