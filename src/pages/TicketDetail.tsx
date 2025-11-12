@@ -227,7 +227,7 @@ export default function TicketDetail() {
       // Adicionar assinatura do agente se habilitado
       let finalMessage = messageText.trim();
       if (isSignatureEnabled && profile?.full_name) {
-        finalMessage = finalMessage ? `${finalMessage}\n\n[${profile.full_name}]` : `[${profile.full_name}]`;
+        finalMessage = finalMessage ? `[${profile.full_name}]\n${finalMessage}` : `[${profile.full_name}]`;
       }
       // Se houver mídia do storage, criar signed URL
       let publicMediaUrl = mediaUrl;
