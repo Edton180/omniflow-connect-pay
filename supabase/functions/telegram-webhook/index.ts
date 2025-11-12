@@ -150,7 +150,7 @@ serve(async (req) => {
             // Upload para Supabase Storage
             const { data: uploadData, error: uploadError } = await supabaseAdmin
               .storage
-              .from('tickets-media')
+              .from('ticket-media')
               .upload(storagePath, fileBuffer, {
                 contentType: downloadResponse.headers.get('content-type') || 'application/octet-stream',
                 upsert: false
@@ -164,7 +164,7 @@ serve(async (req) => {
               // Obter URL pública
               const { data: publicUrlData } = supabaseAdmin
                 .storage
-                .from('tickets-media')
+                .from('ticket-media')
                 .getPublicUrl(storagePath);
               
               mediaUrl = publicUrlData.publicUrl;
