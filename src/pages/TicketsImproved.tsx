@@ -89,6 +89,8 @@ export default function TicketsImproved() {
   useEffect(() => {
     if (!user?.id) return;
     
+    console.log('🔌 Configurando subscrição realtime de tickets');
+    
     const channel = supabase
       .channel('tickets-changes')
       .on(
@@ -99,19 +101,34 @@ export default function TicketsImproved() {
           table: 'tickets'
         },
         async (payload) => {
-          console.log('🔄 Ticket change:', payload);
-          // Reload tickets to get fresh data and re-apply filters
+          const newData = payload.new as any;
+          const oldData = payload.old as any;
+          
+          console.log('🔄 Ticket change detectado:', {
+            event: payload.eventType,
+            ticketId: newData?.id || oldData?.id,
+            status: newData?.status || oldData?.status,
+          });
+          
+          // Reload tickets to get fresh data
           await loadTickets();
-          // Small delay to ensure state is updated before filtering
-          setTimeout(() => filterTickets(), 100);
+          
+          // Pequeno delay para garantir que o estado foi atualizado
+          setTimeout(() => {
+            console.log('🔍 Re-aplicando filtros após mudança de ticket');
+            filterTickets();
+          }, 200);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('📡 Status da subscrição de tickets:', status);
+      });
 
     return () => {
+      console.log('🔌 Removendo subscrição de tickets');
       supabase.removeChannel(channel);
     };
-  }, [user?.id]);
+  }, [user?.id, statusFilter, queueFilter, searchTerm]);
 
   // Realtime subscription for messages
   useEffect(() => {
@@ -601,18 +618,44 @@ export default function TicketsImproved() {
             console.log("📊 Configurações de avaliação:", evalSettings);
 
             if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
+              // Get fresh ticket data with full contact info
+              const { data: freshTicket } = await supabase
+                .from("tickets")
+                .select(`
+                  *,
+                  contact:contacts(*)
+                `)
+                .eq("id", selectedTicket.id)
+                .single();
+
+              if (!freshTicket || !freshTicket.contact) {
+                console.error("❌ Ticket ou contato não encontrado");
+                toast({
+                  title: "Erro",
+                  description: "Não foi possível encontrar os dados do contato para enviar a avaliação.",
+                  variant: "destructive",
+                });
+                return;
+              }
+
+              const contactMetadata = freshTicket.contact.metadata as any;
+              const contactIdentifier = freshTicket.channel === "telegram" 
+                ? (contactMetadata?.telegram_chat_id || freshTicket.contact.phone)
+                : freshTicket.contact.phone;
+
               console.log("📤 Enviando avaliação automática...", {
-                ticketId: selectedTicket.id,
-                channel: selectedTicket.channel,
-                contactId: selectedTicket.contact?.id,
+                ticketId: freshTicket.id,
+                channel: freshTicket.channel,
+                contactId: freshTicket.contact.id,
+                contactIdentifier,
               });
               
               const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
                 body: {
-                  ticketId: selectedTicket.id,
-                  channel: selectedTicket.channel,
-                  contactPhone: selectedTicket.contact?.phone || selectedTicket.contact?.metadata?.telegram_chat_id,
-                  contactId: selectedTicket.contact?.id,
+                  ticketId: freshTicket.id,
+                  channel: freshTicket.channel,
+                  contactPhone: contactIdentifier,
+                  contactId: freshTicket.contact.id,
                 },
               });
 
@@ -620,13 +663,20 @@ export default function TicketsImproved() {
                 console.error("❌ Erro ao enviar avaliação:", evalError);
                 toast({
                   title: "Aviso",
-                  description: "Não foi possível enviar a avaliação automaticamente.",
+                  description: `Não foi possível enviar a avaliação: ${evalError.message}`,
+                  variant: "destructive",
+                });
+              } else if (evalResponse?.error) {
+                console.error("❌ Erro na resposta da avaliação:", evalResponse.error);
+                toast({
+                  title: "Aviso",
+                  description: `Erro ao enviar avaliação: ${evalResponse.error}`,
                   variant: "destructive",
                 });
               } else {
                 console.log("✅ Avaliação enviada com sucesso:", evalResponse);
                 toast({
-                  title: "Avaliação enviada",
+                  title: "Avaliação enviada ✓",
                   description: "A solicitação de avaliação foi enviada ao cliente.",
                 });
               }
@@ -637,9 +687,13 @@ export default function TicketsImproved() {
               });
             }
           }
-        } catch (evalError) {
+        } catch (evalError: any) {
           console.error("❌ Exceção ao enviar avaliação:", evalError);
-          // Don't block status change if evaluation fails
+          toast({
+            title: "Erro",
+            description: `Erro ao processar avaliação: ${evalError.message}`,
+            variant: "destructive",
+          });
         }
       }
 
@@ -652,7 +706,7 @@ export default function TicketsImproved() {
       });
 
       // Update local ticket state immediately
-      setSelectedTicket({ ...selectedTicket, ...updates });
+      setSelectedTicket((prev: any) => prev ? { ...prev, ...updates } : null);
       
       // Force reload tickets and re-apply filters
       await loadTickets();

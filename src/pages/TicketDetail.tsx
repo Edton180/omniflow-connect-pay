@@ -396,8 +396,11 @@ export default function TicketDetail() {
 
       if (error) throw error;
 
+      // Update local ticket state
+      setTicket((prev: any) => ({ ...prev, ...updates }));
+
       // Send evaluation if status is closed and auto_send_on_close is enabled
-      if (newStatus === "closed" && ticket) {
+      if (newStatus === "closed" && id) {
         try {
           const { data: evalSettings } = await supabase
             .from("evaluation_settings")
@@ -408,18 +411,46 @@ export default function TicketDetail() {
           console.log("📊 Configurações de avaliação:", evalSettings);
 
           if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
+            // Get fresh ticket data with contact info
+            const { data: freshTicket } = await supabase
+              .from("tickets")
+              .select(`
+                *,
+                contact:contacts(*)
+              `)
+              .eq("id", id)
+              .single();
+
+            if (!freshTicket || !freshTicket.contact) {
+              console.error("❌ Ticket ou contato não encontrado");
+              toast({
+                title: "Erro",
+                description: "Não foi possível encontrar os dados do contato para enviar a avaliação.",
+                variant: "destructive",
+              });
+              return;
+            }
+
             console.log("📤 Enviando avaliação automática...", {
-              ticketId: ticket.id,
-              channel: ticket.channel,
-              contactId: ticket.contact?.id,
+              ticketId: freshTicket.id,
+              channel: freshTicket.channel,
+              contactId: freshTicket.contact.id,
+              contactPhone: freshTicket.contact.phone,
+              contactMetadata: freshTicket.contact.metadata,
             });
+
+            // Get contact identifier based on channel
+            const contactMetadata = freshTicket.contact.metadata as any;
+            const contactIdentifier = freshTicket.channel === "telegram" 
+              ? (contactMetadata?.telegram_chat_id || freshTicket.contact.phone)
+              : freshTicket.contact.phone;
 
             const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
               body: {
-                ticketId: ticket.id,
-                channel: ticket.channel,
-                contactPhone: ticket.contact?.phone || ticket.contact?.metadata?.telegram_chat_id,
-                contactId: ticket.contact?.id,
+                ticketId: freshTicket.id,
+                channel: freshTicket.channel,
+                contactPhone: contactIdentifier,
+                contactId: freshTicket.contact.id,
               },
             });
 
@@ -427,13 +458,20 @@ export default function TicketDetail() {
               console.error("❌ Erro ao enviar avaliação:", evalError);
               toast({
                 title: "Aviso",
-                description: "Não foi possível enviar a avaliação automaticamente.",
+                description: `Não foi possível enviar a avaliação: ${evalError.message}`,
+                variant: "destructive",
+              });
+            } else if (evalResponse?.error) {
+              console.error("❌ Erro na resposta da avaliação:", evalResponse.error);
+              toast({
+                title: "Aviso",
+                description: `Erro ao enviar avaliação: ${evalResponse.error}`,
                 variant: "destructive",
               });
             } else {
               console.log("✅ Avaliação enviada com sucesso:", evalResponse);
               toast({
-                title: "Avaliação enviada",
+                title: "Avaliação enviada ✓",
                 description: "A solicitação de avaliação foi enviada ao cliente.",
               });
             }
@@ -443,9 +481,13 @@ export default function TicketDetail() {
               autoSend: evalSettings?.auto_send_on_close
             });
           }
-        } catch (evalError) {
+        } catch (evalError: any) {
           console.error("❌ Exceção ao enviar avaliação:", evalError);
-          // Don't block status change if evaluation fails
+          toast({
+            title: "Erro",
+            description: `Erro ao processar avaliação: ${evalError.message}`,
+            variant: "destructive",
+          });
         }
       }
 
