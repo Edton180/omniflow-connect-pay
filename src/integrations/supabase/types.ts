@@ -305,6 +305,50 @@ export type Database = {
           },
         ]
       }
+      checkout_sessions: {
+        Row: {
+          created_at: string | null
+          external_id: string | null
+          gateway: string
+          id: string
+          invoice_id: string | null
+          qr_code: string | null
+          status: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          external_id?: string | null
+          gateway: string
+          id?: string
+          invoice_id?: string | null
+          qr_code?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          external_id?: string | null
+          gateway?: string
+          id?: string
+          invoice_id?: string | null
+          qr_code?: string | null
+          status?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checkout_sessions_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           avatar_url: string | null
@@ -1707,6 +1751,7 @@ export type Database = {
         Args: { invoice_id_param: string }
         Returns: Json
       }
+      update_overdue_invoices: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "super_admin" | "tenant_admin" | "manager" | "agent" | "user"
