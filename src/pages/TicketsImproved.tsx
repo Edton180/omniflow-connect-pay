@@ -379,7 +379,7 @@ export default function TicketsImproved() {
       // Adicionar assinatura do agente se habilitado
       let finalMessage = messageText.trim();
       if (isSignatureEnabled && profile?.full_name) {
-        finalMessage = finalMessage ? `${finalMessage}\n\n— ${profile.full_name}` : `— ${profile.full_name}`;
+        finalMessage = finalMessage ? `${finalMessage}\n\n[${profile.full_name}]` : `[${profile.full_name}]`;
       }
 
       // Insert message into database primeiro para obter o ID
