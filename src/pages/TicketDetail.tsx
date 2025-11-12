@@ -29,6 +29,7 @@ import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TicketStatusBadge } from "@/components/tickets/TicketStatusBadge";
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -655,18 +656,6 @@ export default function TicketDetail() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: "default" | "secondary" | "destructive", label: string }> = {
-      open: { variant: "default", label: "Aberto" },
-      in_progress: { variant: "secondary", label: "Em Atendimento" },
-      pending: { variant: "secondary", label: "Pendente" },
-      resolved: { variant: "default", label: "Resolvido" },
-      closed: { variant: "destructive", label: "Fechado" },
-    };
-
-    const config = variants[status] || { variant: "default", label: status };
-    return <Badge variant={config.variant}>{config.label}</Badge>;
-  };
 
   if (loading) {
     return (
@@ -722,7 +711,7 @@ export default function TicketDetail() {
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-popover">
                   <SelectItem value="open">Aberto</SelectItem>
                   <SelectItem value="in_progress">Em Atendimento</SelectItem>
                   <SelectItem value="pending">Pendente</SelectItem>
@@ -730,7 +719,7 @@ export default function TicketDetail() {
                   <SelectItem value="closed">Fechado</SelectItem>
                 </SelectContent>
               </Select>
-              {getStatusBadge(ticket.status)}
+              <TicketStatusBadge status={ticket.status} />
               <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogTrigger asChild>
                   <Button variant="destructive" size="icon">
