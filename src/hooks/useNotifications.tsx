@@ -80,22 +80,25 @@ export function useNotifications() {
             filter: `assigned_to=eq.${user.id}`,
           },
           (payload) => {
-            console.log("Ticket assigned:", payload);
+            // Only notify if assigned_to actually changed to current user
+            if (payload.old.assigned_to !== payload.new.assigned_to) {
+              console.log("Ticket assigned:", payload);
 
-            toast({
-              title: "Ticket Atribuído!",
-              description: "Um ticket foi atribuído a você",
-            });
-
-            if (
-              "Notification" in window &&
-              Notification.permission === "granted"
-            ) {
-              new Notification("Ticket Atribuído - OmniFlow", {
-                body: "Um ticket foi atribuído a você",
-                icon: "/favicon.ico",
-                tag: "ticket-assigned",
+              toast({
+                title: "Ticket Atribuído!",
+                description: "Um ticket foi atribuído a você",
               });
+
+              if (
+                "Notification" in window &&
+                Notification.permission === "granted"
+              ) {
+                new Notification("Ticket Atribuído - OmniFlow", {
+                  body: "Um ticket foi atribuído a você",
+                  icon: "/favicon.ico",
+                  tag: "ticket-assigned",
+                });
+              }
             }
           }
         )

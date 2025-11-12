@@ -77,8 +77,14 @@ export default function TicketDetail() {
       if (data?.force_agent_signature) {
         setIsSignatureEnabled(true);
         setCanToggleSignature(false);
-      } else {
+      } else if (data?.allow_agent_signature) {
+        // Se allow_agent_signature está ativo mas force não, habilita por padrão mas permite toggle
+        setIsSignatureEnabled(true);
         setCanToggleSignature(true);
+      } else {
+        // Se assinatura não está permitida, desabilita tudo
+        setIsSignatureEnabled(false);
+        setCanToggleSignature(false);
       }
     } catch (error: any) {
       console.error("Erro ao buscar configuração do tenant:", error);
