@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +50,7 @@ export default function TicketDetail() {
   const [selectedQueue, setSelectedQueue] = useState("");
   const [agents, setAgents] = useState<any[]>([]);
   const [queues, setQueues] = useState<any[]>([]);
+  const [signatureEnabled, setSignatureEnabled] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -188,6 +189,11 @@ export default function TicketDetail() {
 
     setSending(true);
     try {
+      // Adicionar assinatura do agente se habilitado
+      let finalMessage = messageText.trim();
+      if (signatureEnabled && profile?.full_name) {
+        finalMessage = finalMessage ? `${finalMessage}\n\n— ${profile.full_name}` : `— ${profile.full_name}`;
+      }
       // Se houver mídia do storage, criar signed URL
       let publicMediaUrl = mediaUrl;
       if (mediaUrl && mediaUrl.includes('supabase.co/storage')) {
@@ -218,7 +224,7 @@ export default function TicketDetail() {
           {
             ticket_id: id,
             sender_id: user.id,
-            content: messageText.trim() || "[Mídia]",
+            content: finalMessage || "[Mídia]",
             is_from_contact: false,
             media_url: mediaUrl,
             media_type: mediaType,
@@ -233,7 +239,7 @@ export default function TicketDetail() {
       // Update ticket's last_message
       await supabase
         .from("tickets")
-        .update({ last_message: messageText.trim() || "[Mídia enviada]" })
+        .update({ last_message: finalMessage || "[Mídia enviada]" })
         .eq("id", id);
 
       // Send message through the appropriate channel
@@ -241,19 +247,19 @@ export default function TicketDetail() {
         const chatId = ticket?.contact?.metadata?.telegram_chat_id;
 
         if (chatId) {
-          try {
-            const { data: sendData, error: sendError } = await supabase.functions.invoke(
-              "send-telegram-media",
-              {
-                body: {
-                  chatId: String(chatId),
-                  message: messageText.trim(),
-                  mediaUrl: publicMediaUrl || null,
-                  mediaType: mediaType || null,
-                  messageId: insertedMessage.id,
-                },
-              }
-            );
+            try {
+              const { data: sendData, error: sendError } = await supabase.functions.invoke(
+                "send-telegram-media",
+                {
+                  body: {
+                    chatId: String(chatId),
+                    message: finalMessage,
+                    mediaUrl: publicMediaUrl || null,
+                    mediaType: mediaType || null,
+                    messageId: insertedMessage.id,
+                  },
+                }
+              );
 
             if (sendError || !sendData?.success) {
               console.error("Erro ao enviar:", sendError || sendData);
@@ -298,7 +304,7 @@ export default function TicketDetail() {
               {
                 body: {
                   to: phoneNumber,
-                  message: messageText.trim(),
+                  message: finalMessage,
                   mediaUrl: publicMediaUrl || null,
                   mediaType: mediaType || null,
                 },
@@ -801,6 +807,15 @@ export default function TicketDetail() {
                     setMediaUrl(url);
                     setMediaType("audio");
                   }} />
+                  <Button
+                    type="button"
+                    variant={signatureEnabled ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setSignatureEnabled(!signatureEnabled)}
+                    title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
+                  >
+                    <UserCheck className="h-5 w-5" />
+                  </Button>
                   <Input
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}

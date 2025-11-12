@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip, Loader2, Check, CheckCheck, X, Trash2, ArrowRight, RefreshCw } from "lucide-react";
+import { ArrowLeft, Search, User, Clock, MessageCircle, Send, Phone, Mail, LogOut, FileText, Paperclip, Loader2, Check, CheckCheck, X, Trash2, ArrowRight, RefreshCw, UserCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaUpload } from "@/components/tickets/MediaUpload";
@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function TicketsImproved() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signOut, user } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const { toast } = useToast();
   const [tickets, setTickets] = useState<any[]>([]);
   const [filteredTickets, setFilteredTickets] = useState<any[]>([]);
@@ -52,6 +52,7 @@ export default function TicketsImproved() {
   const [queues, setQueues] = useState<any[]>([]);
   const [queueFilter, setQueueFilter] = useState<string>("all");
   const [userTenantId, setUserTenantId] = useState<string>("");
+  const [signatureEnabled, setSignatureEnabled] = useState(false);
 
   // Enable push notifications
   useNotifications();
@@ -341,6 +342,12 @@ export default function TicketsImproved() {
 
     setSending(true);
     try {
+      // Adicionar assinatura do agente se habilitado
+      let finalMessage = messageText.trim();
+      if (signatureEnabled && profile?.full_name) {
+        finalMessage = finalMessage ? `${finalMessage}\n\n— ${profile.full_name}` : `— ${profile.full_name}`;
+      }
+
       // Insert message into database primeiro para obter o ID
       const { data: insertedMessage, error: insertError } = await supabase
         .from("messages")
@@ -348,7 +355,7 @@ export default function TicketsImproved() {
           {
             ticket_id: selectedTicket.id,
             sender_id: user.id,
-            content: messageText.trim() || '[Mídia]',
+            content: finalMessage || '[Mídia]',
             is_from_contact: false,
             media_url: mediaUrl,
             media_type: mediaType,
@@ -364,7 +371,7 @@ export default function TicketsImproved() {
       await supabase
         .from("tickets")
         .update({ 
-          last_message: messageText.trim() || '[Mídia enviada]',
+          last_message: finalMessage || '[Mídia enviada]',
           updated_at: new Date().toISOString()
         })
         .eq("id", selectedTicket.id);
@@ -390,7 +397,7 @@ export default function TicketsImproved() {
               {
                 body: {
                   chatId: String(chatId),
-                  message: messageText.trim(),
+                  message: finalMessage,
                   mediaUrl: mediaUrl || null,
                   mediaType: mediaType || null,
                   messageId: insertedMessage.id,
@@ -1225,6 +1232,16 @@ export default function TicketsImproved() {
                   setMediaUrl(url);
                   setMediaType("audio");
                 }} />
+                <Button
+                  type="button"
+                  variant={signatureEnabled ? "default" : "outline"}
+                  size="icon"
+                  onClick={() => setSignatureEnabled(!signatureEnabled)}
+                  title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
+                  className="flex-shrink-0"
+                >
+                  <UserCheck className="h-5 w-5" />
+                </Button>
                 <Textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
