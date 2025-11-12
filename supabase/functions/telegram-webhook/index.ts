@@ -454,7 +454,11 @@ serve(async (req) => {
         if (selectedItem) {
           console.log("✅ Opção válida selecionada:", selectedItem.option_label);
           
-          if (selectedItem.action_type === "queue" && selectedItem.target_id) {
+          // Verificar se é encaminhamento para fila (aceitar ambos os valores)
+          const isQueueAction = selectedItem.action_type === "queue" || 
+                                selectedItem.action_type === "forward_to_queue";
+          
+          if (isQueueAction && selectedItem.target_id) {
             console.log("🎯 Atribuindo ticket à fila:", selectedItem.target_id);
             
             // Buscar informações da fila
@@ -463,6 +467,7 @@ serve(async (req) => {
               .select("name")
               .eq("id", selectedItem.target_id)
               .single();
+            console.log("🎯 Fila encontrada:", queueData?.name || "N/A");
             
             // Atribuir à fila
             const { error: updateError } = await supabaseAdmin

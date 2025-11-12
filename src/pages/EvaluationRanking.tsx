@@ -35,33 +35,67 @@ export default function EvaluationRanking() {
 
     setLoading(true);
     try {
-      // Buscar da tabela evaluations com join de profiles
+      console.log('📊 Buscando avaliações para tenant:', tenantRole.tenant_id);
+      
+      // Buscar avaliações com join de profiles
       const { data: evaluations, error } = await supabase
         .from('evaluations')
         .select(`
           score,
           agent_id,
-          agent:profiles!agent_id(full_name, avatar_url)
+          ticket_id,
+          created_at
         `)
         .eq('tenant_id', tenantRole.tenant_id)
         .not('agent_id', 'is', null);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao buscar avaliações:', error);
+        throw error;
+      }
 
-      console.log('📊 Avaliações carregadas:', evaluations?.length);
+      console.log('📊 Avaliações carregadas:', evaluations?.length, evaluations);
+
+      // Buscar perfis dos agentes
+      const agentIds = [...new Set(evaluations?.map(e => e.agent_id).filter(Boolean))];
+      console.log('👥 Agent IDs encontrados:', agentIds);
+      
+      if (agentIds.length === 0) {
+        console.log('⚠️ Nenhum agente encontrado nas avaliações');
+        setRankings([]);
+        return;
+      }
+
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, full_name, avatar_url')
+        .in('id', agentIds);
+
+      if (profilesError) {
+        console.error('❌ Erro ao buscar perfis:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('👥 Perfis carregados:', profiles);
 
       // Agrupar por agente
       const statsMap = new Map<string, AgentStats>();
       
       evaluations?.forEach((evaluation: any) => {
         const userId = evaluation.agent_id;
-        if (!userId || !evaluation.agent) return;
+        if (!userId) return;
+
+        const profile = profiles?.find(p => p.id === userId);
+        if (!profile) {
+          console.warn('⚠️ Perfil não encontrado para agente:', userId);
+          return;
+        }
 
         if (!statsMap.has(userId)) {
           statsMap.set(userId, {
             user_id: userId,
-            full_name: evaluation.agent.full_name,
-            avatar_url: evaluation.agent.avatar_url,
+            full_name: profile.full_name,
+            avatar_url: profile.avatar_url,
             total_evaluations: 0,
             average_score: 0,
             score_1: 0,
