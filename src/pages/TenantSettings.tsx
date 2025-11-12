@@ -31,6 +31,7 @@ export default function TenantSettings() {
     state: '',
     zip_code: '',
     allow_agent_signature: true,
+    force_agent_signature: false,
   });
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export default function TenantSettings() {
         state: data.state || '',
         zip_code: data.zip_code || '',
         allow_agent_signature: data.allow_agent_signature ?? true,
+        force_agent_signature: data.force_agent_signature ?? false,
       });
     } catch (error: any) {
       toast.error('Erro ao carregar dados da empresa: ' + error.message);
@@ -97,6 +99,7 @@ export default function TenantSettings() {
           state: formData.state || null,
           zip_code: formData.zip_code || null,
           allow_agent_signature: formData.allow_agent_signature,
+          force_agent_signature: formData.force_agent_signature,
         })
         .eq('id', tenant.id);
 
@@ -289,22 +292,44 @@ export default function TenantSettings() {
 
                   <div className="border-t pt-6">
                     <h3 className="text-lg font-semibold mb-4">Configurações de Atendimento</h3>
-                    <div className="flex items-center justify-between space-x-2">
-                      <div className="space-y-0.5">
-                        <Label htmlFor="allow_agent_signature" className="text-base">
-                          Permitir assinatura do agente
-                        </Label>
-                        <p className="text-sm text-muted-foreground">
-                          Permite que agentes adicionem suas assinaturas automaticamente nas mensagens
-                        </p>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between space-x-2">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="allow_agent_signature" className="text-base">
+                            Permitir assinatura do agente
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Permite que agentes adicionem suas assinaturas automaticamente nas mensagens
+                          </p>
+                        </div>
+                        <Switch
+                          id="allow_agent_signature"
+                          checked={formData.allow_agent_signature}
+                          onCheckedChange={(checked) =>
+                            setFormData({ ...formData, allow_agent_signature: checked })
+                          }
+                        />
                       </div>
-                      <Switch
-                        id="allow_agent_signature"
-                        checked={formData.allow_agent_signature}
-                        onCheckedChange={(checked) =>
-                          setFormData({ ...formData, allow_agent_signature: checked })
-                        }
-                      />
+
+                      {formData.allow_agent_signature && (
+                        <div className="flex items-center justify-between space-x-2 pl-4 border-l-2 border-muted">
+                          <div className="space-y-0.5">
+                            <Label htmlFor="force_agent_signature" className="text-base">
+                              Forçar assinatura sempre ativa
+                            </Label>
+                            <p className="text-sm text-muted-foreground">
+                              Quando ativado, agentes não podem desativar a assinatura - ela sempre será incluída
+                            </p>
+                          </div>
+                          <Switch
+                            id="force_agent_signature"
+                            checked={formData.force_agent_signature}
+                            onCheckedChange={(checked) =>
+                              setFormData({ ...formData, force_agent_signature: checked })
+                            }
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
 

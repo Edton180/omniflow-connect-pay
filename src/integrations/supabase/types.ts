@@ -1420,6 +1420,7 @@ export type Database = {
           custom_css: Json | null
           custom_domain: string | null
           expiry_date: string | null
+          force_agent_signature: boolean | null
           id: string
           is_active: boolean | null
           logo_url: string | null
@@ -1445,6 +1446,7 @@ export type Database = {
           custom_css?: Json | null
           custom_domain?: string | null
           expiry_date?: string | null
+          force_agent_signature?: boolean | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null
@@ -1470,6 +1472,7 @@ export type Database = {
           custom_css?: Json | null
           custom_domain?: string | null
           expiry_date?: string | null
+          force_agent_signature?: boolean | null
           id?: string
           is_active?: boolean | null
           logo_url?: string | null

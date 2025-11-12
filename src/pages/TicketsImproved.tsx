@@ -52,8 +52,9 @@ export default function TicketsImproved() {
   const [queues, setQueues] = useState<any[]>([]);
   const [queueFilter, setQueueFilter] = useState<string>("all");
   const [userTenantId, setUserTenantId] = useState<string>("");
-  const [signatureEnabled, setSignatureEnabled] = useState(false);
-  const [allowSignature, setAllowSignature] = useState(false);
+  const [tenant, setTenant] = useState<any>(null);
+  const [isSignatureEnabled, setIsSignatureEnabled] = useState(false);
+  const [canToggleSignature, setCanToggleSignature] = useState(true);
 
   // Enable push notifications
   useNotifications();
@@ -329,15 +330,23 @@ export default function TicketsImproved() {
       
       const { data, error } = await supabase
         .from("tenants")
-        .select("allow_agent_signature")
+        .select("allow_agent_signature, force_agent_signature")
         .eq("id", profile.tenant_id)
         .single();
       
       if (error) throw error;
-      setAllowSignature(data?.allow_agent_signature ?? true);
-    } catch (error) {
+
+      setTenant(data);
+      
+      // Se force_agent_signature estiver ativo, força assinatura e desabilita toggle
+      if (data?.force_agent_signature) {
+        setIsSignatureEnabled(true);
+        setCanToggleSignature(false);
+      } else {
+        setCanToggleSignature(true);
+      }
+    } catch (error: any) {
       console.error("Erro ao buscar configuração do tenant:", error);
-      setAllowSignature(true); // Default true se houver erro
     }
   };
 
@@ -363,7 +372,7 @@ export default function TicketsImproved() {
     try {
       // Adicionar assinatura do agente se habilitado
       let finalMessage = messageText.trim();
-      if (signatureEnabled && profile?.full_name) {
+      if (isSignatureEnabled && profile?.full_name) {
         finalMessage = finalMessage ? `${finalMessage}\n\n— ${profile.full_name}` : `— ${profile.full_name}`;
       }
 
@@ -1251,17 +1260,23 @@ export default function TicketsImproved() {
                   setMediaUrl(url);
                   setMediaType("audio");
                 }} />
-                {allowSignature && (
+                {tenant?.allow_agent_signature && profile?.full_name && canToggleSignature && (
                   <Button
                     type="button"
-                    variant={signatureEnabled ? "default" : "outline"}
                     size="icon"
-                    onClick={() => setSignatureEnabled(!signatureEnabled)}
-                    title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
-                    className="flex-shrink-0"
+                    variant={isSignatureEnabled ? "default" : "outline"}
+                    onClick={() => setIsSignatureEnabled(!isSignatureEnabled)}
+                    title={isSignatureEnabled ? "Remover assinatura" : "Adicionar assinatura"}
                   >
-                    <UserCheck className="h-5 w-5" />
+                    <UserCheck className="h-4 w-4" />
                   </Button>
+                )}
+                
+                {tenant?.force_agent_signature && profile?.full_name && (
+                  <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-md text-xs text-muted-foreground">
+                    <UserCheck className="h-3 w-3" />
+                    Assinatura obrigatória
+                  </div>
                 )}
                 <Textarea
                   value={messageText}
