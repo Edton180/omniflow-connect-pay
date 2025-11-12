@@ -36,7 +36,7 @@ interface NavItem {
   roles?: string[];
 }
 
-// Itens para usuários com tenant (empresas)
+// Itens de navegação principal - apenas para usuários com tenant (empresas)
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Atendimentos", href: "/view-tickets", icon: MessageSquare },
@@ -48,20 +48,21 @@ const navItems: NavItem[] = [
   { title: "Avaliações", href: "/evaluation-ranking", icon: TrendingUp },
 ];
 
+// Administração da Empresa
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
 ];
 
-// Itens exclusivos do Super Admin (métricas globais)
+// Painel Super Admin - métricas e gestão global do sistema
 const superAdminItems: NavItem[] = [
   { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
   { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
-  { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
+  { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
-  { title: "Receita Global", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
+  { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
 ];
@@ -71,7 +72,7 @@ export function AppSidebar() {
   const { branding } = useBranding();
   const { hasRole, isSuperAdmin, signOut, roles } = useAuth();
   
-  // Verificar se o super admin tem tenant associado
+  // Super Admin pode ter ou não um tenant associado
   const hasTenant = roles?.some(r => r.tenant_id !== null);
 
   const hasAccess = (item: NavItem) => {
@@ -120,7 +121,7 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-        {/* Mostrar itens de empresa apenas se não for super admin OU se super admin tiver tenant */}
+        {/* Mostrar itens de empresa apenas se NÃO for super admin OU se for super admin com tenant */}
         {(!isSuperAdmin || hasTenant) && navItems.map((item) => (
           <NavLink
             key={item.href}
@@ -139,7 +140,8 @@ export function AppSidebar() {
           </NavLink>
         ))}
 
-        {(hasRole("tenant_admin") && !isSuperAdmin) && (
+        {/* Administração da Empresa - apenas para tenant_admin que não é super admin, ou super admin com tenant */}
+        {((hasRole("tenant_admin") && !isSuperAdmin) || (isSuperAdmin && hasTenant)) && (
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
               <span className="text-xs font-semibold text-primary-foreground/60 uppercase">
@@ -166,10 +168,11 @@ export function AppSidebar() {
           </>
         )}
 
+        {/* Painel Super Admin - sempre visível para super admin */}
         {isSuperAdmin && (
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
-              <span className="text-xs font-semibold text-primary-foreground/60 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-primary-foreground/60 uppercase">
                 Painel Super Admin
               </span>
             </div>

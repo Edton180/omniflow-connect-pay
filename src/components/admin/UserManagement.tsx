@@ -98,7 +98,7 @@ export const UserManagement = () => {
     try {
       console.log('🔍 Carregando usuários. Super Admin?', isSuperAdmin);
       
-      // Buscar todos os usuários via RPC (sempre retorna todos)
+      // Buscar todos os usuários via RPC (nova função corrigida)
       const { data: usersData, error: usersError } = await supabase
         .rpc('get_users_with_emails');
 
@@ -107,7 +107,7 @@ export const UserManagement = () => {
         throw usersError;
       }
 
-      console.log('📊 Dados do RPC:', usersData?.length, 'usuários');
+      console.log('📋 Usuários retornados do RPC:', usersData?.length);
       
       // Filtrar manualmente se não for super admin
       let filteredUsers = usersData || [];
@@ -128,10 +128,10 @@ export const UserManagement = () => {
           console.log('🔍 Filtrando por tenant:', userTenantId, 'Resultados:', filteredUsers.length);
         }
       } else {
-        console.log('✅ Super Admin - Mostrando TODOS os usuários:', filteredUsers.length);
+        console.log('✅ Super Admin - Mostrando TODOS os', filteredUsers.length, 'usuários do sistema');
       }
       
-      console.log('✅ Usuários finais:', filteredUsers.length);
+      console.log('✅ Usuários finais a exibir:', filteredUsers.length);
 
       // Buscar roles para cada usuário
       const usersWithRoles = await Promise.all(
@@ -153,8 +153,10 @@ export const UserManagement = () => {
         })
       );
 
+      console.log('👥 Usuários com roles processados:', usersWithRoles.length);
       setUsers(usersWithRoles);
     } catch (error: any) {
+      console.error('❌ Erro completo ao carregar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
         description: error.message,
