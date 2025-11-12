@@ -27,6 +27,7 @@ interface UserWithProfile {
   full_name: string;
   phone: string | null;
   tenant_id: string | null;
+  tenant_name: string | null;
   roles: Array<{ role: string; tenant_id: string | null }>;
 }
 
@@ -95,28 +96,27 @@ export const UserManagement = () => {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Fetch profiles
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
+      // Usar função RPC para buscar usuários com emails reais
+      const { data: usersData, error: usersError } = await supabase
+        .rpc('get_users_with_emails');
 
-      if (profileError) throw profileError;
+      if (usersError) throw usersError;
 
-      // Fetch roles for each user
+      // Buscar roles para cada usuário
       const usersWithRoles = await Promise.all(
-        (profiles || []).map(async (profile) => {
+        (usersData || []).map(async (userData) => {
           const { data: rolesData } = await supabase
             .from("user_roles")
             .select("role, tenant_id")
-            .eq("user_id", profile.id);
+            .eq("user_id", userData.id);
 
           return {
-            id: profile.id,
-            email: `user_${profile.id.substring(0, 8)}@system.local`,
-            full_name: profile.full_name,
-            phone: profile.phone,
-            tenant_id: profile.tenant_id,
+            id: userData.id,
+            email: userData.email,
+            full_name: userData.full_name,
+            phone: userData.phone,
+            tenant_id: userData.tenant_id,
+            tenant_name: userData.tenant_name,
             roles: rolesData || [],
           };
         })
@@ -407,6 +407,11 @@ export const UserManagement = () => {
               {user.phone && (
                 <p className="text-sm text-muted-foreground">
                   📱 {user.phone}
+                </p>
+              )}
+              {user.tenant_name && (
+                <p className="text-sm font-medium text-primary">
+                  🏢 {user.tenant_name}
                 </p>
               )}
               <div className="flex flex-wrap gap-2">

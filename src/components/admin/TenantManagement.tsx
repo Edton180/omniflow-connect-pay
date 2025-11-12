@@ -37,7 +37,23 @@ export const TenantManagement = () => {
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTenants(data || []);
+      
+      // Buscar contagem de usuários para cada tenant
+      const tenantsWithUserCount = await Promise.all(
+        (data || []).map(async (tenant) => {
+          const { count } = await supabase
+            .from("profiles")
+            .select("*", { count: "exact", head: true })
+            .eq("tenant_id", tenant.id);
+          
+          return {
+            ...tenant,
+            current_user_count: count || 0
+          };
+        })
+      );
+      
+      setTenants(tenantsWithUserCount);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar tenants",
@@ -207,7 +223,9 @@ export const TenantManagement = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Usuários</span>
-                    <span className="text-sm font-medium">{tenant.max_users}</span>
+                    <span className="text-sm font-medium">
+                      {tenant.current_user_count || 0} / {tenant.max_users}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">Tickets</span>

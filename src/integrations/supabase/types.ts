@@ -1679,6 +1679,18 @@ export type Database = {
         Returns: string
       }
       check_and_generate_invoices: { Args: never; Returns: undefined }
+      get_users_with_emails: {
+        Args: never
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          tenant_id: string
+          tenant_name: string
+        }[]
+      }
       has_role: { Args: { _role: string; _user_id: string }; Returns: boolean }
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
