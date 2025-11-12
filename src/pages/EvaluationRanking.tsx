@@ -24,6 +24,7 @@ export default function EvaluationRanking() {
   const { roles } = useAuth();
   const [loading, setLoading] = useState(true);
   const [rankings, setRankings] = useState<AgentStats[]>([]);
+  const [unassignedCount, setUnassignedCount] = useState(0);
 
   useEffect(() => {
     fetchRankings();
@@ -56,7 +57,12 @@ export default function EvaluationRanking() {
 
       console.log('📊 Avaliações carregadas:', evaluations?.length, evaluations);
 
-      // Buscar perfis dos agentes
+      // Contar avaliações sem agente atribuído
+      const withoutAgent = evaluations?.filter(e => !e.agent_id).length || 0;
+      setUnassignedCount(withoutAgent);
+      console.log('⚠️ Avaliações sem agente:', withoutAgent);
+
+      // Buscar perfis dos agentes (apenas avaliações COM agente)
       const agentIds = [...new Set(evaluations?.map(e => e.agent_id).filter(Boolean))];
       console.log('👥 Agent IDs encontrados:', agentIds);
       
@@ -159,11 +165,38 @@ export default function EvaluationRanking() {
           <p className="text-muted-foreground">Desempenho dos atendentes baseado em avaliações dos clientes</p>
         </div>
 
+        {unassignedCount > 0 && (
+          <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
+                <span className="text-2xl">⚠️</span>
+                <div>
+                  <p className="font-semibold">
+                    {unassignedCount} avaliação{unassignedCount > 1 ? 'ões' : ''} não contabilizada{unassignedCount > 1 ? 's' : ''}
+                  </p>
+                  <p className="text-sm">
+                    Estas avaliações não aparecem no ranking porque os tickets não foram atribuídos a nenhum agente.
+                    Para contabilizar, atribua os tickets aos agentes antes de fechá-los.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid gap-4">
-          {rankings.length === 0 && !loading && (
+          {rankings.length === 0 && !loading && unassignedCount === 0 && (
             <Card>
               <CardContent className="p-8 text-center text-muted-foreground">
                 Nenhuma avaliação registrada ainda
+              </CardContent>
+            </Card>
+          )}
+          
+          {rankings.length === 0 && !loading && unassignedCount > 0 && (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                Não há avaliações de tickets atribuídos a agentes ainda
               </CardContent>
             </Card>
           )}
