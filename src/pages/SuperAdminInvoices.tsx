@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, Loader2, DollarSign, Calendar, Building2, Search, Plus } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, DollarSign, Calendar, Building2, Search, Plus, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -34,6 +34,7 @@ export default function SuperAdminInvoices() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [generatingCheckout, setGeneratingCheckout] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
   const [newInvoice, setNewInvoice] = useState({
@@ -103,6 +104,29 @@ export default function SuperAdminInvoices() {
       toast.error(error.message || "Erro ao processar pagamento");
     } finally {
       setProcessingId(null);
+    }
+  };
+
+  const handleGenerateCheckout = async (invoiceId: string) => {
+    setGeneratingCheckout(invoiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("init-checkout", {
+        body: { invoiceId },
+      });
+
+      if (error) throw error;
+
+      if (data.checkout_url) {
+        window.open(data.checkout_url, "_blank");
+        toast.success("Checkout gerado! Abrindo página de pagamento...");
+      } else if (data.qr_code) {
+        toast.success("PIX gerado! QR Code disponível.");
+      }
+    } catch (error: any) {
+      console.error("Error generating checkout:", error);
+      toast.error(error.message || "Erro ao gerar checkout");
+    } finally {
+      setGeneratingCheckout(null);
     }
   };
 
@@ -285,21 +309,40 @@ export default function SuperAdminInvoices() {
                     </div>
 
                     {invoice.status === "pending" && (
-                      <Button
-                        onClick={() => handleProcessPayment(invoice.id)}
-                        disabled={processingId === invoice.id}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {processingId === invoice.id ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Processando...
-                          </>
-                        ) : (
-                          "Marcar como Paga"
-                        )}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleGenerateCheckout(invoice.id)}
+                          disabled={generatingCheckout === invoice.id}
+                          size="sm"
+                        >
+                          {generatingCheckout === invoice.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Gerando...
+                            </>
+                          ) : (
+                            <>
+                              <CreditCard className="mr-2 h-4 w-4" />
+                              Gerar Checkout
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => handleProcessPayment(invoice.id)}
+                          disabled={processingId === invoice.id}
+                          variant="outline"
+                          size="sm"
+                        >
+                          {processingId === invoice.id ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processando...
+                            </>
+                          ) : (
+                            "Marcar como Paga"
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

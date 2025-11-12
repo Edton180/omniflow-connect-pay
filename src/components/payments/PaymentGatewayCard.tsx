@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Settings, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CreditCard, Settings, CheckCircle, XCircle, Loader2, Copy, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 
 interface PaymentGatewayCardProps {
   gateway: {
@@ -11,6 +12,7 @@ interface PaymentGatewayCardProps {
     logo?: string;
     connected: boolean;
     status?: string;
+    webhookUrl?: string;
   };
   onConfigure: () => void;
   loading?: boolean;
@@ -31,6 +33,19 @@ const getColor = (name: string) => {
 export const PaymentGatewayCard = ({ gateway, onConfigure, loading = false }: PaymentGatewayCardProps) => {
   const Icon = getIcon();
   const colorClass = getColor(gateway.name);
+
+  const getWebhookUrl = () => {
+    const baseUrl = window.location.origin;
+    const gatewayName = gateway.name.toLowerCase().replace(/\s+/g, "");
+    return `${baseUrl}/api/${gatewayName}-webhook`;
+  };
+
+  const webhookUrl = gateway.webhookUrl || getWebhookUrl();
+
+  const copyWebhookUrl = () => {
+    navigator.clipboard.writeText(webhookUrl);
+    toast.success("URL do webhook copiada!");
+  };
 
   return (
     <Card className="gradient-card hover-scale">
@@ -61,6 +76,39 @@ export const PaymentGatewayCard = ({ gateway, onConfigure, loading = false }: Pa
             {gateway.connected ? "Conectado" : "Não Conectado"}
           </Badge>
         </div>
+
+        {gateway.connected && (
+          <div className="space-y-2 p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-muted-foreground">URL do Webhook</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={copyWebhookUrl}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+            </div>
+            <div className="flex items-center gap-2">
+              <code className="text-xs bg-background px-2 py-1 rounded flex-1 truncate">
+                {webhookUrl}
+              </code>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => window.open(webhookUrl, "_blank")}
+              >
+                <ExternalLink className="h-3 w-3" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configure esta URL no painel do {gateway.name} para receber notificações de pagamento.
+            </p>
+          </div>
+        )}
+
         <Button
           variant={gateway.connected ? "outline" : "default"}
           className="w-full"

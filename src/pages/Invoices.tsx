@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, FileText, Calendar, DollarSign, AlertCircle } from "lucide-react";
+import { Loader2, FileText, Calendar, DollarSign, AlertCircle, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -25,6 +25,7 @@ const Invoices = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState<string | null>(null);
+  const [generatingCheckout, setGeneratingCheckout] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -124,6 +125,39 @@ const Invoices = () => {
       });
     } finally {
       setProcessingPayment(null);
+    }
+  };
+
+  const handleGenerateCheckout = async (invoiceId: string) => {
+    setGeneratingCheckout(invoiceId);
+    try {
+      const { data, error } = await supabase.functions.invoke("init-checkout", {
+        body: { invoiceId },
+      });
+
+      if (error) throw error;
+
+      if (data.checkout_url) {
+        window.open(data.checkout_url, "_blank");
+        toast({
+          title: "Checkout gerado",
+          description: "Redirecionando para página de pagamento...",
+        });
+      } else if (data.qr_code) {
+        toast({
+          title: "PIX gerado",
+          description: "Escaneie o QR Code para pagar",
+        });
+      }
+    } catch (error: any) {
+      console.error("Erro ao gerar checkout:", error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao gerar checkout",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingCheckout(null);
     }
   };
 
@@ -258,20 +292,41 @@ const Invoices = () => {
                   )}
 
                   {invoice.status === "pending" && (
-                    <Button
-                      onClick={() => handlePayment(invoice.id)}
-                      disabled={processingPayment === invoice.id}
-                      className="w-full"
-                    >
-                      {processingPayment === invoice.id ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processando...
-                        </>
-                      ) : (
-                        "Pagar Fatura"
-                      )}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleGenerateCheckout(invoice.id)}
+                        disabled={generatingCheckout === invoice.id}
+                        className="flex-1"
+                        variant="default"
+                      >
+                        {generatingCheckout === invoice.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Gerando...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="mr-2 h-4 w-4" />
+                            Gerar Checkout
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handlePayment(invoice.id)}
+                        disabled={processingPayment === invoice.id}
+                        variant="outline"
+                        className="flex-1"
+                      >
+                        {processingPayment === invoice.id ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Processando...
+                          </>
+                        ) : (
+                          "Marcar como Paga"
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
