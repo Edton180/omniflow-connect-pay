@@ -1413,6 +1413,7 @@ export type Database = {
       tenants: {
         Row: {
           address: string | null
+          allow_agent_signature: boolean | null
           city: string | null
           cnpj_cpf: string | null
           created_at: string | null
@@ -1437,6 +1438,7 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          allow_agent_signature?: boolean | null
           city?: string | null
           cnpj_cpf?: string | null
           created_at?: string | null
@@ -1461,6 +1463,7 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          allow_agent_signature?: boolean | null
           city?: string | null
           cnpj_cpf?: string | null
           created_at?: string | null

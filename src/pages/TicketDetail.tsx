@@ -51,10 +51,29 @@ export default function TicketDetail() {
   const [agents, setAgents] = useState<any[]>([]);
   const [queues, setQueues] = useState<any[]>([]);
   const [signatureEnabled, setSignatureEnabled] = useState(false);
+  const [allowSignature, setAllowSignature] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const fetchTenantConfig = async () => {
+    try {
+      if (!profile?.tenant_id) return;
+      
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("allow_agent_signature")
+        .eq("id", profile.tenant_id)
+        .single();
+      
+      if (error) throw error;
+      setAllowSignature(data?.allow_agent_signature ?? true);
+    } catch (error) {
+      console.error("Erro ao buscar configuração do tenant:", error);
+      setAllowSignature(true); // Default true se houver erro
+    }
   };
 
   const fetchTicketData = async () => {
@@ -99,6 +118,7 @@ export default function TicketDetail() {
   useEffect(() => {
     if (id) {
       fetchTicketData();
+      fetchTenantConfig();
     }
   }, [id]);
 
@@ -807,15 +827,17 @@ export default function TicketDetail() {
                     setMediaUrl(url);
                     setMediaType("audio");
                   }} />
-                  <Button
-                    type="button"
-                    variant={signatureEnabled ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => setSignatureEnabled(!signatureEnabled)}
-                    title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
-                  >
-                    <UserCheck className="h-5 w-5" />
-                  </Button>
+                  {allowSignature && (
+                    <Button
+                      type="button"
+                      variant={signatureEnabled ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setSignatureEnabled(!signatureEnabled)}
+                      title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
+                    >
+                      <UserCheck className="h-5 w-5" />
+                    </Button>
+                  )}
                   <Input
                     value={messageText}
                     onChange={(e) => setMessageText(e.target.value)}

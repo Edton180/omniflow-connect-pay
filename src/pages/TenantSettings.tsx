@@ -13,6 +13,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { AIConfigSection } from '@/components/settings/AIConfigSection';
 import { EvaluationSettingsTab } from '@/components/settings/EvaluationSettingsTab';
+import { Switch } from '@/components/ui/switch';
 
 export default function TenantSettings() {
   const { user, roles } = useAuth();
@@ -29,6 +30,7 @@ export default function TenantSettings() {
     city: '',
     state: '',
     zip_code: '',
+    allow_agent_signature: true,
   });
 
   useEffect(() => {
@@ -65,6 +67,7 @@ export default function TenantSettings() {
         city: data.city || '',
         state: data.state || '',
         zip_code: data.zip_code || '',
+        allow_agent_signature: data.allow_agent_signature ?? true,
       });
     } catch (error: any) {
       toast.error('Erro ao carregar dados da empresa: ' + error.message);
@@ -93,6 +96,7 @@ export default function TenantSettings() {
           city: formData.city || null,
           state: formData.state || null,
           zip_code: formData.zip_code || null,
+          allow_agent_signature: formData.allow_agent_signature,
         })
         .eq('id', tenant.id);
 
@@ -280,6 +284,27 @@ export default function TenantSettings() {
                           placeholder="#3B82F6"
                         />
                       </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4">Configurações de Atendimento</h3>
+                    <div className="flex items-center justify-between space-x-2">
+                      <div className="space-y-0.5">
+                        <Label htmlFor="allow_agent_signature" className="text-base">
+                          Permitir assinatura do agente
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Permite que agentes adicionem suas assinaturas automaticamente nas mensagens
+                        </p>
+                      </div>
+                      <Switch
+                        id="allow_agent_signature"
+                        checked={formData.allow_agent_signature}
+                        onCheckedChange={(checked) =>
+                          setFormData({ ...formData, allow_agent_signature: checked })
+                        }
+                      />
                     </div>
                   </div>
 

@@ -53,6 +53,7 @@ export default function TicketsImproved() {
   const [queueFilter, setQueueFilter] = useState<string>("all");
   const [userTenantId, setUserTenantId] = useState<string>("");
   const [signatureEnabled, setSignatureEnabled] = useState(false);
+  const [allowSignature, setAllowSignature] = useState(false);
 
   // Enable push notifications
   useNotifications();
@@ -62,6 +63,7 @@ export default function TicketsImproved() {
     if (user?.id) {
       loadTickets();
       loadQueues();
+      fetchTenantConfig();
     }
   }, [user?.id]);
 
@@ -310,15 +312,32 @@ export default function TicketsImproved() {
 
       const { data, error } = await supabase
         .from("queues")
-        .select("id, name, color")
+        .select("*")
         .eq("tenant_id", userRole.tenant_id)
-        .eq("is_active", true)
-        .order("name");
+        .eq("is_active", true);
 
       if (error) throw error;
       setQueues(data || []);
     } catch (error: any) {
-      console.error("Error loading queues:", error);
+      console.error("Erro ao carregar filas:", error);
+    }
+  };
+
+  const fetchTenantConfig = async () => {
+    try {
+      if (!profile?.tenant_id) return;
+      
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("allow_agent_signature")
+        .eq("id", profile.tenant_id)
+        .single();
+      
+      if (error) throw error;
+      setAllowSignature(data?.allow_agent_signature ?? true);
+    } catch (error) {
+      console.error("Erro ao buscar configuração do tenant:", error);
+      setAllowSignature(true); // Default true se houver erro
     }
   };
 
@@ -1232,16 +1251,18 @@ export default function TicketsImproved() {
                   setMediaUrl(url);
                   setMediaType("audio");
                 }} />
-                <Button
-                  type="button"
-                  variant={signatureEnabled ? "default" : "outline"}
-                  size="icon"
-                  onClick={() => setSignatureEnabled(!signatureEnabled)}
-                  title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
-                  className="flex-shrink-0"
-                >
-                  <UserCheck className="h-5 w-5" />
-                </Button>
+                {allowSignature && (
+                  <Button
+                    type="button"
+                    variant={signatureEnabled ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setSignatureEnabled(!signatureEnabled)}
+                    title={signatureEnabled ? "Remover assinatura das mensagens" : "Adicionar assinatura nas mensagens"}
+                    className="flex-shrink-0"
+                  >
+                    <UserCheck className="h-5 w-5" />
+                  </Button>
+                )}
                 <Textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
