@@ -65,14 +65,13 @@ export default function CRM() {
         return;
       }
 
-      const { data: userRole, error: roleError } = await supabase
+      const { data: userRoles, error: roleError } = await supabase
         .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
+        .select("tenant_id, role")
+        .eq("user_id", user.id);
 
       if (roleError) {
-        console.error("Error loading user role:", roleError);
+        console.error("Error loading user roles:", roleError);
         toast({
           title: "Erro",
           description: "Erro ao carregar dados do usuário",
@@ -81,48 +80,49 @@ export default function CRM() {
         return;
       }
 
-      if (!userRole?.tenant_id) {
-        // Auto-assign tenant if user doesn't have one
-        const { data: newTenantId, error: rpcError } = await supabase
-          .rpc("auto_assign_tenant", {
-            _user_id: user.id,
-            _company_name: "Minha Empresa"
-          });
+      // Check if super admin
+      const isSuperAdmin = userRoles?.some(r => r.role === 'super_admin');
+      const userTenantId = userRoles?.find(r => r.tenant_id)?.tenant_id;
 
-        if (rpcError) {
-          console.error("Error auto-assigning tenant:", rpcError);
-          toast({
-            title: "Erro",
-            description: "Não foi possível criar empresa automaticamente",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        if (newTenantId) {
-          setTenantId(newTenantId);
-          await Promise.all([
-            loadColumns(newTenantId),
-            loadLeads(newTenantId)
-          ]);
-          toast({
-            title: "Empresa criada",
-            description: "Uma empresa foi criada automaticamente para você. Acesse o CRM agora!",
-          });
-        }
+      if (!userTenantId && !isSuperAdmin) {
+        toast({
+          title: "Erro",
+          description: "Você não possui acesso a nenhuma empresa. Entre em contato com o administrador.",
+          variant: "destructive",
+        });
         return;
       }
+
+      // Super admin can see all tenants - for now, load first tenant or create one
+      if (isSuperAdmin && !userTenantId) {
+        const { data: tenants } = await supabase
+          .from('tenants')
+          .select('id')
+          .limit(1)
+          .single();
+
+        if (tenants?.id) {
+          setTenantId(tenants.id);
+          await Promise.all([
+            loadColumns(tenants.id),
+            loadLeads(tenants.id)
+          ]);
+          return;
+        }
+      }
       
-      setTenantId(userRole.tenant_id);
-      await Promise.all([
-        loadColumns(userRole.tenant_id),
-        loadLeads(userRole.tenant_id)
-      ]);
+      if (userTenantId) {
+        setTenantId(userTenantId);
+        await Promise.all([
+          loadColumns(userTenantId),
+          loadLeads(userTenantId)
+        ]);
+      }
     } catch (error: any) {
       console.error("Error in loadData:", error);
       toast({
         title: "Erro",
-        description: error.message,
+        description: error.message || "Erro ao carregar dados",
         variant: "destructive",
       });
     }

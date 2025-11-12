@@ -33,6 +33,8 @@ import InternalChat from "./pages/InternalChat";
 import SuperAdminTickets from "./pages/SuperAdminTickets";
 import ViewTickets from "./pages/ViewTickets";
 import SuperAdminInvoices from "./pages/SuperAdminInvoices";
+import SuperAdminChannels from "./pages/SuperAdminChannels";
+import SuperAdminCRM from "./pages/SuperAdminCRM";
 import LandingPageEditor from "./pages/LandingPageEditor";
 import EvaluationRanking from "./pages/EvaluationRanking";
 import EvaluationDashboard from "./pages/EvaluationDashboard";
@@ -72,6 +74,8 @@ const App = () => (
           <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
           <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
           <Route path="/admin/all-tickets" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminTickets /></AuthGuard>} />
+          <Route path="/admin/all-channels" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminChannels /></AuthGuard>} />
+          <Route path="/admin/all-crm" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminCRM /></AuthGuard>} />
           <Route path="/admin/invoices" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminInvoices /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />

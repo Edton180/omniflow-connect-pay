@@ -17,7 +17,9 @@ import {
   Zap,
   ChevronLeft,
   ChevronRight,
-  TrendingUp
+  TrendingUp,
+  Building2,
+  Kanban
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -56,6 +58,10 @@ const superAdminItems: NavItem[] = [
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
+  { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
+  { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
+  { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
+  { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {

@@ -98,10 +98,18 @@ export const UserManagement = () => {
     try {
       console.log('🔍 Carregando usuários. Super Admin?', isSuperAdmin);
       
-      // Usar função RPC para buscar usuários com emails reais
-      let query = supabase.rpc('get_users_with_emails');
+      // Buscar todos os usuários via RPC
+      const { data: usersData, error: usersError } = await supabase
+        .rpc('get_users_with_emails');
+
+      if (usersError) {
+        console.error('❌ Erro ao buscar usuários:', usersError);
+        throw usersError;
+      }
+
+      // Filtrar manualmente se não for super admin
+      let filteredUsers = usersData || [];
       
-      // Se não for super admin, filtrar apenas usuários do tenant
       if (!isSuperAdmin) {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('Usuário não autenticado');
@@ -109,30 +117,24 @@ export const UserManagement = () => {
         const { data: userRoles } = await supabase
           .from('user_roles')
           .select('tenant_id')
-          .eq('user_id', user.id)
-          .limit(1)
-          .single();
+          .eq('user_id', user.id);
           
-        if (userRoles?.tenant_id) {
-          query = query.eq('tenant_id', userRoles.tenant_id);
-          console.log('🔍 Filtrando por tenant:', userRoles.tenant_id);
+        const userTenantId = userRoles?.[0]?.tenant_id;
+        
+        if (userTenantId) {
+          filteredUsers = usersData.filter((u: any) => u.tenant_id === userTenantId);
+          console.log('🔍 Filtrando por tenant:', userTenantId, 'Resultados:', filteredUsers.length);
         }
       } else {
-        console.log('🔍 Super Admin - Buscando TODOS os usuários do sistema');
+        console.log('🔍 Super Admin - Mostrando TODOS os usuários do sistema:', filteredUsers.length);
       }
-      
-      const { data: usersData, error: usersError } = await query;
 
-      if (usersError) {
-        console.error('❌ Erro ao buscar usuários:', usersError);
-        throw usersError;
-      }
       
-      console.log('✅ Usuários carregados:', usersData?.length);
+      console.log('✅ Usuários carregados:', filteredUsers.length);
 
       // Buscar roles para cada usuário
       const usersWithRoles = await Promise.all(
-        (usersData || []).map(async (userData) => {
+        filteredUsers.map(async (userData: any) => {
           const { data: rolesData } = await supabase
             .from("user_roles")
             .select("role, tenant_id")
