@@ -379,6 +379,10 @@ export default function TicketDetail() {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
+      console.log("🔄 Iniciando mudança de status para:", newStatus);
+      console.log("📊 Profile tenant_id:", profile?.tenant_id);
+      console.log("🎫 Ticket atual:", ticket);
+      
       const updates: any = { 
         status: newStatus,
         updated_at: new Date().toISOString()
@@ -401,84 +405,153 @@ export default function TicketDetail() {
 
       // Send evaluation if status is closed and auto_send_on_close is enabled
       if (newStatus === "closed" && id) {
+        console.log("🔐 Ticket fechado, verificando configurações de avaliação...");
+        
         try {
-          const { data: evalSettings } = await supabase
+          // Get tenant_id from ticket if not available in profile
+          const tenantId = profile?.tenant_id || ticket?.tenant_id;
+          
+          if (!tenantId) {
+            console.error("❌ tenant_id não disponível");
+            throw new Error("Tenant ID não encontrado");
+          }
+
+          console.log("🔍 Buscando configurações de avaliação para tenant:", tenantId);
+
+          const { data: evalSettings, error: evalError } = await supabase
             .from("evaluation_settings")
             .select("*")
-            .eq("tenant_id", profile?.tenant_id)
+            .eq("tenant_id", tenantId)
             .maybeSingle();
 
-          console.log("📊 Configurações de avaliação:", evalSettings);
+          if (evalError) {
+            console.error("❌ Erro ao buscar configurações:", evalError);
+            throw evalError;
+          }
 
-          if (evalSettings?.enabled && evalSettings?.auto_send_on_close) {
-            // Get fresh ticket data with contact info
-            const { data: freshTicket } = await supabase
-              .from("tickets")
-              .select(`
-                *,
-                contact:contacts(*)
-              `)
-              .eq("id", id)
-              .single();
+          console.log("📊 Configurações de avaliação:", {
+            enabled: evalSettings?.enabled,
+            auto_send_on_close: evalSettings?.auto_send_on_close,
+            rating_scale: evalSettings?.rating_scale,
+            message_template: evalSettings?.message_template
+          });
 
-            if (!freshTicket || !freshTicket.contact) {
-              console.error("❌ Ticket ou contato não encontrado");
-              toast({
-                title: "Erro",
-                description: "Não foi possível encontrar os dados do contato para enviar a avaliação.",
-                variant: "destructive",
-              });
-              return;
-            }
+          if (!evalSettings) {
+            console.warn("⚠️ Nenhuma configuração de avaliação encontrada");
+            return;
+          }
 
-            console.log("📤 Enviando avaliação automática...", {
-              ticketId: freshTicket.id,
-              channel: freshTicket.channel,
-              contactId: freshTicket.contact.id,
-              contactPhone: freshTicket.contact.phone,
-              contactMetadata: freshTicket.contact.metadata,
+          if (!evalSettings.enabled) {
+            console.warn("⚠️ Sistema de avaliação desabilitado");
+            toast({
+              title: "Avaliação desabilitada",
+              description: "O sistema de avaliação não está habilitado. Ative-o nas configurações.",
+              variant: "default",
             });
+            return;
+          }
 
-            // Get contact identifier based on channel
-            const contactMetadata = freshTicket.contact.metadata as any;
-            const contactIdentifier = freshTicket.channel === "telegram" 
-              ? (contactMetadata?.telegram_chat_id || freshTicket.contact.phone)
-              : freshTicket.contact.phone;
+          if (!evalSettings.auto_send_on_close) {
+            console.log("ℹ️ Envio automático de avaliação desabilitado");
+            return;
+          }
 
-            const { data: evalResponse, error: evalError } = await supabase.functions.invoke("send-evaluation", {
+          // Get fresh ticket data with contact info
+          console.log("🔄 Buscando dados atualizados do ticket...");
+          const { data: freshTicket, error: ticketError } = await supabase
+            .from("tickets")
+            .select(`
+              *,
+              contact:contacts(*)
+            `)
+            .eq("id", id)
+            .single();
+
+          if (ticketError) {
+            console.error("❌ Erro ao buscar ticket:", ticketError);
+            throw ticketError;
+          }
+
+          if (!freshTicket || !freshTicket.contact) {
+            console.error("❌ Ticket ou contato não encontrado");
+            toast({
+              title: "Erro",
+              description: "Não foi possível encontrar os dados do contato para enviar a avaliação.",
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log("📱 Dados do ticket:", {
+            id: freshTicket.id,
+            channel: freshTicket.channel,
+            contactId: freshTicket.contact.id,
+            contactPhone: freshTicket.contact.phone,
+            contactName: freshTicket.contact.name,
+            metadata: freshTicket.contact.metadata,
+          });
+
+          // Get contact identifier based on channel
+          const contactMetadata = freshTicket.contact.metadata as any;
+          let contactIdentifier: string;
+          
+          if (freshTicket.channel === "telegram") {
+            contactIdentifier = contactMetadata?.telegram_chat_id || freshTicket.contact.phone;
+            console.log("📞 Telegram chat_id:", contactIdentifier);
+          } else {
+            contactIdentifier = freshTicket.contact.phone;
+            console.log("📞 WhatsApp phone:", contactIdentifier);
+          }
+
+          if (!contactIdentifier) {
+            console.error("❌ Identificador do contato não encontrado");
+            toast({
+              title: "Erro",
+              description: `Não foi possível identificar o contato para o canal ${freshTicket.channel}`,
+              variant: "destructive",
+            });
+            return;
+          }
+
+          console.log("📤 Enviando avaliação automática...");
+          console.log("📦 Payload:", {
+            ticketId: freshTicket.id,
+            channel: freshTicket.channel,
+            contactPhone: contactIdentifier,
+            contactId: freshTicket.contact.id,
+          });
+
+          const { data: evalResponse, error: sendEvalError } = await supabase.functions.invoke(
+            "send-evaluation",
+            {
               body: {
                 ticketId: freshTicket.id,
                 channel: freshTicket.channel,
                 contactPhone: contactIdentifier,
                 contactId: freshTicket.contact.id,
               },
-            });
-
-            if (evalError) {
-              console.error("❌ Erro ao enviar avaliação:", evalError);
-              toast({
-                title: "Aviso",
-                description: `Não foi possível enviar a avaliação: ${evalError.message}`,
-                variant: "destructive",
-              });
-            } else if (evalResponse?.error) {
-              console.error("❌ Erro na resposta da avaliação:", evalResponse.error);
-              toast({
-                title: "Aviso",
-                description: `Erro ao enviar avaliação: ${evalResponse.error}`,
-                variant: "destructive",
-              });
-            } else {
-              console.log("✅ Avaliação enviada com sucesso:", evalResponse);
-              toast({
-                title: "Avaliação enviada ✓",
-                description: "A solicitação de avaliação foi enviada ao cliente.",
-              });
             }
+          );
+
+          if (sendEvalError) {
+            console.error("❌ Erro ao enviar avaliação:", sendEvalError);
+            toast({
+              title: "Aviso",
+              description: `Não foi possível enviar a avaliação: ${sendEvalError.message}`,
+              variant: "destructive",
+            });
+          } else if (evalResponse?.error) {
+            console.error("❌ Erro na resposta da avaliação:", evalResponse.error);
+            toast({
+              title: "Aviso",
+              description: `Erro ao enviar avaliação: ${evalResponse.error}`,
+              variant: "destructive",
+            });
           } else {
-            console.log("⚠️ Avaliação automática desabilitada ou não configurada", {
-              enabled: evalSettings?.enabled,
-              autoSend: evalSettings?.auto_send_on_close
+            console.log("✅ Avaliação enviada com sucesso:", evalResponse);
+            toast({
+              title: "Avaliação enviada ✓",
+              description: "A solicitação de avaliação foi enviada ao cliente.",
             });
           }
         } catch (evalError: any) {
@@ -496,6 +569,7 @@ export default function TicketDetail() {
         description: "O status do ticket foi atualizado com sucesso.",
       });
     } catch (error: any) {
+      console.error("❌ Erro ao atualizar status:", error);
       toast({
         title: "Erro ao atualizar status",
         description: error.message,
