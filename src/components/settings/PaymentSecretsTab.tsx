@@ -26,8 +26,8 @@ export const PaymentSecretsTab = () => {
       name: "RESEND_API_KEY",
       value: "",
       label: "Resend API Key",
-      description: "Chave de API para envio de emails via Resend",
-      required: true,
+      description: "Chave de API para envio de emails via Resend (crie conta em resend.com)",
+      required: false,
     },
     {
       name: "ASAAS_WEBHOOK_TOKEN",
@@ -160,7 +160,13 @@ export const PaymentSecretsTab = () => {
         <AlertDescription>
           <strong>Segurança:</strong> Por motivos de segurança, secrets salvos não podem ser
           visualizados novamente. Você pode apenas atualizá-los inserindo novos valores.
-          Configure aqui as chaves necessárias para os webhooks e notificações funcionarem.
+          <br /><br />
+          <strong>O que é Resend?</strong> Resend é um serviço de envio de emails transacionais 
+          (notificações automáticas). Você pode criar uma conta gratuita em{" "}
+          <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">
+            resend.com
+          </a>
+          {" "}e obter sua API Key. É necessário para enviar emails de notificação de faturas.
         </AlertDescription>
       </Alert>
 

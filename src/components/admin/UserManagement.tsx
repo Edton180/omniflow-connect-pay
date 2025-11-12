@@ -632,14 +632,17 @@ export const UserManagement = () => {
             {!selectedUser && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email (opcional)</Label>
                   <Input
                     id="email"
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    required
+                    placeholder="usuario@example.com (opcional)"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Email é opcional. Se não fornecido, será gerado automaticamente.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

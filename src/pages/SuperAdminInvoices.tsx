@@ -10,38 +10,16 @@ import { ArrowLeft, FileText, Loader2, DollarSign, Calendar, Building2, Search, 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { CreateInvoiceDialog } from "@/components/invoices/CreateInvoiceDialog";
 
 export default function SuperAdminInvoices() {
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState<any[]>([]);
-  const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [generatingCheckout, setGeneratingCheckout] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [plans, setPlans] = useState<any[]>([]);
-  const [newInvoice, setNewInvoice] = useState({
-    tenant_id: "",
-    plan_id: "",
-    due_date: "",
-  });
 
   useEffect(() => {
     loadData();
@@ -49,7 +27,6 @@ export default function SuperAdminInvoices() {
 
   const loadData = async () => {
     try {
-      // Load invoices with tenant info
       const { data: invoicesData, error: invoicesError } = await supabase
         .from("invoices")
         .select(`
@@ -61,25 +38,7 @@ export default function SuperAdminInvoices() {
 
       if (invoicesError) throw invoicesError;
 
-      // Load tenants
-      const { data: tenantsData, error: tenantsError } = await supabase
-        .from("tenants")
-        .select("id, name, slug, subscription_status")
-        .order("name");
-
-      if (tenantsError) throw tenantsError;
-
-      // Load plans
-      const { data: plansData, error: plansError } = await supabase
-        .from("plans")
-        .select("*")
-        .order("price");
-
-      if (plansError) throw plansError;
-
       setInvoices(invoicesData || []);
-      setTenants(tenantsData || []);
-      setPlans(plansData || []);
     } catch (error) {
       console.error("Error loading data:", error);
       toast.error("Erro ao carregar dados");
@@ -130,38 +89,6 @@ export default function SuperAdminInvoices() {
     }
   };
 
-  const handleCreateInvoice = async () => {
-    if (!newInvoice.tenant_id || !newInvoice.plan_id || !newInvoice.due_date) {
-      toast.error("Preencha todos os campos");
-      return;
-    }
-
-    try {
-      const plan = plans.find(p => p.id === newInvoice.plan_id);
-      if (!plan) throw new Error("Plano não encontrado");
-
-      const { error } = await supabase
-        .from("invoices")
-        .insert({
-          tenant_id: newInvoice.tenant_id,
-          amount: plan.price,
-          currency: plan.currency || "BRL",
-          due_date: newInvoice.due_date,
-          status: "pending",
-          description: `Fatura Manual - ${plan.name}`,
-        });
-
-      if (error) throw error;
-
-      toast.success("Fatura criada com sucesso!");
-      setCreateDialogOpen(false);
-      setNewInvoice({ tenant_id: "", plan_id: "", due_date: "" });
-      loadData();
-    } catch (error: any) {
-      console.error("Error creating invoice:", error);
-      toast.error(error.message || "Erro ao criar fatura");
-    }
-  };
 
   const getStatusBadge = (status: string, dueDate: string) => {
     const isOverdue = new Date(dueDate) < new Date() && status === "pending";
@@ -352,74 +279,11 @@ export default function SuperAdminInvoices() {
         )}
       </div>
 
-      <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Criar Nova Fatura</DialogTitle>
-            <DialogDescription>
-              Gere uma fatura manual para uma empresa
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Empresa</Label>
-              <Select
-                value={newInvoice.tenant_id}
-                onValueChange={(value) => setNewInvoice({ ...newInvoice, tenant_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione a empresa" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tenants.map((tenant) => (
-                    <SelectItem key={tenant.id} value={tenant.id}>
-                      {tenant.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Plano</Label>
-              <Select
-                value={newInvoice.plan_id}
-                onValueChange={(value) => setNewInvoice({ ...newInvoice, plan_id: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o plano" />
-                </SelectTrigger>
-                <SelectContent>
-                  {plans.map((plan) => (
-                    <SelectItem key={plan.id} value={plan.id}>
-                      {plan.name} - {plan.billing_period === 'yearly' ? 'Anual' : 'Mensal'} - R$ {plan.price?.toFixed(2)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Data de Vencimento</Label>
-              <Input
-                type="date"
-                value={newInvoice.due_date}
-                onChange={(e) => setNewInvoice({ ...newInvoice, due_date: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleCreateInvoice}>
-              Criar Fatura
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateInvoiceDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onSuccess={loadData}
+      />
     </div>
   );
 }
