@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Users as UsersIcon } from "lucide-react";
+import { Loader2, Users as UsersIcon, Pencil } from "lucide-react";
+import { UserEditDialog } from "./UserEditDialog";
 
 interface TenantUser {
   id: string;
@@ -22,6 +24,8 @@ interface TenantUsersListProps {
 export const TenantUsersList = ({ tenantId, tenantName }: TenantUsersListProps) => {
   const [users, setUsers] = useState<TenantUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingUser, setEditingUser] = useState<TenantUser | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchTenantUsers();
@@ -144,21 +148,40 @@ export const TenantUsersList = ({ tenantId, tenantName }: TenantUsersListProps) 
                     )}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  {user.roles.map((role, idx) => (
-                    <Badge key={idx} variant={getRoleBadgeVariant(role.role)}>
-                      {getRoleLabel(role.role)}
-                    </Badge>
-                  ))}
-                  {user.roles.length === 0 && (
-                    <Badge variant="outline">Sem Papel</Badge>
-                  )}
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-2">
+                    {user.roles.map((role, idx) => (
+                      <Badge key={idx} variant={getRoleBadgeVariant(role.role)}>
+                        {getRoleLabel(role.role)}
+                      </Badge>
+                    ))}
+                    {user.roles.length === 0 && (
+                      <Badge variant="outline">Sem Papel</Badge>
+                    )}
+                  </div>
+                  <Button 
+                    size="icon" 
+                    variant="ghost"
+                    onClick={() => {
+                      setEditingUser(user);
+                      setEditDialogOpen(true);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             ))}
           </div>
         )}
       </CardContent>
+
+      <UserEditDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        user={editingUser}
+        onSuccess={fetchTenantUsers}
+      />
     </Card>
   );
 };

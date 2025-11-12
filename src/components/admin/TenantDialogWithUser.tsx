@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { AvatarUpload } from "@/components/common/AvatarUpload";
 
 interface TenantDialogWithUserProps {
   open: boolean;
@@ -227,6 +228,14 @@ export const TenantDialogWithUser = ({ open, onOpenChange, tenant, onSuccess }: 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <h3 className="font-semibold text-lg">Informações</h3>
+            
+            <AvatarUpload
+              currentUrl={formData.logo_url}
+              onUpload={(url) => setFormData({ ...formData, logo_url: url })}
+              fallbackText={formData.name.charAt(0) || 'E'}
+              bucket="avatars"
+              folder="tenants"
+            />
             
             <div className="space-y-2">
               <Label htmlFor="name">Nome *</Label>

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AvatarUpload } from '@/components/common/AvatarUpload';
 
 export default function Profile() {
   const { user, profile, refetchProfile } = useAuth();
@@ -15,6 +16,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -30,6 +32,7 @@ export default function Profile() {
         .update({
           full_name: fullName,
           phone: phone || null,
+          avatar_url: avatarUrl || null,
         })
         .eq('id', user.id);
 
@@ -123,6 +126,12 @@ export default function Profile() {
               <CardDescription>Atualize suas informações básicas</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <AvatarUpload
+                currentUrl={avatarUrl}
+                onUpload={setAvatarUrl}
+                fallbackText={fullName.charAt(0) || 'U'}
+              />
+              
               <div className="space-y-2">
                 <Label htmlFor="fullName">Nome Completo</Label>
                 <Input
