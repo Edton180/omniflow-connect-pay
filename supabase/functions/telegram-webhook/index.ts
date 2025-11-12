@@ -194,7 +194,86 @@ serve(async (req) => {
         console.log("✅ Novo contato criado:", contact.id);
       }
 
-      // Buscar ou criar ticket
+      // Verificar se é resposta de avaliação
+      const isEvaluationResponse = message.text && /^[1-5]$/.test(message.text.trim());
+      
+      // Buscar ticket mais recente do contato (incluindo fechados recentes para avaliação)
+      const { data: recentTickets } = await supabaseAdmin
+        .from("tickets")
+        .select("*, bot_state")
+        .eq("contact_id", contact.id)
+        .order("updated_at", { ascending: false })
+        .limit(1);
+      
+      const mostRecentTicket = recentTickets?.[0];
+      
+      // Se for resposta de avaliação e o ticket mais recente foi fechado recentemente (últimas 2 horas)
+      if (isEvaluationResponse && mostRecentTicket?.status === "closed") {
+        const closedAt = new Date(mostRecentTicket.closed_at);
+        const now = new Date();
+        const hoursSinceClosed = (now.getTime() - closedAt.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceClosed < 2) {
+          console.log("⭐ Resposta de avaliação detectada:", message.text);
+          
+          // Salvar avaliação
+          const score = parseInt(message.text.trim());
+          const { error: evalError } = await supabaseAdmin
+            .from("evaluations")
+            .insert({
+              ticket_id: mostRecentTicket.id,
+              contact_id: contact.id,
+              agent_id: mostRecentTicket.assigned_to,
+              tenant_id: tenantId,
+              score: score,
+            });
+          
+          if (evalError) {
+            console.error("❌ Erro ao salvar avaliação:", evalError);
+          } else {
+            console.log("✅ Avaliação salva com sucesso");
+            
+            // Atualizar ticket com nota
+            await supabaseAdmin
+              .from("tickets")
+              .update({ 
+                evaluation_score: score,
+                evaluated_at: new Date().toISOString()
+              })
+              .eq("id", mostRecentTicket.id);
+            
+            // Buscar mensagem de agradecimento
+            const { data: evalSettings } = await supabaseAdmin
+              .from("evaluation_settings")
+              .select("thank_you_message")
+              .eq("tenant_id", tenantId)
+              .maybeSingle();
+            
+            const thankYouMessage = evalSettings?.thank_you_message || "Obrigado pela sua avaliação!";
+            
+            // Enviar mensagem de agradecimento
+            try {
+              await supabaseAdmin.functions.invoke("send-telegram-media", {
+                body: {
+                  chatId: chatId,
+                  message: thankYouMessage,
+                },
+              });
+              console.log("✅ Mensagem de agradecimento enviada");
+            } catch (err) {
+              console.error("❌ Erro ao enviar agradecimento:", err);
+            }
+          }
+          
+          // Retornar sem criar novo ticket
+          return new Response(JSON.stringify({ ok: true }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      }
+      
+      // Buscar ou criar ticket (apenas tickets abertos)
       let ticket;
       let isNewTicket = false;
       const { data: existingTickets } = await supabaseAdmin
@@ -376,14 +455,22 @@ serve(async (req) => {
           console.log("✅ Opção válida selecionada:", selectedItem.option_label);
           
           if (selectedItem.action_type === "queue" && selectedItem.target_id) {
+            console.log("🎯 Atribuindo ticket à fila:", selectedItem.target_id);
+            
             // Atribuir à fila
-            await supabaseAdmin
+            const { error: updateError } = await supabaseAdmin
               .from("tickets")
               .update({ 
                 queue_id: selectedItem.target_id,
                 bot_state: { step: "routed", timestamp: new Date().toISOString() }
               })
               .eq("id", ticket.id);
+            
+            if (updateError) {
+              console.error("❌ Erro ao atribuir fila:", updateError);
+            } else {
+              console.log("✅ Ticket atribuído à fila com sucesso");
+            }
             
             // Enviar mensagem de confirmação
             try {

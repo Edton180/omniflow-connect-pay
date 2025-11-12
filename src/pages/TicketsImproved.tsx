@@ -236,13 +236,14 @@ export default function TicketsImproved() {
         .from("tickets")
         .select(`
           *,
-          contact:contacts(name, phone, avatar_url, metadata),
-          queue:queues(name, color)
+          contact:contacts(name, phone, avatar_url, metadata, tags),
+          queue:queues(id, name, color)
         `)
         .eq("tenant_id", userRole.tenant_id)
         .order("updated_at", { ascending: false });
 
       console.log("Tickets carregados:", data?.length, "Error:", error);
+      console.log("Exemplo de ticket com fila:", data?.find(t => t.queue_id)?.queue);
 
       if (error) throw error;
       
