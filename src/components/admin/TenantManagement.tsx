@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Building2, Plus, Pencil, Trash2, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TenantDialogWithUser } from "./TenantDialogWithUser";
+import { TenantUsersList } from './TenantUsersList';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ export const TenantManagement = () => {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
+  const [viewingTenant, setViewingTenant] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<any>(null);
 
@@ -77,6 +79,10 @@ export const TenantManagement = () => {
   const handleEdit = (tenant: any) => {
     setSelectedTenant(tenant);
     setDialogOpen(true);
+  };
+
+  const handleViewUsers = (tenant: any) => {
+    setViewingTenant(tenant);
   };
 
   const handleDeleteClick = (tenant: any) => {
@@ -133,26 +139,37 @@ export const TenantManagement = () => {
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
+            <Button variant="ghost" size="icon" onClick={() => viewingTenant ? setViewingTenant(null) : navigate("/dashboard")}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Gerenciar Tenants</h1>
-              <p className="text-xs text-muted-foreground">Administre todas as empresas do sistema</p>
+              <h1 className="text-xl font-bold">
+                {viewingTenant ? `Usuários de ${viewingTenant.name}` : 'Gerenciar Tenants'}
+              </h1>
+              <p className="text-xs text-muted-foreground">
+                {viewingTenant ? 'Veja todos os usuários desta empresa' : 'Administre todas as empresas do sistema'}
+              </p>
             </div>
           </div>
-          <Button onClick={handleCreate}>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Tenant
-          </Button>
+          {!viewingTenant && (
+            <Button onClick={handleCreate}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Tenant
+            </Button>
+          )}
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8">
-        {loading ? (
+        {viewingTenant ? (
+          <TenantUsersList 
+            tenantId={viewingTenant.id} 
+            tenantName={viewingTenant.name}
+          />
+        ) : loading ? (
           <div className="flex items-center justify-center h-64">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -197,6 +214,14 @@ export const TenantManagement = () => {
                       </div>
                     </div>
                     <div className="flex gap-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        onClick={() => handleViewUsers(tenant)}
+                        className="text-xs"
+                      >
+                        Ver Usuários
+                      </Button>
                       <Button size="icon" variant="ghost" onClick={() => handleEdit(tenant)}>
                         <Pencil className="h-4 w-4" />
                       </Button>

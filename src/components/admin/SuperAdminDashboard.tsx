@@ -164,61 +164,71 @@ export const SuperAdminDashboard = () => {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/admin/tenants')}
-            >
-              <Building2 className="mr-2 h-5 w-5" />
-              Gerenciar Tenants
-            </Button>
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/admin/users')}
-            >
-              <Users className="mr-2 h-5 w-5" />
-              Gerenciar Usuários
-            </Button>
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/admin/all-tickets')}
-            >
-              <MessageSquare className="mr-2 h-5 w-5" />
-              Todos os Atendimentos
-            </Button>
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/admin/invoices')}
-            >
-              <FileText className="mr-2 h-5 w-5" />
-              Gerenciar Faturas
-            </Button>
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/payments')}
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              Planos e Pagamentos
-            </Button>
-            <Button 
-              className="h-20 text-lg" 
-              variant="outline"
-              onClick={() => navigate('/admin/revenue')}
-            >
-              <TrendingUp className="mr-2 h-5 w-5" />
-              Receita e Faturamento
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Gerenciamento</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/tenants')}
+              >
+                <Building2 className="mr-3 h-5 w-5" />
+                Gerenciar Tenants
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/users')}
+              >
+                <Users className="mr-3 h-5 w-5" />
+                Gerenciar Usuários
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/all-tickets')}
+              >
+                <MessageSquare className="mr-3 h-5 w-5" />
+                Todos os Atendimentos
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Financeiro</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/invoices')}
+              >
+                <FileText className="mr-3 h-5 w-5" />
+                Gerenciar Faturas
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/payments')}
+              >
+                <CreditCard className="mr-3 h-5 w-5" />
+                Planos e Pagamentos
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/revenue')}
+              >
+                <BarChart3 className="mr-3 h-5 w-5" />
+                Receita e Faturamento
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </AppLayout>
   );

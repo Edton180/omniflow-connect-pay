@@ -38,7 +38,7 @@ export default function EvaluationRanking() {
     try {
       console.log('📊 Buscando avaliações para tenant:', tenantRole.tenant_id);
       
-      // Buscar avaliações com join de profiles
+      // Buscar avaliações (incluindo as sem agente para contagem)
       const { data: evaluations, error } = await supabase
         .from('evaluations')
         .select(`
@@ -47,8 +47,7 @@ export default function EvaluationRanking() {
           ticket_id,
           created_at
         `)
-        .eq('tenant_id', tenantRole.tenant_id)
-        .not('agent_id', 'is', null);
+        .eq('tenant_id', tenantRole.tenant_id);
 
       if (error) {
         console.error('❌ Erro ao buscar avaliações:', error);
@@ -57,13 +56,15 @@ export default function EvaluationRanking() {
 
       console.log('📊 Avaliações carregadas:', evaluations?.length, evaluations);
 
-      // Contar avaliações sem agente atribuído
+      // Separar avaliações com e sem agente
+      const evaluationsWithAgent = evaluations?.filter(e => e.agent_id) || [];
       const withoutAgent = evaluations?.filter(e => !e.agent_id).length || 0;
       setUnassignedCount(withoutAgent);
       console.log('⚠️ Avaliações sem agente:', withoutAgent);
+      console.log('✅ Avaliações com agente:', evaluationsWithAgent.length);
 
       // Buscar perfis dos agentes (apenas avaliações COM agente)
-      const agentIds = [...new Set(evaluations?.map(e => e.agent_id).filter(Boolean))];
+      const agentIds = [...new Set(evaluationsWithAgent.map(e => e.agent_id).filter(Boolean))];
       console.log('👥 Agent IDs encontrados:', agentIds);
       
       if (agentIds.length === 0) {
@@ -84,10 +85,10 @@ export default function EvaluationRanking() {
 
       console.log('👥 Perfis carregados:', profiles);
 
-      // Agrupar por agente
+      // Agrupar por agente (apenas avaliações com agente)
       const statsMap = new Map<string, AgentStats>();
       
-      evaluations?.forEach((evaluation: any) => {
+      evaluationsWithAgent.forEach((evaluation: any) => {
         const userId = evaluation.agent_id;
         if (!userId) return;
 
