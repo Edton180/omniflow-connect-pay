@@ -73,12 +73,24 @@ export const PaymentSecretsTab = () => {
   const loadSecrets = async () => {
     setLoading(true);
     try {
-      // Em produção, os secrets não podem ser lidos por segurança
-      // Apenas mostramos se estão configurados ou não
-      toast.info("Secrets configurados não podem ser visualizados por segurança");
-    } catch (error) {
+      const { data, error } = await supabase.functions.invoke('get-system-secrets');
+      
+      if (error) throw error;
+
+      // Atualizar status dos secrets (se estão configurados ou não)
+      if (data?.secrets) {
+        setSecrets(prev => prev.map(secret => {
+          const remoteSecret = data.secrets.find((s: any) => s.secret_name === secret.name);
+          return {
+            ...secret,
+            // Não exibir o valor por segurança, apenas indicar se está configurado
+            value: remoteSecret?.is_configured ? '••••••••••••' : '',
+          };
+        }));
+      }
+    } catch (error: any) {
       console.error("Error loading secrets:", error);
-      toast.error("Erro ao carregar configurações");
+      toast.error(error.message || "Erro ao carregar configurações");
     } finally {
       setLoading(false);
     }
@@ -102,24 +114,29 @@ export const PaymentSecretsTab = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Filtrar apenas secrets que foram preenchidos
-      const secretsToSave = secrets.filter(s => s.value.trim() !== "");
+      // Filtrar apenas secrets que foram modificados (não são ••••)
+      const secretsToSave = secrets
+        .filter(s => s.value.trim() !== "" && !s.value.startsWith("•"))
+        .map(s => ({
+          name: s.name,
+          value: s.value,
+        }));
 
       if (secretsToSave.length === 0) {
         toast.warning("Nenhum secret foi modificado");
         return;
       }
 
-      // Nota: Em produção, isso deveria chamar uma edge function segura
-      // que salva os secrets usando variáveis de ambiente do Supabase
-      toast.success(
-        `${secretsToSave.length} secret(s) seriam salvos. Implemente a edge function 'save-secrets' para persistir.`
-      );
+      const { data, error } = await supabase.functions.invoke('save-system-secrets', {
+        body: { secrets: secretsToSave },
+      });
 
-      // Limpar campos após salvar
-      setSecrets(prev =>
-        prev.map(secret => ({ ...secret, value: "" }))
-      );
+      if (error) throw error;
+
+      toast.success(data.message || `${secretsToSave.length} secret(s) salvos com sucesso`);
+
+      // Recarregar secrets
+      await loadSecrets();
     } catch (error: any) {
       console.error("Error saving secrets:", error);
       toast.error(error.message || "Erro ao salvar secrets");

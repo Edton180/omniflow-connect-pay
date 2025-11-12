@@ -1,5 +1,6 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { getSystemSecret } from "../_shared/get-secret.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,14 +19,35 @@ serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const resendApiKey = Deno.env.get("RESEND_API_KEY");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+    // Buscar API key do Resend do banco ou env vars
+    const resendApiKey = await getSystemSecret(
+      "RESEND_API_KEY",
+      supabaseUrl,
+      supabaseServiceKey
+    );
 
     if (!resendApiKey) {
-      throw new Error("RESEND_API_KEY não configurada. Configure no painel de Super Admin.");
+      console.error("RESEND_API_KEY não configurado");
+      return new Response(
+        JSON.stringify({
+          error: "RESEND_API_KEY não configurado. Configure em System Secrets.",
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
     const { invoiceId, type }: EmailNotificationRequest = await req.json();
 
     // Buscar fatura com informações do tenant e subscription
@@ -123,15 +145,15 @@ serve(async (req) => {
         break;
     }
 
-    // Enviar email via Resend
-    const resendResponse = await fetch("https://api.resend.com/emails", {
+    // Enviar email via Resend API diretamente
+    const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${resendApiKey}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
-        from: "OmniFlow <noreply@omniflow.app>",
+        from: "OmniFlow <onboarding@resend.dev>",
         to: [email],
         subject,
         html: `
@@ -159,18 +181,20 @@ serve(async (req) => {
       }),
     });
 
-    if (!resendResponse.ok) {
-      const errorText = await resendResponse.text();
-      throw new Error(`Erro ao enviar email: ${errorText}`);
+    if (!emailResponse.ok) {
+      const errorData = await emailResponse.text();
+      console.error("Erro ao enviar email via Resend:", errorData);
+      throw new Error(`Falha ao enviar email: ${errorData}`);
     }
 
-    const resendData = await resendResponse.json();
+    const emailData = await emailResponse.json();
+    console.log("Email enviado com sucesso:", emailData);
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Notificação enviada com sucesso",
-        emailId: resendData.id,
+        emailId: emailData.id,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

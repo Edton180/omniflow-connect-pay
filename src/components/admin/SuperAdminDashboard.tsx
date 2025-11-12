@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3 } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3, Key } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -225,6 +225,22 @@ export const SuperAdminDashboard = () => {
               >
                 <BarChart3 className="mr-3 h-5 w-5" />
                 Receita e Faturamento
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Configurações do Sistema</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/settings')}
+              >
+                <Key className="mr-3 h-5 w-5" />
+                Secrets de Pagamento
               </Button>
             </CardContent>
           </Card>

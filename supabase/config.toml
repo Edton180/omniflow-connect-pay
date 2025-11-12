@@ -30,6 +30,12 @@ verify_jwt = true
 [functions.waba-webhook]
 verify_jwt = false
 
+[functions.get-system-secrets]
+verify_jwt = true
+
+[functions.save-system-secrets]
+verify_jwt = true
+
 [functions.facebook-webhook]
 verify_jwt = false
 
