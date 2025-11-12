@@ -1172,6 +1172,7 @@ export type Database = {
           id: string
           is_active: boolean | null
           name: string
+          routing_message: string | null
           sla_minutes: number | null
           tenant_id: string
           updated_at: string | null
@@ -1183,6 +1184,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name: string
+          routing_message?: string | null
           sla_minutes?: number | null
           tenant_id: string
           updated_at?: string | null
@@ -1194,6 +1196,7 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           name?: string
+          routing_message?: string | null
           sla_minutes?: number | null
           tenant_id?: string
           updated_at?: string | null

@@ -54,6 +54,62 @@ serve(async (req) => {
       );
     }
 
+    // Extrair userId do header de autorização para atribuição automática
+    const authHeader = req.headers.get("authorization");
+    let sendingUserId = null;
+    
+    if (authHeader?.startsWith("Bearer ")) {
+      try {
+        const token = authHeader.replace("Bearer ", "");
+        const { data: userData } = await supabaseAdmin.auth.getUser(token);
+        sendingUserId = userData?.user?.id;
+        console.log("👤 Mensagem enviada por usuário:", sendingUserId);
+      } catch (err) {
+        console.log("⚠️ Não foi possível identificar usuário:", err);
+      }
+    }
+
+    // Atribuição automática: se houver userId, buscar ticket associado ao chatId
+    if (sendingUserId) {
+      try {
+        // Buscar contato pelo chatId (assumindo que chatId é armazenado em contacts)
+        const { data: contact } = await supabaseAdmin
+          .from("contacts")
+          .select("id, tenant_id")
+          .eq("phone", chatId.toString())
+          .maybeSingle();
+
+        if (contact) {
+          // Buscar tickets abertos deste contato que não estão atribuídos
+          const { data: unassignedTickets } = await supabaseAdmin
+            .from("tickets")
+            .select("id, assigned_to")
+            .eq("contact_id", contact.id)
+            .eq("tenant_id", contact.tenant_id)
+            .in("status", ["open", "pending"])
+            .is("assigned_to", null);
+
+          // Atribuir automaticamente ao agente que está respondendo
+          if (unassignedTickets && unassignedTickets.length > 0) {
+            for (const ticket of unassignedTickets) {
+              await supabaseAdmin
+                .from("tickets")
+                .update({ 
+                  assigned_to: sendingUserId,
+                  status: "open"
+                })
+                .eq("id", ticket.id);
+              
+              console.log(`✅ Ticket ${ticket.id} atribuído automaticamente ao agente ${sendingUserId}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("⚠️ Erro na atribuição automática:", err);
+        // Não interromper o envio da mensagem
+      }
+    }
+
     // Send message via Telegram Bot API
     const response = await fetch(
       `https://api.telegram.org/bot${telegramBotToken}/sendMessage`,

@@ -461,10 +461,10 @@ serve(async (req) => {
           if (isQueueAction && selectedItem.target_id) {
             console.log("🎯 Atribuindo ticket à fila:", selectedItem.target_id);
             
-            // Buscar informações da fila
+            // Buscar informações da fila incluindo mensagem customizável
             const { data: queueData } = await supabaseAdmin
               .from("queues")
-              .select("name")
+              .select("name, routing_message")
               .eq("id", selectedItem.target_id)
               .single();
             console.log("🎯 Fila encontrada:", queueData?.name || "N/A");
@@ -486,11 +486,15 @@ serve(async (req) => {
             } else {
               console.log(`✅ Ticket atribuído à fila: ${queueData?.name || selectedItem.target_id}`);
               
+              // Mensagem configurável da fila
+              let routingMessage = queueData?.routing_message || 'Você foi direcionado para: {queue_name}';
+              routingMessage = routingMessage.replace('{queue_name}', selectedItem.option_label);
+              
               // Confirmar ao usuário
               await supabaseAdmin.functions.invoke("send-telegram-media", {
                 body: {
                   chatId: chatId,
-                  message: `Você foi direcionado para: ${selectedItem.option_label}`,
+                  message: routingMessage,
                 },
               });
             }

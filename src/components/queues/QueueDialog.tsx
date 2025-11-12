@@ -27,6 +27,7 @@ export const QueueDialog = ({ open, onOpenChange, queue, onSuccess }: QueueDialo
     color: "#8B5CF6",
     sla_minutes: 30,
     is_active: true,
+    routing_message: "Você foi direcionado para: {queue_name}",
   });
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export const QueueDialog = ({ open, onOpenChange, queue, onSuccess }: QueueDialo
         color: queue.color || "#8B5CF6",
         sla_minutes: queue.sla_minutes || 30,
         is_active: queue.is_active ?? true,
+        routing_message: queue.routing_message || "Você foi direcionado para: {queue_name}",
       });
     } else {
       setFormData({
@@ -45,6 +47,7 @@ export const QueueDialog = ({ open, onOpenChange, queue, onSuccess }: QueueDialo
         color: "#8B5CF6",
         sla_minutes: 30,
         is_active: true,
+        routing_message: "Você foi direcionado para: {queue_name}",
       });
     }
   }, [queue, open]);
@@ -126,6 +129,20 @@ export const QueueDialog = ({ open, onOpenChange, queue, onSuccess }: QueueDialo
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               rows={3}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="routing_message">Mensagem de Direcionamento</Label>
+            <Textarea
+              id="routing_message"
+              value={formData.routing_message}
+              onChange={(e) => setFormData({ ...formData, routing_message: e.target.value })}
+              rows={2}
+              placeholder="Você foi direcionado para: {queue_name}"
+            />
+            <p className="text-xs text-muted-foreground">
+              Use <code className="bg-muted px-1 py-0.5 rounded">{'{queue_name}'}</code> para incluir o nome da opção selecionada
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
