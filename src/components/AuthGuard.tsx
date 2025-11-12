@@ -32,6 +32,39 @@ export const AuthGuard = ({ children, requireAuth = true, requiredRoles = [] }: 
         }
       }
 
+      // Verificar status de assinatura overdue (exceto na própria página /payment-required)
+      if (user && !window.location.pathname.includes('/payment-required') && !window.location.pathname.includes('/auth')) {
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('tenant_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        if (userRole?.tenant_id) {
+          const { data: tenant } = await supabase
+            .from('tenants')
+            .select('subscription_status, expiry_date')
+            .eq('id', userRole.tenant_id)
+            .single();
+
+          // Bloquear se overdue ou expired com faturas pendentes
+          if (tenant && (tenant.subscription_status === 'overdue' || tenant.subscription_status === 'expired')) {
+            const { data: pendingInvoices } = await supabase
+              .from('invoices')
+              .select('id')
+              .eq('tenant_id', userRole.tenant_id)
+              .in('status', ['pending', 'overdue'])
+              .limit(1);
+
+            if (pendingInvoices && pendingInvoices.length > 0) {
+              navigate('/payment-required');
+              setChecking(false);
+              return;
+            }
+          }
+        }
+      }
+
       if (!loading) {
         if (requireAuth && !user) {
           navigate('/auth');

@@ -39,6 +39,7 @@ import LandingPageEditor from "./pages/LandingPageEditor";
 import EvaluationRanking from "./pages/EvaluationRanking";
 import EvaluationDashboard from "./pages/EvaluationDashboard";
 import TicketKanban from "./pages/TicketKanban";
+import PaymentRequired from "./pages/PaymentRequired";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
           <Route path="/setup" element={<SetupWizard />} />
           <Route path="/force-logout" element={<ForceLogout />} />
           <Route path="/system-reset" element={<SystemReset />} />
+          <Route path="/payment-required" element={<PaymentRequired />} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
           <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
