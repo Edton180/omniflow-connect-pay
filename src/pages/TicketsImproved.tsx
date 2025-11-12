@@ -64,9 +64,15 @@ export default function TicketsImproved() {
     if (user?.id) {
       loadTickets();
       loadQueues();
-      fetchTenantConfig();
     }
   }, [user?.id]);
+
+  // Carregar configuração do tenant quando profile estiver disponível
+  useEffect(() => {
+    if (profile?.tenant_id) {
+      fetchTenantConfig();
+    }
+  }, [profile?.tenant_id]);
 
   // Handle ticket selection from navigation state
   useEffect(() => {

@@ -121,23 +121,60 @@ serve(async (req) => {
         messageContent = "[Mensagem não suportada]";
       }
 
-      // Obter URL do arquivo se houver
+      // Obter URL do arquivo se houver e fazer upload para Supabase Storage
       if (fileId && botToken) {
         try {
-          console.log("🔄 Obtendo URL do arquivo via getFile API...");
+          console.log("🔄 Obtendo arquivo via getFile API...");
           const fileResponse = await fetch(
             `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
           );
           const fileData = await fileResponse.json();
           
           if (fileData.ok && fileData.result.file_path) {
-            mediaUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
-            console.log("✅ URL do arquivo obtida:", mediaUrl);
+            const telegramFileUrl = `https://api.telegram.org/file/bot${botToken}/${fileData.result.file_path}`;
+            console.log("✅ URL do arquivo obtida, fazendo download...");
+            
+            // Fazer download do arquivo
+            const downloadResponse = await fetch(telegramFileUrl);
+            const fileBlob = await downloadResponse.blob();
+            const fileBuffer = await fileBlob.arrayBuffer();
+            
+            // Determinar extensão do arquivo
+            const filePath = fileData.result.file_path;
+            const fileExtension = filePath.split('.').pop() || 'bin';
+            const fileName = `telegram_${Date.now()}_${fileId}.${fileExtension}`;
+            const storagePath = `telegram-media/${tenantId}/${fileName}`;
+            
+            console.log("📤 Fazendo upload para Supabase Storage:", storagePath);
+            
+            // Upload para Supabase Storage
+            const { data: uploadData, error: uploadError } = await supabaseAdmin
+              .storage
+              .from('tickets-media')
+              .upload(storagePath, fileBuffer, {
+                contentType: downloadResponse.headers.get('content-type') || 'application/octet-stream',
+                upsert: false
+              });
+            
+            if (uploadError) {
+              console.error("❌ Erro ao fazer upload:", uploadError);
+              // Fallback para URL do Telegram (temporário)
+              mediaUrl = telegramFileUrl;
+            } else {
+              // Obter URL pública
+              const { data: publicUrlData } = supabaseAdmin
+                .storage
+                .from('tickets-media')
+                .getPublicUrl(storagePath);
+              
+              mediaUrl = publicUrlData.publicUrl;
+              console.log("✅ Arquivo salvo no Storage:", mediaUrl);
+            }
           } else {
             console.error("❌ Erro ao obter arquivo do Telegram:", fileData);
           }
         } catch (error) {
-          console.error("❌ Exceção ao obter URL do arquivo:", error);
+          console.error("❌ Exceção ao processar arquivo:", error);
         }
       }
 
