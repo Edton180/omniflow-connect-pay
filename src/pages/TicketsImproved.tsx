@@ -156,20 +156,23 @@ export default function TicketsImproved() {
         },
         (payload) => {
           console.log('✅ Nova mensagem recebida:', payload.new);
-          setMessages((prev) => {
-            // Evita duplicatas
-            if (prev.some(msg => msg.id === payload.new.id)) {
-              return prev;
-            }
-            return [...prev, payload.new];
-          });
-          // Auto scroll para nova mensagem
-          setTimeout(() => {
-            const chatArea = document.getElementById('chat-messages');
-            if (chatArea) {
-              chatArea.scrollTop = chatArea.scrollHeight;
-            }
-          }, 100);
+          // Só adicionar se for de contato (mensagens próprias são carregadas via reload)
+          if (payload.new.is_from_contact) {
+            setMessages((prev) => {
+              // Evita duplicatas
+              if (prev.some(msg => msg.id === payload.new.id)) {
+                return prev;
+              }
+              return [...prev, payload.new];
+            });
+            // Auto scroll para nova mensagem
+            setTimeout(() => {
+              const chatArea = document.getElementById('chat-messages');
+              if (chatArea) {
+                chatArea.scrollTop = chatArea.scrollHeight;
+              }
+            }, 100);
+          }
         }
       )
       .on(
@@ -378,8 +381,20 @@ export default function TicketsImproved() {
     try {
       // Adicionar assinatura do agente se habilitado
       let finalMessage = messageText.trim();
+      
+      console.log('🔍 Debug assinatura:', {
+        isSignatureEnabled,
+        profileName: profile?.full_name,
+        canToggle: canToggleSignature,
+        allowSignature: tenant?.allow_agent_signature,
+        forceSignature: tenant?.force_agent_signature
+      });
+      
       if (isSignatureEnabled && profile?.full_name) {
         finalMessage = finalMessage ? `[${profile.full_name}]\n${finalMessage}` : `[${profile.full_name}]`;
+        console.log('✅ Assinatura aplicada:', finalMessage);
+      } else {
+        console.log('⚠️ Assinatura NÃO aplicada');
       }
 
       // Insert message into database primeiro para obter o ID
@@ -503,8 +518,17 @@ export default function TicketsImproved() {
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
+      // Aguardar 500ms para garantir que dados foram persistidos
+      await new Promise(resolve => setTimeout(resolve, 500));
       // Recarregar mensagens para garantir que mídia apareça
       await loadMessages(selectedTicket.id);
+      // Scroll para o final
+      setTimeout(() => {
+        const chatArea = document.getElementById('chat-messages');
+        if (chatArea) {
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
+      }, 100);
       loadTickets();
     } catch (error: any) {
       toast({
