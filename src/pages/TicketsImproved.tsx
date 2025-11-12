@@ -503,7 +503,8 @@ export default function TicketsImproved() {
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
-      // Não recarrega mensagens pois o realtime cuida disso
+      // Recarregar mensagens para garantir que mídia apareça
+      await loadMessages(selectedTicket.id);
       loadTickets();
     } catch (error: any) {
       toast({

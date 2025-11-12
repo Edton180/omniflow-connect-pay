@@ -91,6 +91,21 @@ export default function TicketDetail() {
     }
   };
 
+  const fetchMessages = async () => {
+    try {
+      const { data: messagesData, error: messagesError } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("ticket_id", id)
+        .order("created_at", { ascending: true });
+
+      if (messagesError) throw messagesError;
+      setMessages(messagesData || []);
+    } catch (error: any) {
+      console.error("Erro ao carregar mensagens:", error);
+    }
+  };
+
   const fetchTicketData = async () => {
     setLoading(true);
     try {
@@ -383,6 +398,8 @@ export default function TicketDetail() {
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
+      // Recarregar mensagens para garantir que mídia apareça
+      await fetchMessages();
     } catch (error: any) {
       toast({
         title: "Erro ao enviar mensagem",
