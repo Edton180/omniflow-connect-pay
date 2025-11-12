@@ -922,12 +922,24 @@ export default function TicketsImproved() {
                     <p className="text-xs text-muted-foreground truncate">
                       {ticket.last_message || 'Sem mensagens'}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                       {getStatusBadge(ticket.status)}
+                      {ticket.channel && (
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {ticket.channel === 'waba' ? 'WhatsApp' : ticket.channel}
+                        </Badge>
+                      )}
                       {ticket.queue && (
-                        <span className="text-xs text-muted-foreground">
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs"
+                          style={{ 
+                            borderColor: ticket.queue.color,
+                            color: ticket.queue.color
+                          }}
+                        >
                           {ticket.queue.name}
-                        </span>
+                        </Badge>
                       )}
                     </div>
                     {ticket.contact?.tags && ticket.contact.tags.length > 0 && (
@@ -982,6 +994,26 @@ export default function TicketsImproved() {
                           <Mail className="h-3 w-3" />
                           {selectedTicket.contact.email}
                         </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      {selectedTicket.channel && (
+                        <Badge variant="secondary" className="text-xs capitalize">
+                          <MessageCircle className="h-3 w-3 mr-1" />
+                          {selectedTicket.channel === 'waba' ? 'WhatsApp' : selectedTicket.channel}
+                        </Badge>
+                      )}
+                      {selectedTicket.queue && (
+                        <Badge 
+                          variant="outline" 
+                          className="text-xs"
+                          style={{ 
+                            borderColor: selectedTicket.queue.color,
+                            color: selectedTicket.queue.color
+                          }}
+                        >
+                          {selectedTicket.queue.name}
+                        </Badge>
                       )}
                     </div>
                     {selectedTicket.contact && (

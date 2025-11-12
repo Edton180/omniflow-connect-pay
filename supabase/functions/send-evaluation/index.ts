@@ -116,25 +116,70 @@ serve(async (req) => {
       
       console.log("📤 Sending Telegram evaluation:", { telegramChatId, botToken: botToken.substring(0, 10) + "..." });
 
-      sendResult = await supabaseAdmin.functions.invoke("send-telegram-message", {
-        body: {
-          chatId: String(telegramChatId),
-          message: evaluationMessage,
-          botToken,
-        },
+      // Send message directly via Telegram API
+      const telegramUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const telegramResponse = await fetch(telegramUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: String(telegramChatId),
+          text: evaluationMessage,
+        }),
       });
+
+      if (!telegramResponse.ok) {
+        const errorData = await telegramResponse.json();
+        console.error("❌ Telegram API error:", errorData);
+        throw new Error(`Telegram API error: ${JSON.stringify(errorData)}`);
+      }
+
+      const telegramData = await telegramResponse.json();
+      console.log("✅ Telegram message sent:", telegramData);
+      
+      sendResult = { data: telegramData, error: null };
     } else if (channel === "whatsapp" || channel === "waba") {
       // For WhatsApp, use phone number
       const phoneNumber = contact.phone || contactPhone;
       
       console.log("📤 Sending WhatsApp evaluation:", { phoneNumber });
 
-      sendResult = await supabaseAdmin.functions.invoke("send-waba-message", {
-        body: {
-          to: phoneNumber,
-          message: evaluationMessage,
+      // Get WhatsApp credentials from channel config
+      const wabaToken = channelData.config?.waba_token;
+      const phoneNumberId = channelData.config?.phone_number_id;
+
+      if (!wabaToken || !phoneNumberId) {
+        return new Response(
+          JSON.stringify({ error: "WhatsApp credentials not configured" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Send message directly via WhatsApp Cloud API
+      const wabaUrl = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
+      const wabaResponse = await fetch(wabaUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${wabaToken}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: phoneNumber,
+          type: 'text',
+          text: { body: evaluationMessage },
+        }),
       });
+
+      if (!wabaResponse.ok) {
+        const errorData = await wabaResponse.json();
+        console.error("❌ WhatsApp API error:", errorData);
+        throw new Error(`WhatsApp API error: ${JSON.stringify(errorData)}`);
+      }
+
+      const wabaData = await wabaResponse.json();
+      console.log("✅ WhatsApp message sent:", wabaData);
+      
+      sendResult = { data: wabaData, error: null };
     } else {
       return new Response(
         JSON.stringify({ error: "Channel not supported for evaluation" }),
