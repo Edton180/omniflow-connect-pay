@@ -167,17 +167,20 @@ export default function EvaluationRanking() {
         </div>
 
         {unassignedCount > 0 && (
-          <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800">
+          <Card className="bg-yellow-50 dark:bg-yellow-950 border-yellow-200 dark:border-yellow-800 mb-6">
             <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-yellow-800 dark:text-yellow-200">
-                <span className="text-2xl">⚠️</span>
-                <div>
-                  <p className="font-semibold">
+              <div className="flex items-start gap-3 text-yellow-800 dark:text-yellow-200">
+                <span className="text-3xl">⚠️</span>
+                <div className="flex-1">
+                  <p className="font-bold text-lg mb-2">
                     {unassignedCount} avaliação{unassignedCount > 1 ? 'ões' : ''} não contabilizada{unassignedCount > 1 ? 's' : ''}
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm mb-2">
                     Estas avaliações não aparecem no ranking porque os tickets não foram atribuídos a nenhum agente.
-                    Para contabilizar, atribua os tickets aos agentes antes de fechá-los.
+                  </p>
+                  <p className="text-sm font-semibold bg-yellow-100 dark:bg-yellow-900 p-2 rounded">
+                    ✅ SOLUÇÃO: No painel de atendimentos, ANTES de fechar um ticket, atribua-o a um agente usando o botão "Encaminhar" ou "Status".
+                    Assim, quando o cliente avaliar, a nota será contabilizada para o agente correto.
                   </p>
                 </div>
               </div>

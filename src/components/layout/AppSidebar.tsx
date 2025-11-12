@@ -36,6 +36,7 @@ interface NavItem {
   roles?: string[];
 }
 
+// Itens para usuários com tenant (empresas)
 const navItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: Home },
   { title: "Atendimentos", href: "/view-tickets", icon: MessageSquare },
@@ -52,22 +53,26 @@ const adminItems: NavItem[] = [
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
 ];
 
+// Itens exclusivos do Super Admin (métricas globais)
 const superAdminItems: NavItem[] = [
+  { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
+  { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
+  { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
+  { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
+  { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
+  { title: "Receita Global", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
-  { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
-  { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
-  { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
-  { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
-  { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
-  { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const { branding } = useBranding();
-  const { hasRole, isSuperAdmin, signOut } = useAuth();
+  const { hasRole, isSuperAdmin, signOut, roles } = useAuth();
+  
+  // Verificar se o super admin tem tenant associado
+  const hasTenant = roles?.some(r => r.tenant_id !== null);
 
   const hasAccess = (item: NavItem) => {
     if (!item.roles || item.roles.length === 0) return true;
@@ -115,7 +120,8 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-        {navItems.map((item) => (
+        {/* Mostrar itens de empresa apenas se não for super admin OU se super admin tiver tenant */}
+        {(!isSuperAdmin || hasTenant) && navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
@@ -163,8 +169,8 @@ export function AppSidebar() {
         {isSuperAdmin && (
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
-              <span className="text-xs font-semibold text-primary-foreground/60 uppercase">
-                Super Admin
+              <span className="text-xs font-semibold text-primary-foreground/60 uppercase tracking-wider">
+                Painel Super Admin
               </span>
             </div>
             {superAdminItems.filter(hasAccess).map((item) => (
