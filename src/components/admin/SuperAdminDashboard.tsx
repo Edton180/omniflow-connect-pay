@@ -237,7 +237,7 @@ export const SuperAdminDashboard = () => {
               <Button 
                 className="h-16 text-base justify-start" 
                 variant="outline"
-                onClick={() => navigate('/settings')}
+                onClick={() => navigate('/admin/settings')}
               >
                 <Key className="mr-3 h-5 w-5" />
                 Secrets de Pagamento

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Users, Plus, Pencil, Trash2, Mail, Shield, Loader2 } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Mail, Shield, Loader2, Upload } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +28,7 @@ interface UserWithProfile {
   phone: string | null;
   tenant_id: string | null;
   tenant_name: string | null;
+  avatar_url: string | null;
   roles: Array<{ role: string; tenant_id: string | null }>;
 }
 
@@ -52,7 +53,9 @@ export const UserManagement = () => {
     queue_ids: [] as string[],
     queue_role: "agent" as "agent" | "supervisor" | "admin",
     can_takeover_ai: false,
+    avatar_url: "",
   });
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [queues, setQueues] = useState<any[]>([]);
 
   const fetchTenants = async () => {
@@ -98,7 +101,7 @@ export const UserManagement = () => {
     try {
       console.log('🔍 Carregando usuários. Super Admin?', isSuperAdmin);
       
-      // Buscar todos os usuários via RPC (nova função corrigida)
+      // Buscar todos os perfis com avatar
       const { data: usersData, error: usersError } = await supabase
         .rpc('get_users_with_emails');
 
@@ -141,6 +144,13 @@ export const UserManagement = () => {
             .select("role, tenant_id")
             .eq("user_id", userData.id);
 
+          // Buscar avatar do perfil
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("avatar_url")
+            .eq("id", userData.id)
+            .single();
+
           return {
             id: userData.id,
             email: userData.email,
@@ -148,6 +158,7 @@ export const UserManagement = () => {
             phone: userData.phone,
             tenant_id: userData.tenant_id,
             tenant_name: userData.tenant_name,
+            avatar_url: profileData?.avatar_url || null,
             roles: rolesData || [],
           };
         })
@@ -185,6 +196,7 @@ export const UserManagement = () => {
       queue_ids: [],
       queue_role: "agent",
       can_takeover_ai: false,
+      avatar_url: "",
     });
     setDialogOpen(true);
   };
@@ -211,6 +223,7 @@ export const UserManagement = () => {
       queue_ids: queueIds,
       queue_role: (firstQueue?.role as "agent" | "supervisor" | "admin") || "agent",
       can_takeover_ai: firstQueue?.can_takeover_ai || false,
+      avatar_url: user.avatar_url || "",
     });
     setDialogOpen(true);
   };
@@ -237,6 +250,7 @@ export const UserManagement = () => {
             full_name: formData.full_name,
             phone: formData.phone || null,
             tenant_id: formData.tenant_id || null,
+            avatar_url: formData.avatar_url || null,
           })
           .eq("id", selectedUser.id);
 
@@ -382,6 +396,81 @@ export const UserManagement = () => {
     );
   };
 
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>, userId?: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Erro",
+        description: "Por favor, selecione uma imagem válida",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar tamanho (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "Erro",
+        description: "A imagem deve ter no máximo 2MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const targetUserId = userId || selectedUser?.id || 'new';
+      const fileName = `${targetUserId}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setFormData({ ...formData, avatar_url: publicUrl });
+
+      // Se estiver editando um usuário existente, atualizar imediatamente
+      if (userId) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ avatar_url: publicUrl })
+          .eq('id', userId);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Avatar atualizado",
+          description: "A foto de perfil foi atualizada com sucesso",
+        });
+
+        fetchUsers();
+      } else {
+        toast({
+          title: "Avatar selecionado",
+          description: "A foto será salva ao criar/atualizar o usuário",
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro ao fazer upload",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -410,15 +499,29 @@ export const UserManagement = () => {
           <Card key={user.id} className="gradient-card hover-scale">
             <CardHeader>
               <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Shield className="h-5 w-5 text-primary" />
-                    {user.full_name}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-2 mt-1">
-                    <Mail className="h-4 w-4" />
-                    {user.email}
-                  </CardDescription>
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    {user.avatar_url ? (
+                      <img 
+                        src={user.avatar_url} 
+                        alt={user.full_name}
+                        className="w-12 h-12 rounded-full object-cover border-2 border-primary"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold">
+                        {user.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      {user.full_name}
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-2 mt-1 text-xs">
+                      <Mail className="h-3 w-3" />
+                      {user.email}
+                    </CardDescription>
+                  </div>
                 </div>
                 <div className="flex gap-1">
                   <Button size="icon" variant="ghost" onClick={() => handleEdit(user)}>
@@ -487,6 +590,35 @@ export const UserManagement = () => {
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Foto de Perfil</Label>
+              <div className="flex items-center gap-4">
+                {formData.avatar_url ? (
+                  <img 
+                    src={formData.avatar_url} 
+                    alt="Avatar preview"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-primary"
+                  />
+                ) : (
+                  <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center text-white font-bold text-2xl">
+                    {formData.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                )}
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleAvatarUpload(e, selectedUser?.id)}
+                    disabled={uploadingAvatar}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {uploadingAvatar ? "Enviando..." : "PNG, JPG até 2MB"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="full_name">Nome Completo</Label>
               <Input
