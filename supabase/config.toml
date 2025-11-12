@@ -68,3 +68,9 @@ verify_jwt = false
 
 [functions.infinitepay-webhook]
 verify_jwt = false
+
+[functions.init-checkout]
+verify_jwt = true
+
+[functions.send-invoice-notification]
+verify_jwt = true

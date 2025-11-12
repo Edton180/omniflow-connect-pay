@@ -148,15 +148,17 @@ async function verifyMercadoPagoSignature(
 }
 
 async function handlePaymentApproved(supabase: any, payment: any) {
-  console.log('Processing approved payment:', payment.id);
+  console.log('Processing MercadoPago payment approved:', payment.id);
 
-  const { metadata } = payment;
-  if (!metadata?.tenant_id) {
-    console.log('No tenant_id in metadata, skipping');
+  const metadata = payment.metadata || {};
+  const tenantId = metadata.tenant_id || payment.payer?.id;
+
+  if (!tenantId) {
+    console.log('No tenant_id found, skipping');
     return;
   }
 
-  // Idempotency check: verify payment hasn't been processed
+  // Idempotency check
   const { data: existing } = await supabase
     .from('payments')
     .select('id')
@@ -169,55 +171,100 @@ async function handlePaymentApproved(supabase: any, payment: any) {
   }
 
   // Create payment record
-  const { error } = await supabase
+  const { error: paymentError } = await supabase
     .from('payments')
     .insert({
-      tenant_id: metadata.tenant_id,
+      tenant_id: tenantId,
       subscription_id: metadata.subscription_id || null,
       amount: payment.transaction_amount,
       currency: payment.currency_id,
       status: 'completed',
       payment_gateway: 'mercadopago',
-      payment_method: payment.payment_type_id,
+      payment_method: payment.payment_type_id || payment.payment_method_id,
       gateway_payment_id: payment.id.toString(),
       paid_at: payment.date_approved || new Date().toISOString(),
-      gateway_response: payment,
+      gateway_response: {
+        payment_id: payment.id,
+        status: payment.status,
+        status_detail: payment.status_detail,
+      },
     });
 
-  if (error) {
-    console.error('Error creating payment:', error);
-    throw error;
+  if (paymentError) {
+    console.error('Error creating payment:', paymentError);
+    throw paymentError;
   }
 
-  // If there's an invoice, mark it as paid
+  console.log('Payment created successfully');
+
+  // Update checkout session
+  if (metadata.checkout_session_id) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'completed' })
+      .eq('id', metadata.checkout_session_id);
+    console.log('Checkout session updated');
+  }
+
+  // Process invoice
   if (metadata.invoice_id) {
-    await supabase.rpc('process_invoice_payment', {
+    console.log('Processing invoice payment:', metadata.invoice_id);
+    const { error: invoiceError } = await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
     });
+    if (invoiceError) {
+      console.error('Error processing invoice:', invoiceError);
+    } else {
+      console.log('Invoice processed successfully');
+    }
   }
 
-  // If there's a catalog order, mark it as paid
+  // Process catalog order
   if (metadata.order_id) {
-    await supabase.rpc('process_catalog_order_payment', {
+    console.log('Processing catalog order:', metadata.order_id);
+    const { error: orderError } = await supabase.rpc('process_catalog_order_payment', {
       order_id_param: metadata.order_id
     });
+    if (orderError) {
+      console.error('Error processing order:', orderError);
+    }
   }
 }
 
 async function handlePaymentRejected(supabase: any, payment: any) {
-  console.log('Processing rejected payment:', payment.id);
+  console.log('Processing MercadoPago payment rejection:', payment.id);
 
-  const { metadata } = payment;
-  if (!metadata?.tenant_id) return;
-
-  // Update payment status
+  // Update payment status if exists
   const { error } = await supabase
     .from('payments')
     .update({
       status: 'failed',
-      gateway_response: payment,
+      gateway_response: {
+        payment_id: payment.id,
+        status: payment.status,
+        status_detail: payment.status_detail,
+      },
     })
     .eq('gateway_payment_id', payment.id.toString());
 
-  if (error) console.error('Error updating payment:', error);
+  if (error) {
+    console.error('Error updating payment:', error);
+  } else {
+    console.log('Payment marked as failed');
+  }
+
+  // Update checkout session
+  const { data: checkoutSession } = await supabase
+    .from('checkout_sessions')
+    .select('id')
+    .eq('external_id', payment.id.toString())
+    .maybeSingle();
+
+  if (checkoutSession) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'failed' })
+      .eq('id', checkoutSession.id);
+    console.log('Checkout session marked as failed');
+  }
 }

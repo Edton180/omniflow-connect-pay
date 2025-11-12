@@ -106,11 +106,13 @@ async function verifyInfinitePaySignature(
 }
 
 async function handleChargePaid(supabase: any, charge: any) {
-  console.log('Processing paid charge:', charge.id);
+  console.log('Processing InfinitePay charge paid:', charge.id);
 
-  const { metadata } = charge;
-  if (!metadata?.tenant_id) {
-    console.log('No tenant_id in metadata, skipping');
+  const metadata = charge.metadata || {};
+  const tenantId = metadata.tenant_id || charge.customer_id;
+
+  if (!tenantId) {
+    console.log('No tenant_id found, skipping');
     return;
   }
 
@@ -127,50 +129,100 @@ async function handleChargePaid(supabase: any, charge: any) {
   }
 
   // Create payment record
-  const { error } = await supabase
+  const { error: paymentError } = await supabase
     .from('payments')
     .insert({
-      tenant_id: metadata.tenant_id,
+      tenant_id: tenantId,
       subscription_id: metadata.subscription_id || null,
       amount: charge.amount / 100,
       currency: charge.currency?.toUpperCase() || 'BRL',
       status: 'completed',
       payment_gateway: 'infinitepay',
-      payment_method: charge.payment_method,
+      payment_method: charge.payment_method || 'card',
       gateway_payment_id: charge.id,
-      paid_at: charge.paid_at || new Date().toISOString(),
-      gateway_response: charge,
+      paid_at: charge.paid_at || charge.confirmed_at || new Date().toISOString(),
+      gateway_response: {
+        charge_id: charge.id,
+        status: charge.status,
+        payment_method: charge.payment_method,
+      },
     });
 
-  if (error) {
-    console.error('Error creating payment:', error);
-    throw error;
+  if (paymentError) {
+    console.error('Error creating payment:', paymentError);
+    throw paymentError;
   }
 
+  console.log('Payment created successfully');
+
+  // Update checkout session
+  if (metadata.checkout_session_id) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'completed' })
+      .eq('id', metadata.checkout_session_id);
+    console.log('Checkout session updated');
+  }
+
+  // Process invoice
   if (metadata.invoice_id) {
-    await supabase.rpc('process_invoice_payment', {
+    console.log('Processing invoice payment:', metadata.invoice_id);
+    const { error: invoiceError } = await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
     });
+    if (invoiceError) {
+      console.error('Error processing invoice:', invoiceError);
+    } else {
+      console.log('Invoice processed successfully');
+    }
   }
 
+  // Process catalog order
   if (metadata.order_id) {
-    await supabase.rpc('process_catalog_order_payment', {
+    console.log('Processing catalog order:', metadata.order_id);
+    const { error: orderError } = await supabase.rpc('process_catalog_order_payment', {
       order_id_param: metadata.order_id
     });
+    if (orderError) {
+      console.error('Error processing order:', orderError);
+    }
   }
 }
 
 async function handleChargeFailed(supabase: any, charge: any) {
-  console.log('Processing failed charge:', charge.id);
+  console.log('Processing InfinitePay charge failure:', charge.id);
 
   // Update payment status if exists
   const { error } = await supabase
     .from('payments')
     .update({
       status: 'failed',
-      gateway_response: charge,
+      gateway_response: {
+        charge_id: charge.id,
+        status: charge.status,
+        failure_reason: charge.failure_reason,
+      },
     })
     .eq('gateway_payment_id', charge.id);
 
-  if (error) console.error('Error updating payment:', error);
+  if (error) {
+    console.error('Error updating payment:', error);
+  } else {
+    console.log('Payment marked as failed');
+  }
+
+  // Update checkout session
+  const { data: checkoutSession } = await supabase
+    .from('checkout_sessions')
+    .select('id')
+    .eq('external_id', charge.id)
+    .maybeSingle();
+
+  if (checkoutSession) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'failed' })
+      .eq('id', checkoutSession.id);
+    console.log('Checkout session marked as failed');
+  }
 }

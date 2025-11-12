@@ -72,7 +72,7 @@ serve(async (req) => {
 });
 
 async function handlePaymentReceived(supabase: any, payment: any) {
-  console.log('Processing received payment:', payment.id);
+  console.log('Processing ASAAS payment received:', payment.id);
 
   let metadata: any = {};
   try {
@@ -83,8 +83,9 @@ async function handlePaymentReceived(supabase: any, payment: any) {
     console.log('Could not parse metadata from externalReference');
   }
 
-  if (!metadata?.tenant_id) {
-    console.log('No tenant_id in metadata, skipping');
+  const tenantId = metadata.tenant_id || payment.customer;
+  if (!tenantId) {
+    console.log('No tenant_id found, skipping');
     return;
   }
 
@@ -101,50 +102,100 @@ async function handlePaymentReceived(supabase: any, payment: any) {
   }
 
   // Create payment record
-  const { error } = await supabase
+  const { error: paymentError } = await supabase
     .from('payments')
     .insert({
-      tenant_id: metadata.tenant_id,
+      tenant_id: tenantId,
       subscription_id: metadata.subscription_id || null,
       amount: payment.value,
       currency: 'BRL',
       status: 'completed',
       payment_gateway: 'asaas',
-      payment_method: payment.billingType,
+      payment_method: payment.billingType?.toLowerCase() || 'unknown',
       gateway_payment_id: payment.id,
-      paid_at: payment.paymentDate || new Date().toISOString(),
-      gateway_response: payment,
+      paid_at: payment.confirmedDate || payment.paymentDate || new Date().toISOString(),
+      gateway_response: {
+        payment_id: payment.id,
+        status: payment.status,
+        billing_type: payment.billingType,
+      },
     });
 
-  if (error) {
-    console.error('Error creating payment:', error);
-    throw error;
+  if (paymentError) {
+    console.error('Error creating payment:', paymentError);
+    throw paymentError;
   }
 
+  console.log('Payment created successfully');
+
+  // Update checkout session if exists
+  if (metadata.checkout_session_id) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'completed' })
+      .eq('id', metadata.checkout_session_id);
+    console.log('Checkout session updated');
+  }
+
+  // Process invoice if present
   if (metadata.invoice_id) {
-    await supabase.rpc('process_invoice_payment', {
+    console.log('Processing invoice payment:', metadata.invoice_id);
+    const { error: invoiceError } = await supabase.rpc('process_invoice_payment', {
       invoice_id_param: metadata.invoice_id
     });
+    if (invoiceError) {
+      console.error('Error processing invoice:', invoiceError);
+    } else {
+      console.log('Invoice processed successfully');
+    }
   }
 
+  // Process catalog order if present
   if (metadata.order_id) {
-    await supabase.rpc('process_catalog_order_payment', {
+    console.log('Processing catalog order:', metadata.order_id);
+    const { error: orderError } = await supabase.rpc('process_catalog_order_payment', {
       order_id_param: metadata.order_id
     });
+    if (orderError) {
+      console.error('Error processing order:', orderError);
+    }
   }
 }
 
 async function handlePaymentFailed(supabase: any, payment: any) {
-  console.log('Processing failed payment:', payment.id);
+  console.log('Processing ASAAS payment failure:', payment.id);
 
   // Update payment status if exists
   const { error } = await supabase
     .from('payments')
     .update({
       status: 'failed',
-      gateway_response: payment,
+      gateway_response: {
+        payment_id: payment.id,
+        status: payment.status,
+        billing_type: payment.billingType,
+      },
     })
     .eq('gateway_payment_id', payment.id);
 
-  if (error) console.error('Error updating payment:', error);
+  if (error) {
+    console.error('Error updating payment:', error);
+  } else {
+    console.log('Payment marked as failed');
+  }
+
+  // Update checkout session if linked
+  const { data: checkoutSession } = await supabase
+    .from('checkout_sessions')
+    .select('id')
+    .eq('external_id', payment.id)
+    .maybeSingle();
+
+  if (checkoutSession) {
+    await supabase
+      .from('checkout_sessions')
+      .update({ status: 'failed' })
+      .eq('id', checkoutSession.id);
+    console.log('Checkout session marked as failed');
+  }
 }
