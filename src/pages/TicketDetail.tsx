@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck, FileText } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -812,6 +812,47 @@ export default function TicketDetail() {
                             : "bg-primary text-primary-foreground"
                         }`}
                       >
+                        {message.media_url && !message.deleted_at && (
+                          <div className="mb-2">
+                            {message.media_type === 'image' && (
+                              <img 
+                                src={message.media_url} 
+                                alt="Mídia" 
+                                className="rounded-lg max-w-full h-auto max-h-96 object-contain"
+                              />
+                            )}
+                            {message.media_type === 'audio' && (
+                              <audio controls className="w-full">
+                                <source src={message.media_url} />
+                              </audio>
+                            )}
+                            {message.media_type === 'video' && (
+                              <video controls className="w-full rounded-lg max-h-96">
+                                <source src={message.media_url} />
+                              </video>
+                            )}
+                            {message.media_type === 'sticker' && (
+                              <img 
+                                src={message.media_url} 
+                                alt="Sticker" 
+                                className="rounded-lg w-32 h-32 object-contain"
+                              />
+                            )}
+                            {message.media_type === 'document' && (
+                              <a 
+                                href={message.media_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`flex items-center gap-2 text-sm underline ${
+                                  message.is_from_contact ? 'text-foreground' : 'text-primary-foreground'
+                                }`}
+                              >
+                                <FileText className="h-4 w-4" />
+                                Abrir documento
+                              </a>
+                            )}
+                          </div>
+                        )}
                         <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
                         <p
                           className={`text-xs mt-1 ${
