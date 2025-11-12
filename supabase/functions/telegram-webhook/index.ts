@@ -457,34 +457,37 @@ serve(async (req) => {
           if (selectedItem.action_type === "queue" && selectedItem.target_id) {
             console.log("🎯 Atribuindo ticket à fila:", selectedItem.target_id);
             
+            // Buscar informações da fila
+            const { data: queueData } = await supabaseAdmin
+              .from("queues")
+              .select("name")
+              .eq("id", selectedItem.target_id)
+              .single();
+            
             // Atribuir à fila
             const { error: updateError } = await supabaseAdmin
               .from("tickets")
               .update({ 
                 queue_id: selectedItem.target_id,
-                bot_state: { step: "routed", timestamp: new Date().toISOString() }
+                bot_state: { 
+                  step: "routed", 
+                  timestamp: new Date().toISOString() 
+                }
               })
               .eq("id", ticket.id);
             
             if (updateError) {
               console.error("❌ Erro ao atribuir fila:", updateError);
             } else {
-              console.log("✅ Ticket atribuído à fila com sucesso");
-            }
-            
-            // Enviar mensagem de confirmação
-            try {
-              const confirmMessage = selectedItem.target_data?.confirmation_message || 
-                `✅ Entendido! Você será atendido em breve.`;
+              console.log(`✅ Ticket atribuído à fila: ${queueData?.name || selectedItem.target_id}`);
               
+              // Confirmar ao usuário
               await supabaseAdmin.functions.invoke("send-telegram-media", {
                 body: {
                   chatId: chatId,
-                  message: confirmMessage,
+                  message: `Você foi direcionado para: ${selectedItem.option_label}`,
                 },
               });
-            } catch (err) {
-              console.error("⚠️ Erro ao enviar confirmação:", err);
             }
           } else if (selectedItem.action_type === "message" && selectedItem.target_data?.message) {
             // Enviar mensagem configurada

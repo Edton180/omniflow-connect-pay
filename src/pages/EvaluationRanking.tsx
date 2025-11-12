@@ -35,31 +35,33 @@ export default function EvaluationRanking() {
 
     setLoading(true);
     try {
-      const { data: tickets, error } = await supabase
-        .from('tickets')
+      // Buscar da tabela evaluations com join de profiles
+      const { data: evaluations, error } = await supabase
+        .from('evaluations')
         .select(`
-          assigned_to,
-          evaluation_score,
-          assigned:profiles!assigned_to(full_name, avatar_url)
+          score,
+          agent_id,
+          agent:profiles!agent_id(full_name, avatar_url)
         `)
         .eq('tenant_id', tenantRole.tenant_id)
-        .not('evaluation_score', 'is', null)
-        .not('assigned_to', 'is', null);
+        .not('agent_id', 'is', null);
 
       if (error) throw error;
+
+      console.log('📊 Avaliações carregadas:', evaluations?.length);
 
       // Agrupar por agente
       const statsMap = new Map<string, AgentStats>();
       
-      tickets?.forEach((ticket: any) => {
-        const userId = ticket.assigned_to;
-        if (!userId || !ticket.assigned) return;
+      evaluations?.forEach((evaluation: any) => {
+        const userId = evaluation.agent_id;
+        if (!userId || !evaluation.agent) return;
 
         if (!statsMap.has(userId)) {
           statsMap.set(userId, {
             user_id: userId,
-            full_name: ticket.assigned.full_name,
-            avatar_url: ticket.assigned.avatar_url,
+            full_name: evaluation.agent.full_name,
+            avatar_url: evaluation.agent.avatar_url,
             total_evaluations: 0,
             average_score: 0,
             score_1: 0,
@@ -73,7 +75,7 @@ export default function EvaluationRanking() {
         const stats = statsMap.get(userId)!;
         stats.total_evaluations++;
         
-        const score = ticket.evaluation_score;
+        const score = evaluation.score;
         if (score === 1) stats.score_1++;
         else if (score === 2) stats.score_2++;
         else if (score === 3) stats.score_3++;
@@ -95,6 +97,8 @@ export default function EvaluationRanking() {
 
       // Ordenar por média decrescente
       rankings.sort((a, b) => b.average_score - a.average_score);
+      
+      console.log('📊 Rankings processados:', rankings);
       setRankings(rankings);
     } catch (error) {
       console.error('Error fetching rankings:', error);

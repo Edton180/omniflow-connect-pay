@@ -692,16 +692,21 @@ export default function TicketDetail() {
                   <h1 className="text-lg font-bold">#{ticket.id.slice(0, 8)}</h1>
                   <p className="text-xs text-muted-foreground">{ticket.contact?.name}</p>
                 </div>
-                {ticket.queue && (
-                  <Badge 
-                    style={{ 
-                      backgroundColor: ticket.queue.color,
-                      color: '#fff'
-                    }}
-                  >
-                    {ticket.queue.name}
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="capitalize">
+                    {ticket.channel === 'waba' ? 'WhatsApp' : ticket.channel}
                   </Badge>
-                )}
+                  {ticket.queue && (
+                    <Badge 
+                      style={{ 
+                        backgroundColor: ticket.queue.color,
+                        color: '#fff'
+                      }}
+                    >
+                      {ticket.queue.name}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
