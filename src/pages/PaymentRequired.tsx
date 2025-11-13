@@ -65,18 +65,21 @@ export default function PaymentRequired() {
         .eq("user_id", user!.id)
         .single();
 
-      const { data: gateway } = await supabase
+      // Buscar gateway ativo do tenant ou gateway global (tenant_id NULL)
+      const { data: gateways } = await supabase
         .from("payment_gateways")
         .select("gateway_name")
-        .eq("tenant_id", userRole!.tenant_id)
         .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
+        .or(`tenant_id.eq.${userRole!.tenant_id},tenant_id.is.null`)
+        .order("tenant_id", { ascending: false }) // Prioriza tenant específico sobre global
+        .limit(1);
 
-      if (!gateway) {
-        toast.error("Nenhum gateway de pagamento configurado");
+      if (!gateways || gateways.length === 0) {
+        toast.error("Nenhum gateway de pagamento configurado. Configure um gateway em /payments");
         return;
       }
+      
+      const gateway = gateways[0];
 
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {

@@ -41,17 +41,21 @@ serve(async (req) => {
 
     console.log("Fatura encontrada:", invoice.id);
 
-    // Buscar gateway ativo do tenant
-    const { data: gateway, error: gatewayError } = await supabaseClient
+    // Buscar gateway ativo do tenant ou gateway global (tenant_id NULL)
+    const { data: gateways, error: gatewayError } = await supabaseClient
       .from("payment_gateways")
       .select("*")
-      .eq("tenant_id", invoice.tenant_id)
       .eq("is_active", true)
-      .maybeSingle();
+      .or(`tenant_id.eq.${invoice.tenant_id},tenant_id.is.null`)
+      .order("tenant_id", { ascending: false }) // Prioriza tenant específico sobre global
+      .limit(1);
 
-    if (gatewayError || !gateway) {
-      throw new Error("Nenhum gateway de pagamento ativo configurado para este tenant");
+    if (gatewayError || !gateways || gateways.length === 0) {
+      console.error("Gateway error:", gatewayError);
+      throw new Error("Nenhum gateway de pagamento ativo configurado. Configure um gateway de pagamento em /payments");
     }
+
+    const gateway = gateways[0];
 
     console.log("Gateway encontrado:", gateway.gateway_name);
 
