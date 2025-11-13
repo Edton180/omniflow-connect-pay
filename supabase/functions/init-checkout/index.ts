@@ -17,7 +17,8 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { invoiceId } = await req.json();
+    const body = await req.json();
+    const invoiceId = body.invoiceId || body.invoice_id;
 
     if (!invoiceId) {
       throw new Error("invoiceId é obrigatório");
@@ -41,18 +42,21 @@ serve(async (req) => {
 
     console.log("Fatura encontrada:", invoice.id);
 
-    // Buscar gateway ativo do tenant ou gateway global (tenant_id NULL)
+    // Buscar gateway ativo - prioriza gateways globais (tenant_id NULL = configurado pelo Super Admin)
     const { data: gateways, error: gatewayError } = await supabaseClient
       .from("payment_gateways")
       .select("*")
       .eq("is_active", true)
-      .or(`tenant_id.eq.${invoice.tenant_id},tenant_id.is.null`)
-      .order("tenant_id", { ascending: false }) // Prioriza tenant específico sobre global
-      .limit(1);
+      .is("tenant_id", null); // Busca apenas gateways globais configurados pelo Super Admin
 
-    if (gatewayError || !gateways || gateways.length === 0) {
+    if (gatewayError) {
       console.error("Gateway error:", gatewayError);
-      throw new Error("Nenhum gateway de pagamento ativo configurado. Configure um gateway de pagamento em /payments");
+      throw new Error("Erro ao buscar gateways de pagamento");
+    }
+
+    if (!gateways || gateways.length === 0) {
+      console.error("Nenhum gateway encontrado");
+      throw new Error("Nenhum gateway de pagamento configurado. Entre em contato com o administrador do sistema.");
     }
 
     const gateway = gateways[0];
@@ -101,6 +105,13 @@ serve(async (req) => {
       if (!asaasResponse.ok) {
         const error = await asaasResponse.text();
         console.error("Erro ASAAS:", error);
+        const errorObj = JSON.parse(error);
+        
+        // Mensagem específica para erro de ambiente
+        if (errorObj.errors?.[0]?.code === "invalid_environment") {
+          throw new Error("API Key inválida ou de ambiente incorreto. Verifique se está usando a chave correta (Produção vs Sandbox) no painel ASAAS.");
+        }
+        
         throw new Error(`Erro ao criar cobrança ASAAS: ${error}`);
       }
 

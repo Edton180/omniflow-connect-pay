@@ -275,8 +275,9 @@ export const PaymentGatewayList = () => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Configure seus gateways de pagamento para começar a processar transações. 
-          Você precisará das credenciais API de cada serviço.
+          <strong>Super Admin:</strong> Os gateways configurados aqui serão usados globalmente por todos os tenants do sistema para processar pagamentos de assinaturas.
+          <br />
+          Configure as credenciais de API de cada gateway de pagamento que deseja utilizar.
         </AlertDescription>
       </Alert>
 

@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { AlertCircle, CreditCard, Loader2, Copy } from "lucide-react";
+import { AlertCircle, CreditCard, Loader2, Copy, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 
 export default function PaymentRequired() {
+  const navigate = useNavigate();
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
@@ -58,33 +60,22 @@ export default function PaymentRequired() {
   const handlePayInvoice = async (invoiceId: string) => {
     setProcessingId(invoiceId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", user!.id)
-        .single();
-
-      // Buscar gateway ativo do tenant ou gateway global (tenant_id NULL)
+      // Buscar gateways globais configurados pelo Super Admin
       const { data: gateways } = await supabase
         .from("payment_gateways")
         .select("gateway_name")
         .eq("is_active", true)
-        .or(`tenant_id.eq.${userRole!.tenant_id},tenant_id.is.null`)
-        .order("tenant_id", { ascending: false }) // Prioriza tenant específico sobre global
+        .is("tenant_id", null) // Apenas gateways globais
         .limit(1);
 
       if (!gateways || gateways.length === 0) {
-        toast.error("Nenhum gateway de pagamento configurado. Configure um gateway em /payments");
+        toast.error("Nenhum gateway de pagamento configurado. Entre em contato com o suporte.");
         return;
       }
-      
-      const gateway = gateways[0];
 
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
-          invoice_id: invoiceId,
-          gateway_name: gateway.gateway_name,
+          invoiceId: invoiceId,
         },
       });
 
@@ -105,18 +96,33 @@ export default function PaymentRequired() {
     toast.success("Copiado para área de transferência!");
   };
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/auth");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("Erro ao fazer logout");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-2xl w-full border-destructive">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <AlertCircle className="h-8 w-8 text-destructive" />
-            <div>
-              <CardTitle className="text-2xl">Pagamento Necessário</CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                Sua assinatura está vencida. Pague as faturas pendentes para restaurar o acesso.
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-8 w-8 text-destructive" />
+              <div>
+                <CardTitle className="text-2xl">Pagamento Necessário</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Sua assinatura está vencida. Pague as faturas pendentes para restaurar o acesso.
+                </p>
+              </div>
             </div>
+            <Button variant="ghost" size="icon" onClick={handleLogout} title="Sair">
+              <LogOut className="h-5 w-5" />
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
