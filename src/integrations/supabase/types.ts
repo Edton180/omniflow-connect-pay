@@ -308,33 +308,45 @@ export type Database = {
       checkout_sessions: {
         Row: {
           created_at: string | null
+          error_message: string | null
+          expires_at: string | null
           external_id: string | null
           gateway: string
           id: string
           invoice_id: string | null
+          metadata: Json | null
           qr_code: string | null
+          retry_count: number | null
           status: string | null
           updated_at: string | null
           url: string | null
         }
         Insert: {
           created_at?: string | null
+          error_message?: string | null
+          expires_at?: string | null
           external_id?: string | null
           gateway: string
           id?: string
           invoice_id?: string | null
+          metadata?: Json | null
           qr_code?: string | null
+          retry_count?: number | null
           status?: string | null
           updated_at?: string | null
           url?: string | null
         }
         Update: {
           created_at?: string | null
+          error_message?: string | null
+          expires_at?: string | null
           external_id?: string | null
           gateway?: string
           id?: string
           invoice_id?: string | null
+          metadata?: Json | null
           qr_code?: string | null
+          retry_count?: number | null
           status?: string | null
           updated_at?: string | null
           url?: string | null
@@ -1063,12 +1075,17 @@ export type Database = {
           amount: number
           created_at: string | null
           currency: string
+          customer_email: string | null
+          customer_name: string | null
+          failure_reason: string | null
           gateway_payment_id: string | null
           gateway_response: Json | null
           id: string
           paid_at: string | null
           payment_gateway: string
           payment_method: string | null
+          refund_amount: number | null
+          refunded_at: string | null
           status: string
           subscription_id: string | null
           tenant_id: string
@@ -1077,12 +1094,17 @@ export type Database = {
           amount: number
           created_at?: string | null
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          failure_reason?: string | null
           gateway_payment_id?: string | null
           gateway_response?: Json | null
           id?: string
           paid_at?: string | null
           payment_gateway: string
           payment_method?: string | null
+          refund_amount?: number | null
+          refunded_at?: string | null
           status?: string
           subscription_id?: string | null
           tenant_id: string
@@ -1091,12 +1113,17 @@ export type Database = {
           amount?: number
           created_at?: string | null
           currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          failure_reason?: string | null
           gateway_payment_id?: string | null
           gateway_response?: Json | null
           id?: string
           paid_at?: string | null
           payment_gateway?: string
           payment_method?: string | null
+          refund_amount?: number | null
+          refunded_at?: string | null
           status?: string
           subscription_id?: string | null
           tenant_id?: string
@@ -1736,6 +1763,51 @@ export type Database = {
           },
         ]
       }
+      webhook_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_id: string | null
+          event_type: string
+          gateway: string
+          id: string
+          last_retry_at: string | null
+          payload: Json
+          processed_at: string | null
+          retry_count: number
+          signature: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type: string
+          gateway: string
+          id?: string
+          last_retry_at?: string | null
+          payload: Json
+          processed_at?: string | null
+          retry_count?: number
+          signature?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_id?: string | null
+          event_type?: string
+          gateway?: string
+          id?: string
+          last_retry_at?: string | null
+          payload?: Json
+          processed_at?: string | null
+          retry_count?: number
+          signature?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       evaluation_rankings: {
@@ -1759,6 +1831,27 @@ export type Database = {
           },
         ]
       }
+      payment_statistics: {
+        Row: {
+          average_payment: number | null
+          failed_payments: number | null
+          month: string | null
+          payment_gateway: string | null
+          successful_payments: number | null
+          tenant_id: string | null
+          total_payments: number | null
+          total_revenue: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_assign_tenant: {
@@ -1766,6 +1859,10 @@ export type Database = {
         Returns: string
       }
       check_and_generate_invoices: { Args: never; Returns: undefined }
+      ensure_webhook_idempotency: {
+        Args: { p_event_id: string; p_gateway: string; p_payload: Json }
+        Returns: boolean
+      }
       get_users_with_emails: {
         Args: never
         Returns: {
@@ -1782,6 +1879,15 @@ export type Database = {
       has_tenant_access: {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
+      }
+      mark_webhook_processed: {
+        Args: {
+          p_error_message?: string
+          p_event_id: string
+          p_gateway: string
+          p_success: boolean
+        }
+        Returns: undefined
       }
       notify_overdue_invoices: { Args: never; Returns: undefined }
       process_invoice_payment: {
