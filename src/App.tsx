@@ -40,6 +40,7 @@ import EvaluationRanking from "./pages/EvaluationRanking";
 import EvaluationDashboard from "./pages/EvaluationDashboard";
 import TicketKanban from "./pages/TicketKanban";
 import PaymentRequired from "./pages/PaymentRequired";
+import TransactionHistory from "./pages/TransactionHistory";
 
 const queryClient = new QueryClient();
 
@@ -69,6 +70,7 @@ const App = () => (
           <Route path="/channels/:id/config" element={<AuthGuard requireAuth><ChannelConfig /></AuthGuard>} />
           <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
+          <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
           <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
