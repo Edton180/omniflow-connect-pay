@@ -1989,10 +1989,20 @@ export type Database = {
         Returns: string
       }
       check_and_generate_invoices: { Args: never; Returns: undefined }
-      ensure_webhook_idempotency: {
-        Args: { p_event_id: string; p_gateway: string; p_payload: Json }
-        Returns: boolean
-      }
+      ensure_webhook_idempotency:
+        | {
+            Args: {
+              p_event_id: string
+              p_event_type: string
+              p_gateway: string
+              p_payload: Json
+            }
+            Returns: string
+          }
+        | {
+            Args: { p_event_id: string; p_gateway: string; p_payload: Json }
+            Returns: boolean
+          }
       get_users_with_emails: {
         Args: never
         Returns: {
@@ -2021,10 +2031,17 @@ export type Database = {
       }
       notify_due_invoices: { Args: never; Returns: undefined }
       notify_overdue_invoices: { Args: never; Returns: undefined }
-      process_invoice_payment: {
-        Args: { invoice_id_param: string }
-        Returns: Json
-      }
+      process_invoice_payment:
+        | { Args: { invoice_id_param: string }; Returns: Json }
+        | {
+            Args: {
+              p_gateway?: string
+              p_gateway_payment_id?: string
+              p_invoice_id: string
+              p_payment_id?: string
+            }
+            Returns: Json
+          }
       update_overdue_invoices: { Args: never; Returns: undefined }
     }
     Enums: {
