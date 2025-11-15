@@ -14,52 +14,35 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const { invoiceId } = await req.json();
+    const { invoiceId, paymentId, gateway, gatewayPaymentId } = await req.json();
 
     if (!invoiceId) {
       throw new Error("ID da fatura é obrigatório");
     }
 
-    // Buscar fatura
-    const { data: invoice, error: invoiceError } = await supabaseClient
-      .from("invoices")
-      .select("*")
-      .eq("id", invoiceId)
-      .single();
-
-    if (invoiceError || !invoice) {
-      throw new Error("Fatura não encontrada");
-    }
-
-    if (invoice.status === "paid") {
-      return new Response(
-        JSON.stringify({ error: "Fatura já foi paga" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
-      );
-    }
+    console.log("Processando pagamento para fatura:", invoiceId);
 
     // Usar a função SQL para processar o pagamento
     const { data: result, error: processError } = await supabaseClient
-      .rpc('process_invoice_payment', { invoice_id_param: invoiceId });
+      .rpc('process_invoice_payment', { 
+        p_invoice_id: invoiceId,
+        p_payment_id: paymentId || null,
+        p_gateway: gateway || null,
+        p_gateway_payment_id: gatewayPaymentId || null,
+      });
 
     if (processError) {
       console.error("Erro ao processar pagamento:", processError);
       throw new Error(processError.message || "Erro ao processar pagamento");
     }
 
-    if (!result || !result.success) {
-      throw new Error(result?.error || "Erro ao processar pagamento");
+    const resultData = typeof result === 'string' ? JSON.parse(result) : result;
+
+    if (!resultData || !resultData.success) {
+      throw new Error(resultData?.error || "Erro ao processar pagamento");
     }
 
     console.log(`Pagamento processado com sucesso para fatura ${invoiceId}`);
@@ -67,8 +50,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: result.message || "Pagamento processado com sucesso!",
-        new_expiry_date: result.new_expiry_date,
+        message: resultData.message || "Pagamento processado com sucesso!",
+        new_expiry_date: resultData.new_expiry_date,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

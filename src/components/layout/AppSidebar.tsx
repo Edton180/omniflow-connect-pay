@@ -52,6 +52,7 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
+  { title: "Webhooks", href: "/webhook-config", icon: Zap, roles: ["tenant_admin"] },
 ];
 
 // Painel Super Admin - métricas e gestão global do sistema
@@ -62,6 +63,8 @@ const superAdminItems: NavItem[] = [
   { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
   { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
+  { title: "Webhooks", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
+  { title: "Relatórios Financeiros", href: "/financial-reports", icon: TrendingUp, roles: ["super_admin"] },
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },

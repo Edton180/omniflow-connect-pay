@@ -77,15 +77,59 @@ serve(async (req) => {
 
     // Lógica por gateway
     if (gatewayName === "asaas") {
-      const apiKey = gateway.api_key_encrypted || gateway.config?.api_key;
+      const apiKey = gateway.config?.api_key;
       
       if (!apiKey) {
         throw new Error("API Key do ASAAS não configurada");
       }
 
-      console.log("Criando cobrança ASAAS...");
+      console.log("Criando/buscando customer ASAAS...");
 
-      // Criar cobrança ASAAS
+      // Buscar ou criar customer
+      let customerId: string;
+      const { data: existingCustomer } = await supabaseClient
+        .from("gateway_customers")
+        .select("gateway_customer_id")
+        .eq("tenant_id", invoice.tenant_id)
+        .eq("gateway", "asaas")
+        .maybeSingle();
+
+      if (existingCustomer?.gateway_customer_id) {
+        customerId = existingCustomer.gateway_customer_id;
+      } else {
+        // Criar customer no ASAAS
+        const customerResponse = await fetch("https://www.asaas.com/api/v3/customers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "access_token": apiKey,
+          },
+          body: JSON.stringify({
+            name: invoice.tenant.name,
+            cpfCnpj: invoice.tenant.cnpj_cpf,
+            email: `${invoice.tenant.slug}@omniflow.app`,
+          }),
+        });
+
+        if (!customerResponse.ok) {
+          const error = await customerResponse.text();
+          console.error("Erro ao criar customer:", error);
+          throw new Error(`Erro ao criar cliente: ${error}`);
+        }
+
+        const customer = await customerResponse.json();
+        customerId = customer.id;
+
+        // Salvar mapeamento
+        await supabaseClient.from("gateway_customers").insert({
+          tenant_id: invoice.tenant_id,
+          gateway: "asaas",
+          gateway_customer_id: customerId,
+          customer_data: customer,
+        });
+      }
+
+      // Criar cobrança PIX
       const asaasResponse = await fetch("https://www.asaas.com/api/v3/payments", {
         method: "POST",
         headers: {
@@ -93,7 +137,7 @@ serve(async (req) => {
           "access_token": apiKey,
         },
         body: JSON.stringify({
-          customer: invoice.tenant.cnpj_cpf || invoice.tenant.id,
+          customer: customerId,
           billingType: "PIX",
           value: parseFloat(invoice.amount),
           dueDate: invoice.due_date.split("T")[0],

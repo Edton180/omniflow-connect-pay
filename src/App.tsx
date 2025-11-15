@@ -41,6 +41,9 @@ import EvaluationDashboard from "./pages/EvaluationDashboard";
 import TicketKanban from "./pages/TicketKanban";
 import PaymentRequired from "./pages/PaymentRequired";
 import TransactionHistory from "./pages/TransactionHistory";
+import WebhookDashboard from "./pages/WebhookDashboard";
+import FinancialReports from "./pages/FinancialReports";
+import WebhookConfig from "./pages/WebhookConfig";
 
 const queryClient = new QueryClient();
 
@@ -71,6 +74,9 @@ const App = () => (
           <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
           <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
+          <Route path="/webhooks" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookDashboard /></AuthGuard>} />
+          <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><FinancialReports /></AuthGuard>} />
+          <Route path="/webhook-config" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WebhookConfig /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
           <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
