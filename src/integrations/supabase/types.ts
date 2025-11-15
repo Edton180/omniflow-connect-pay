@@ -706,6 +706,44 @@ export type Database = {
           },
         ]
       }
+      gateway_customers: {
+        Row: {
+          created_at: string | null
+          customer_data: Json | null
+          gateway: string
+          gateway_customer_id: string
+          id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_data?: Json | null
+          gateway: string
+          gateway_customer_id: string
+          id?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_data?: Json | null
+          gateway?: string
+          gateway_customer_id?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gateway_customers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       internal_messages: {
         Row: {
           content: string
@@ -767,6 +805,57 @@ export type Database = {
           },
           {
             foreignKeyName: "internal_messages_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_notifications: {
+        Row: {
+          created_at: string | null
+          delivery_method: string
+          error_message: string | null
+          id: string
+          invoice_id: string | null
+          notification_type: string
+          sent_at: string | null
+          status: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          delivery_method: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          notification_type: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          delivery_method?: string
+          error_message?: string | null
+          id?: string
+          invoice_id?: string | null
+          notification_type?: string
+          sent_at?: string | null
+          status?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_notifications_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_notifications_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1763,6 +1852,47 @@ export type Database = {
           },
         ]
       }
+      webhook_configs: {
+        Row: {
+          created_at: string | null
+          gateway: string
+          id: string
+          is_active: boolean | null
+          tenant_id: string | null
+          updated_at: string | null
+          webhook_token: string
+          webhook_url: string
+        }
+        Insert: {
+          created_at?: string | null
+          gateway: string
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          webhook_token: string
+          webhook_url: string
+        }
+        Update: {
+          created_at?: string | null
+          gateway?: string
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string | null
+          updated_at?: string | null
+          webhook_token?: string
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "webhook_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           created_at: string
@@ -1889,6 +2019,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      notify_due_invoices: { Args: never; Returns: undefined }
       notify_overdue_invoices: { Args: never; Returns: undefined }
       process_invoice_payment: {
         Args: { invoice_id_param: string }
