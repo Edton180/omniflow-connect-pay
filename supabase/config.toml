@@ -72,10 +72,10 @@ verify_jwt = false
 [functions.asaas-webhook]
 verify_jwt = false
 
-[functions.infinitepay-webhook]
+[functions.paypal-webhook]
 verify_jwt = false
 
-[functions.init-checkout]
+[functions.test-gateway]
 verify_jwt = true
 
 [functions.send-invoice-notification]

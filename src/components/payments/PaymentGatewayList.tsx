@@ -31,9 +31,9 @@ export const PaymentGatewayList = () => {
       description: "Pagamentos internacionais",
     },
     {
-      id: "infinitepay",
-      name: "InfinitePay",
-      description: "Soluções de pagamento digital",
+      id: "paypal",
+      name: "PayPal",
+      description: "Pagamentos globais via PayPal",
     },
   ];
 

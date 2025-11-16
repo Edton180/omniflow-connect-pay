@@ -27,8 +27,8 @@ serve(async (req) => {
       case 'mercadopago':
         result = await testMercadoPago(credentials);
         break;
-      case 'infinitepay':
-        result = await testInfinitePay(credentials);
+      case 'paypal':
+        result = await testPayPal(credentials);
         break;
       default:
         return new Response(
@@ -168,27 +168,34 @@ async function testMercadoPago(credentials: any) {
   }
 }
 
-async function testInfinitePay(credentials: any) {
+async function testPayPal(credentials: any) {
   try {
-    const apiKey = credentials.api_key;
-    if (!apiKey) {
-      return { success: false, message: 'API Key é obrigatória' };
+    const clientId = credentials.client_id;
+    const clientSecret = credentials.client_secret;
+    const mode = credentials.mode || 'sandbox';
+    
+    if (!clientId || !clientSecret) {
+      return { success: false, message: 'Client ID e Client Secret são obrigatórios' };
     }
 
-    // Test API connectivity - InfinitePay doesn't have a direct "me" endpoint
-    // So we'll test with a simple request to validate the key
-    const response = await fetch('https://api.infinitepay.io/v1/account', {
+    const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+    // Test API connectivity by getting access token
+    const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
+        'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
+      body: 'grant_type=client_credentials',
     });
 
     if (!response.ok) {
+      const error = await response.json();
       return {
         success: false,
         message: 'Falha na autenticação',
-        details: 'API Key inválida ou expirada',
+        details: error.error_description || 'Client ID ou Client Secret inválidos',
       };
     }
 
@@ -197,7 +204,8 @@ async function testInfinitePay(credentials: any) {
     return {
       success: true,
       message: 'Conexão estabelecida com sucesso',
-      accountName: data.name || 'InfinitePay Account',
+      environment: mode === 'live' ? 'Produção' : 'Sandbox',
+      tokenType: data.token_type,
     };
   } catch (error: any) {
     return { success: false, message: `Erro ao conectar: ${error.message}` };
