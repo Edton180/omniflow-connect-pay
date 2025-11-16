@@ -25,7 +25,7 @@ const getColor = (name: string) => {
     asaas: "bg-blue-600",
     mercadopago: "bg-sky-500",
     stripe: "bg-purple-600",
-    infinitepay: "bg-orange-500",
+    paypal: "bg-blue-600",
   };
   return colors[name.toLowerCase()] || "bg-gray-500";
 };

@@ -32,8 +32,10 @@ const mercadopagoSchema = z.object({
   public_key: z.string().min(1, "Public Key é obrigatória").max(500),
 });
 
-const infinitepaySchema = z.object({
-  api_key: z.string().min(1, "API Key é obrigatória").max(500),
+const paypalSchema = z.object({
+  client_id: z.string().min(1, "Client ID é obrigatório").max(500),
+  client_secret: z.string().min(1, "Client Secret é obrigatório").max(500),
+  mode: z.enum(['sandbox', 'live']).default('sandbox'),
 });
 
 export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: PaymentGatewayDialogProps) {
@@ -60,8 +62,8 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         case 'mercadopago':
           schema = mercadopagoSchema;
           break;
-        case 'infinitepay':
-          schema = infinitepaySchema;
+        case 'paypal':
+          schema = paypalSchema;
           break;
         default:
           throw new Error('Gateway não suportado');
@@ -134,8 +136,8 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         case 'mercadopago':
           schema = mercadopagoSchema;
           break;
-        case 'infinitepay':
-          schema = infinitepaySchema;
+        case 'paypal':
+          schema = paypalSchema;
           break;
         default:
           throw new Error('Gateway não suportado');
@@ -296,21 +298,44 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
           </>
         );
 
-      case 'infinitepay':
+      case 'paypal':
         return (
           <>
             <div className="space-y-2">
-              <Label htmlFor="api_key">API Key *</Label>
+              <Label htmlFor="client_id">Client ID *</Label>
               <Input
-                id="api_key"
-                type="password"
-                placeholder="Digite sua API Key"
-                value={credentials.api_key || ''}
-                onChange={(e) => setCredentials({ ...credentials, api_key: e.target.value.trim() })}
+                id="client_id"
+                type="text"
+                placeholder="Digite seu Client ID"
+                value={credentials.client_id || ''}
+                onChange={(e) => setCredentials({ ...credentials, client_id: e.target.value.trim() })}
                 maxLength={500}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="client_secret">Client Secret *</Label>
+              <Input
+                id="client_secret"
+                type="password"
+                placeholder="Digite seu Client Secret"
+                value={credentials.client_secret || ''}
+                onChange={(e) => setCredentials({ ...credentials, client_secret: e.target.value.trim() })}
+                maxLength={500}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mode">Ambiente</Label>
+              <select
+                id="mode"
+                className="w-full rounded-md border border-input bg-background px-3 py-2"
+                value={credentials.mode || 'sandbox'}
+                onChange={(e) => setCredentials({ ...credentials, mode: e.target.value })}
+              >
+                <option value="sandbox">Sandbox (Teste)</option>
+                <option value="live">Live (Produção)</option>
+              </select>
               <p className="text-xs text-muted-foreground">
-                Encontre sua API Key no painel do InfinitePay
+                Encontre suas credenciais no Dashboard do PayPal → Apps & Credentials
               </p>
             </div>
           </>
@@ -409,9 +434,11 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
                     <li><a href="https://www.mercadopago.com.br/developers/panel/credentials" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Obter credenciais</a></li>
                   </ul>
                 )}
-                {gateway?.id === 'infinitepay' && (
+                {gateway?.id === 'paypal' && (
                   <ul className="list-disc list-inside space-y-1 text-sm">
-                    <li><a href="https://docs.infinitepay.io" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Documentação oficial</a></li>
+                    <li><a href="https://developer.paypal.com/api/rest/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Documentação oficial</a></li>
+                    <li><a href="https://developer.paypal.com/dashboard/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">PayPal Dashboard - Obter credenciais</a></li>
+                    <li><a href="https://developer.paypal.com/api/rest/webhooks/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">Configurar Webhooks</a></li>
                   </ul>
                 )}
               </AlertDescription>

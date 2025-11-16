@@ -268,45 +268,74 @@ serve(async (req) => {
       checkoutUrl = mpData.init_point;
       console.log("Preferência Mercado Pago criada:", externalId);
 
-    } else if (gatewayName === "infinitepay") {
-      const apiKey = gateway.api_key_encrypted || gateway.config?.api_key;
+    } else if (gatewayName === "paypal") {
+      const clientId = gateway.config?.client_id;
+      const clientSecret = gateway.config?.client_secret;
+      const mode = gateway.config?.mode || 'sandbox';
       
-      if (!apiKey) {
-        throw new Error("API Key do InfinitePay não configurada");
+      if (!clientId || !clientSecret) {
+        throw new Error("Credenciais do PayPal não configuradas");
       }
 
-      console.log("Criando cobrança InfinitePay...");
+      console.log("Criando pedido PayPal...");
 
-      // Criar cobrança
-      const ipResponse = await fetch("https://api.infinitepay.io/v1/charges", {
+      const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+
+      // Get access token
+      const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: "grant_type=client_credentials",
+      });
+
+      if (!authResponse.ok) {
+        const error = await authResponse.text();
+        throw new Error(`Erro ao autenticar no PayPal: ${error}`);
+      }
+
+      const authData = await authResponse.json();
+      const accessToken = authData.access_token;
+
+      // Create order
+      const ppResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKey}`,
+          "Authorization": `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
-          amount: Math.round(parseFloat(invoice.amount) * 100),
-          currency: invoice.currency,
-          description: invoice.description || `Fatura #${invoice.id.slice(0, 8)}`,
-          customer: {
-            name: invoice.tenant.name,
-            document: invoice.tenant.cnpj_cpf,
+          intent: "CAPTURE",
+          purchase_units: [{
+            amount: {
+              currency_code: invoice.currency,
+              value: parseFloat(invoice.amount).toFixed(2),
+            },
+            description: invoice.description || `Fatura #${invoice.id.slice(0, 8)}`,
+            custom_id: JSON.stringify(metadata),
+          }],
+          application_context: {
+            brand_name: invoice.tenant.name,
+            landing_page: "BILLING",
+            user_action: "PAY_NOW",
+            return_url: `${Deno.env.get("SUPABASE_URL")}/payment-success`,
+            cancel_url: `${Deno.env.get("SUPABASE_URL")}/payment-cancel`,
           },
-          metadata: metadata,
         }),
       });
 
-      if (!ipResponse.ok) {
-        const error = await ipResponse.text();
-        console.error("Erro InfinitePay:", error);
-        throw new Error(`Erro ao criar cobrança InfinitePay: ${error}`);
+      if (!ppResponse.ok) {
+        const error = await ppResponse.text();
+        console.error("Erro PayPal:", error);
+        throw new Error(`Erro ao criar pedido PayPal: ${error}`);
       }
 
-      const ipData = await ipResponse.json();
-      externalId = ipData.id;
-      checkoutUrl = ipData.checkout_url;
-      qrCode = ipData.qr_code;
-      console.log("Cobrança InfinitePay criada:", externalId);
+      const ppData = await ppResponse.json();
+      externalId = ppData.id;
+      checkoutUrl = ppData.links.find((link: any) => link.rel === 'approve')?.href || '';
+      console.log("Pedido PayPal criado:", externalId);
 
     } else {
       throw new Error(`Gateway ${gatewayName} não suportado`);

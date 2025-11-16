@@ -51,10 +51,10 @@ export const PaymentSecretsTab = () => {
       required: false,
     },
     {
-      name: "INFINITEPAY_WEBHOOK_SECRET",
+      name: "PAYPAL_WEBHOOK_ID",
       value: "",
-      label: "InfinitePay Webhook Secret",
-      description: "Secret para validação de webhooks do InfinitePay",
+      label: "PayPal Webhook ID",
+      description: "ID do webhook configurado no PayPal Dashboard",
       required: false,
     },
     {
@@ -244,7 +244,7 @@ export const PaymentSecretsTab = () => {
       <Alert>
         <AlertDescription className="text-xs">
           <strong>Nota:</strong> Após configurar os secrets, certifique-se de configurar as URLs
-          de webhook em cada plataforma (ASAAS, Stripe, Mercado Pago, InfinitePay) apontando para
+          de webhook em cada plataforma (ASAAS, Stripe, Mercado Pago, PayPal) apontando para
           as edge functions correspondentes. As URLs aparecem nos cards de cada gateway.
         </AlertDescription>
       </Alert>

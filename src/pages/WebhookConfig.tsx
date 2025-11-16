@@ -155,7 +155,7 @@ export default function WebhookConfig() {
       asaas: "bg-blue-500",
       stripe: "bg-purple-500",
       mercadopago: "bg-cyan-500",
-      infinitepay: "bg-orange-500",
+      paypal: "bg-blue-600",
     };
 
     return (
@@ -199,7 +199,7 @@ export default function WebhookConfig() {
                     <SelectItem value="asaas">ASAAS</SelectItem>
                     <SelectItem value="stripe">Stripe</SelectItem>
                     <SelectItem value="mercadopago">Mercado Pago</SelectItem>
-                    <SelectItem value="infinitepay">InfinitePay</SelectItem>
+                    <SelectItem value="paypal">PayPal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
