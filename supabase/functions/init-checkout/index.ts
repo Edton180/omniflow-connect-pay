@@ -42,13 +42,14 @@ serve(async (req) => {
 
     console.log("Fatura encontrada:", invoice.id);
 
-    // Buscar gateway ativo - prioriza gateways globais (tenant_id NULL) ou do próprio tenant
+    // CORREÇÃO: Buscar apenas gateways GLOBAIS (configurados pelo Super Admin)
+    // Os gateways são globais no sistema, não por tenant
     const { data: gateways, error: gatewayError } = await supabaseClient
       .from("payment_gateways")
       .select("*")
       .eq("is_active", true)
-      .or(`tenant_id.is.null,tenant_id.eq.${invoice.tenant_id}`)
-      .order("tenant_id", { ascending: true, nullsFirst: true }); // Prioriza globais (null)
+      .is("tenant_id", null) // APENAS gateways globais
+      .limit(1);
 
     if (gatewayError) {
       console.error("Gateway error:", gatewayError);
@@ -56,13 +57,16 @@ serve(async (req) => {
     }
 
     if (!gateways || gateways.length === 0) {
-      console.error("Nenhum gateway encontrado");
-      throw new Error("Nenhum gateway de pagamento configurado. Entre em contato com o administrador do sistema.");
+      console.error("Nenhum gateway global encontrado");
+      console.error("IMPORTANTE: Os gateways devem ser configurados pelo Super Admin na página de Pagamentos");
+      throw new Error("Nenhum gateway de pagamento configurado no sistema. Configure um gateway global na página de Pagamentos (Super Admin).");
     }
 
     const gateway = gateways[0];
 
-    console.log("Gateway encontrado:", gateway.gateway_name);
+    console.log("Gateway global encontrado:", gateway.gateway_name);
+    console.log("Gateway ID:", gateway.id);
+    console.log("Gateway tenant_id:", gateway.tenant_id);
 
     let checkoutUrl = "";
     let qrCode = "";

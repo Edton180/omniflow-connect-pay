@@ -59,24 +59,22 @@ export const PaymentGatewayList = () => {
         .eq("role", "super_admin")
         .maybeSingle();
 
-      let query = supabase
+      console.log("Carregando gateways - Super Admin:", !!isSuperAdmin);
+
+      // CRÍTICO: Carregar APENAS gateways globais (tenant_id NULL)
+      // Gateways são sempre globais no sistema
+      const { data: savedGateways, error } = await supabase
         .from("payment_gateways")
-        .select("gateway_name, is_active")
-        .eq("is_active", true);
+        .select("gateway_name, is_active, tenant_id")
+        .eq("is_active", true)
+        .is("tenant_id", null); // Apenas gateways globais
 
-      // Se não for super admin, filtrar por tenant
-      if (!isSuperAdmin) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("tenant_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!userRole?.tenant_id) return;
-        query = query.eq("tenant_id", userRole.tenant_id);
+      if (error) {
+        console.error("Erro ao carregar gateways:", error);
+        throw error;
       }
 
-      const { data: savedGateways } = await query;
+      console.log("Gateways globais encontrados:", savedGateways);
 
       if (savedGateways) {
         setConnectedGateways(new Set(savedGateways.map(g => g.gateway_name)));
@@ -106,28 +104,19 @@ export const PaymentGatewayList = () => {
         .eq("role", "super_admin")
         .maybeSingle();
 
-      let query = supabase
-        .from("payment_gateways")
-        .delete()
-        .eq("gateway_name", gateway.id);
-
-      // Se não for super admin, garantir que só delete do próprio tenant
+      // CRÍTICO: Apenas Super Admins podem desconectar gateways globais
       if (!isSuperAdmin) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("tenant_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
-
-        if (!userRole?.tenant_id) {
-          throw new Error("Tenant não encontrado");
-        }
-        query = query.eq("tenant_id", userRole.tenant_id);
-      } else {
-        query = query.is("tenant_id", null);
+        throw new Error("Apenas Super Admins podem desconectar gateways de pagamento");
       }
 
-      const { error } = await query;
+      console.log("Desconectando gateway global:", gateway.id);
+
+      // Deletar gateway global
+      const { error } = await supabase
+        .from("payment_gateways")
+        .delete()
+        .eq("gateway_name", gateway.id)
+        .is("tenant_id", null);
 
       if (error) throw error;
 

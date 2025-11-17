@@ -158,7 +158,7 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Check if super admin
+      // CRÍTICO: Verificar se é Super Admin
       const { data: isSuperAdmin } = await supabase
         .from("user_roles")
         .select("role")
@@ -166,64 +166,64 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         .eq("role", "super_admin")
         .maybeSingle();
 
-      let tenantId = null;
-      
-      if (!isSuperAdmin) {
-        const { data: userRole } = await supabase
-          .from("user_roles")
-          .select("tenant_id")
-          .eq("user_id", user.id)
-          .maybeSingle();
+      console.log("Salvando gateway - Super Admin:", !!isSuperAdmin);
+      console.log("Gateway:", gateway.id);
 
-        if (!userRole?.tenant_id) {
-          throw new Error('Tenant não encontrado');
-        }
-        tenantId = userRole.tenant_id;
+      // APENAS Super Admins podem configurar gateways globais
+      if (!isSuperAdmin) {
+        throw new Error('Apenas Super Admins podem configurar gateways de pagamento globais');
       }
 
-      // Check if gateway already exists
-      let query = supabase
+      // Buscar gateway global existente
+      const { data: existingGateway } = await supabase
         .from("payment_gateways")
         .select("id")
-        .eq("gateway_name", gateway.id);
-      
-      if (isSuperAdmin) {
-        query = query.is("tenant_id", null);
-      } else {
-        query = query.eq("tenant_id", tenantId);
-      }
+        .eq("gateway_name", gateway.id)
+        .is("tenant_id", null)
+        .maybeSingle();
 
-      const { data: existingGateway } = await query.maybeSingle();
+      console.log("Gateway existente encontrado:", !!existingGateway);
 
+      // CRÍTICO: Sempre salvar com tenant_id = NULL (gateway global)
       const gatewayData: any = {
         gateway_name: gateway.id,
         is_active: true,
         config: credentials,
-        tenant_id: tenantId,
+        api_key_encrypted: credentials.api_key || credentials.access_token || credentials.secret_key || null,
+        tenant_id: null, // SEMPRE NULL - gateway global
       };
+
+      console.log("Salvando gateway com tenant_id:", gatewayData.tenant_id);
 
       let error;
       
       if (existingGateway) {
-        // Update existing gateway
+        // Atualizar gateway existente
+        console.log("Atualizando gateway existente:", existingGateway.id);
         const result = await supabase
           .from("payment_gateways")
           .update(gatewayData)
           .eq("id", existingGateway.id);
         error = result.error;
       } else {
-        // Insert new gateway
+        // Inserir novo gateway
+        console.log("Inserindo novo gateway global");
         const result = await supabase
           .from("payment_gateways")
           .insert(gatewayData);
         error = result.error;
       }
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao salvar gateway:", error);
+        throw error;
+      }
+
+      console.log("Gateway salvo com sucesso!");
 
       toast({
         title: "Gateway configurado",
-        description: `${gateway.name} foi configurado com sucesso`,
+        description: `${gateway.name} foi configurado com sucesso como gateway global`,
       });
 
       onSave();
