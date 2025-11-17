@@ -60,27 +60,42 @@ export default function PaymentRequired() {
   const handlePayInvoice = async (invoiceId: string) => {
     setProcessingId(invoiceId);
     try {
-      // Buscar gateways globais configurados pelo Super Admin
-      const { data: gateways } = await supabase
+      console.log("Iniciando pagamento da fatura:", invoiceId);
+      
+      // Verificar gateways globais configurados
+      const { data: gateways, error: gatewayError } = await supabase
         .from("payment_gateways")
-        .select("gateway_name")
+        .select("gateway_name, is_active, tenant_id")
         .eq("is_active", true)
-        .is("tenant_id", null) // Apenas gateways globais
+        .is("tenant_id", null)
         .limit(1);
 
+      console.log("Gateways globais encontrados:", gateways);
+
+      if (gatewayError) {
+        console.error("Erro ao buscar gateways:", gatewayError);
+        throw new Error("Erro ao buscar gateways de pagamento");
+      }
+
       if (!gateways || gateways.length === 0) {
-        toast.error("Nenhum gateway de pagamento configurado. Entre em contato com o suporte.");
+        console.error("Nenhum gateway global configurado");
+        toast.error("Nenhum gateway de pagamento configurado no sistema. Entre em contato com o suporte.");
         return;
       }
 
+      console.log("Chamando init-checkout...");
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
           invoiceId: invoiceId,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro no init-checkout:", error);
+        throw error;
+      }
 
+      console.log("Checkout iniciado com sucesso:", data);
       setCheckoutData(data);
       setCheckoutDialogOpen(true);
     } catch (error: any) {
