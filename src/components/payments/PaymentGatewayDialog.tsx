@@ -166,14 +166,8 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         .eq("role", "super_admin")
         .maybeSingle();
 
-      // Prepare gateway data
-      const gatewayData: any = {
-        gateway_name: gateway.id,
-        is_active: true,
-        config: credentials,
-        tenant_id: isSuperAdmin ? null : undefined,
-      };
-
+      let tenantId = null;
+      
       if (!isSuperAdmin) {
         const { data: userRole } = await supabase
           .from("user_roles")
@@ -184,14 +178,46 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         if (!userRole?.tenant_id) {
           throw new Error('Tenant não encontrado');
         }
-        gatewayData.tenant_id = userRole.tenant_id;
+        tenantId = userRole.tenant_id;
       }
 
-      const { error } = await supabase
+      // Check if gateway already exists
+      let query = supabase
         .from("payment_gateways")
-        .upsert(gatewayData, {
-          onConflict: isSuperAdmin ? 'gateway_name' : 'gateway_name,tenant_id',
-        });
+        .select("id")
+        .eq("gateway_name", gateway.id);
+      
+      if (isSuperAdmin) {
+        query = query.is("tenant_id", null);
+      } else {
+        query = query.eq("tenant_id", tenantId);
+      }
+
+      const { data: existingGateway } = await query.maybeSingle();
+
+      const gatewayData: any = {
+        gateway_name: gateway.id,
+        is_active: true,
+        config: credentials,
+        tenant_id: tenantId,
+      };
+
+      let error;
+      
+      if (existingGateway) {
+        // Update existing gateway
+        const result = await supabase
+          .from("payment_gateways")
+          .update(gatewayData)
+          .eq("id", existingGateway.id);
+        error = result.error;
+      } else {
+        // Insert new gateway
+        const result = await supabase
+          .from("payment_gateways")
+          .insert(gatewayData);
+        error = result.error;
+      }
 
       if (error) throw error;
 
@@ -385,6 +411,11 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
                   )}
                   {testResult.details && (
                     <div className="text-sm mt-1 opacity-80">{testResult.details}</div>
+                  )}
+                  {testResult.success && (
+                    <div className="text-sm mt-2 font-semibold text-primary">
+                      ⚠️ Não esqueça de clicar em "Salvar Configuração" para concluir!
+                    </div>
                   )}
                 </AlertDescription>
               </Alert>

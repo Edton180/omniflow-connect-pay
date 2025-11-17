@@ -42,12 +42,13 @@ serve(async (req) => {
 
     console.log("Fatura encontrada:", invoice.id);
 
-    // Buscar gateway ativo - prioriza gateways globais (tenant_id NULL = configurado pelo Super Admin)
+    // Buscar gateway ativo - prioriza gateways globais (tenant_id NULL) ou do próprio tenant
     const { data: gateways, error: gatewayError } = await supabaseClient
       .from("payment_gateways")
       .select("*")
       .eq("is_active", true)
-      .is("tenant_id", null); // Busca apenas gateways globais configurados pelo Super Admin
+      .or(`tenant_id.is.null,tenant_id.eq.${invoice.tenant_id}`)
+      .order("tenant_id", { ascending: true, nullsFirst: true }); // Prioriza globais (null)
 
     if (gatewayError) {
       console.error("Gateway error:", gatewayError);
