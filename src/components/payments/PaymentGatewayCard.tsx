@@ -15,6 +15,7 @@ interface PaymentGatewayCardProps {
     webhookUrl?: string;
   };
   onConfigure: () => void;
+  onDisconnect?: () => void;
   loading?: boolean;
 }
 
@@ -30,7 +31,7 @@ const getColor = (name: string) => {
   return colors[name.toLowerCase()] || "bg-gray-500";
 };
 
-export const PaymentGatewayCard = ({ gateway, onConfigure, loading = false }: PaymentGatewayCardProps) => {
+export const PaymentGatewayCard = ({ gateway, onConfigure, onDisconnect, loading = false }: PaymentGatewayCardProps) => {
   const Icon = getIcon();
   const colorClass = getColor(gateway.name);
 
@@ -109,19 +110,33 @@ export const PaymentGatewayCard = ({ gateway, onConfigure, loading = false }: Pa
           </div>
         )}
 
-        <Button
-          variant={gateway.connected ? "outline" : "default"}
-          className="w-full"
-          onClick={onConfigure}
-          disabled={loading}
-        >
-          {loading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Settings className="mr-2 h-4 w-4" />
+        <div className="flex gap-2">
+          <Button
+            variant={gateway.connected ? "outline" : "default"}
+            className="flex-1"
+            onClick={onConfigure}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Settings className="mr-2 h-4 w-4" />
+            )}
+            {gateway.connected ? "Configurar" : "Conectar"}
+          </Button>
+          
+          {gateway.connected && onDisconnect && (
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={onDisconnect}
+              disabled={loading}
+              title="Desconectar gateway"
+            >
+              <XCircle className="h-4 w-4" />
+            </Button>
           )}
-          {gateway.connected ? "Configurar" : "Conectar"}
-        </Button>
+        </div>
       </CardContent>
     </Card>
   );

@@ -93,6 +93,60 @@ export const PaymentGatewayList = () => {
     setDialogOpen(true);
   };
 
+  const handleDisconnect = async (gateway: any) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Verificar se é super admin
+      const { data: isSuperAdmin } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      let query = supabase
+        .from("payment_gateways")
+        .delete()
+        .eq("gateway_name", gateway.id);
+
+      // Se não for super admin, garantir que só delete do próprio tenant
+      if (!isSuperAdmin) {
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (!userRole?.tenant_id) {
+          throw new Error("Tenant não encontrado");
+        }
+        query = query.eq("tenant_id", userRole.tenant_id);
+      } else {
+        query = query.is("tenant_id", null);
+      }
+
+      const { error } = await query;
+
+      if (error) throw error;
+
+      toast({
+        title: "Gateway desconectado",
+        description: `${gateway.name} foi desconectado com sucesso`,
+      });
+
+      loadGateways();
+    } catch (error: any) {
+      console.error("Error disconnecting gateway:", error);
+      toast({
+        title: "Erro ao desconectar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSave = () => {
     loadGateways();
   };
@@ -113,6 +167,8 @@ export const PaymentGatewayList = () => {
             key={gateway.id}
             gateway={gateway}
             onConfigure={() => handleConfigure(gateway)}
+            onDisconnect={() => handleDisconnect(gateway)}
+            loading={loading}
           />
         ))}
         
