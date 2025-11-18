@@ -60,46 +60,84 @@ export default function PaymentRequired() {
   const handlePayInvoice = async (invoiceId: string) => {
     setProcessingId(invoiceId);
     try {
-      console.log("Iniciando pagamento da fatura:", invoiceId);
+      console.log("💳 Iniciando processo de pagamento para fatura:", invoiceId);
+
+      // VERIFICAÇÃO: Buscar gateway global ativo antes de tentar iniciar checkout
+      console.log("🔍 [Step 1] Verificando gateways globais ativos...");
       
-      // Verificar gateways globais configurados
-      const { data: gateways, error: gatewayError } = await supabase
+      const { data: gateways, error: gatewayError, count } = await supabase
         .from("payment_gateways")
-        .select("gateway_name, is_active, tenant_id")
+        .select("*", { count: 'exact' })
         .eq("is_active", true)
-        .is("tenant_id", null)
-        .limit(1);
+        .is("tenant_id", null); // Apenas gateways globais
 
-      console.log("Gateways globais encontrados:", gateways);
-
+      console.log("📊 [Step 2] Resultado da busca:");
+      console.log("  - Total de gateways ativos:", count);
+      console.log("  - Gateways retornados:", gateways?.length || 0);
+      console.log("  - Erro:", gatewayError);
+      
+      if (gateways && gateways.length > 0) {
+        console.log("  - Gateway(s) encontrado(s):");
+        gateways.forEach((gw: any, idx: number) => {
+          console.log(`    ${idx + 1}. ${gw.gateway_name} (ID: ${gw.id}, tenant_id: ${gw.tenant_id})`);
+        });
+      }
+      
       if (gatewayError) {
-        console.error("Erro ao buscar gateways:", gatewayError);
-        throw new Error("Erro ao buscar gateways de pagamento");
+        console.error("❌ [Error] Erro ao buscar gateways:", gatewayError);
+        throw new Error("Erro ao verificar gateways de pagamento: " + gatewayError.message);
       }
 
       if (!gateways || gateways.length === 0) {
-        console.error("Nenhum gateway global configurado");
-        toast.error("Nenhum gateway de pagamento configurado no sistema. Entre em contato com o suporte.");
+        console.error("❌ [Error] Nenhum gateway global configurado");
+        console.error("💡 Sugestão: Acesse Configurações > Pagamentos e configure um gateway");
+        toast.error(
+          "Nenhum gateway de pagamento configurado",
+          {
+            description: "Configure um gateway de pagamento em Configurações > Pagamentos para processar pagamentos.",
+          }
+        );
         return;
       }
 
-      console.log("Chamando init-checkout...");
+      console.log("✅ [Step 3] Gateway ativo encontrado:", gateways[0].gateway_name);
+      console.log("🚀 [Step 4] Iniciando checkout via edge function init-checkout...");
+      console.log("  - Invoice ID:", invoiceId);
+
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
           invoiceId: invoiceId,
         },
       });
 
+      console.log("📬 [Step 5] Resposta do init-checkout:");
+      console.log("  - Success:", !!data);
+      console.log("  - Error:", error);
+
       if (error) {
-        console.error("Erro no init-checkout:", error);
-        throw error;
+        console.error("❌ [Error] Erro ao iniciar checkout:", error);
+        throw new Error(error.message || "Erro ao iniciar checkout");
       }
 
-      console.log("Checkout iniciado com sucesso:", data);
+      if (data?.error) {
+        console.error("❌ [Error] Erro retornado pelo init-checkout:", data.error);
+        throw new Error(data.error);
+      }
+
+      if (!data?.checkout_url) {
+        console.error("❌ [Error] URL de checkout não retornada");
+        console.error("  - Data recebido:", data);
+        throw new Error("URL de checkout não foi gerada. Verifique a configuração do gateway.");
+      }
+
+      console.log("✅ [Step 6] Checkout iniciado com sucesso!");
+      console.log("  - Gateway:", data.gateway);
+      console.log("  - URL:", data.checkout_url);
+      
       setCheckoutData(data);
       setCheckoutDialogOpen(true);
     } catch (error: any) {
-      console.error("Error initiating payment:", error);
+      console.error("❌ [Fatal Error] Error initiating payment:", error);
       toast.error(error.message || "Erro ao iniciar pagamento");
     } finally {
       setProcessingId(null);

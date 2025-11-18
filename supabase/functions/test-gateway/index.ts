@@ -180,26 +180,47 @@ async function testPayPal(credentials: any) {
 
     const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
 
+    console.log('Testing PayPal connection:', { mode, baseUrl });
+
+    // Encode credentials properly for Basic Auth
+    const authString = `${clientId}:${clientSecret}`;
+    const base64Auth = btoa(authString);
+
+    console.log('Auth header created (length):', base64Auth.length);
+
     // Test API connectivity by getting access token
     const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Authorization': `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+        'Authorization': `Basic ${base64Auth}`,
         'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
       },
       body: 'grant_type=client_credentials',
     });
 
+    console.log('PayPal API response status:', response.status);
+
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      console.error('PayPal API error:', errorText);
+      
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error_description: errorText };
+      }
+      
       return {
         success: false,
         message: 'Falha na autenticação',
-        details: error.error_description || 'Client ID ou Client Secret inválidos',
+        details: error.error_description || 'Verifique suas credenciais do PayPal. Certifique-se de usar as credenciais corretas para o ambiente selecionado (Sandbox/Live).',
       };
     }
 
     const data = await response.json();
+    console.log('PayPal test successful');
 
     return {
       success: true,
@@ -208,6 +229,7 @@ async function testPayPal(credentials: any) {
       tokenType: data.token_type,
     };
   } catch (error: any) {
+    console.error('PayPal test error:', error);
     return { success: false, message: `Erro ao conectar: ${error.message}` };
   }
 }

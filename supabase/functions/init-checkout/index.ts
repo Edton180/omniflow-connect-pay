@@ -44,29 +44,36 @@ serve(async (req) => {
 
     // CORREÇÃO: Buscar apenas gateways GLOBAIS (configurados pelo Super Admin)
     // Os gateways são globais no sistema, não por tenant
+    console.log("🔍 Buscando gateways globais ativos...");
+    
     const { data: gateways, error: gatewayError } = await supabaseClient
       .from("payment_gateways")
       .select("*")
       .eq("is_active", true)
-      .is("tenant_id", null) // APENAS gateways globais
-      .limit(1);
+      .is("tenant_id", null); // APENAS gateways globais
 
+    console.log("📊 Resultado da busca de gateways:");
+    console.log("  - Quantidade encontrada:", gateways?.length || 0);
+    console.log("  - Erro:", gatewayError);
+    
     if (gatewayError) {
-      console.error("Gateway error:", gatewayError);
-      throw new Error("Erro ao buscar gateways de pagamento");
+      console.error("❌ Gateway error:", gatewayError);
+      throw new Error("Erro ao buscar gateways de pagamento: " + gatewayError.message);
     }
 
     if (!gateways || gateways.length === 0) {
-      console.error("Nenhum gateway global encontrado");
-      console.error("IMPORTANTE: Os gateways devem ser configurados pelo Super Admin na página de Pagamentos");
+      console.error("❌ Nenhum gateway global encontrado");
+      console.error("💡 IMPORTANTE: Os gateways devem ser configurados pelo Super Admin na página de Pagamentos");
       throw new Error("Nenhum gateway de pagamento configurado no sistema. Configure um gateway global na página de Pagamentos (Super Admin).");
     }
 
     const gateway = gateways[0];
 
-    console.log("Gateway global encontrado:", gateway.gateway_name);
-    console.log("Gateway ID:", gateway.id);
-    console.log("Gateway tenant_id:", gateway.tenant_id);
+    console.log("✅ Gateway global encontrado:");
+    console.log("  - Nome:", gateway.gateway_name);
+    console.log("  - ID:", gateway.id);
+    console.log("  - tenant_id:", gateway.tenant_id);
+    console.log("  - Config keys:", Object.keys(gateway.config || {}));
 
     let checkoutUrl = "";
     let qrCode = "";
@@ -278,33 +285,48 @@ serve(async (req) => {
       const clientSecret = gateway.config?.client_secret;
       const mode = gateway.config?.mode || 'sandbox';
       
+      console.log("💳 Iniciando checkout PayPal:");
+      console.log("  - Mode:", mode);
+      console.log("  - Client ID presente:", !!clientId);
+      console.log("  - Client Secret presente:", !!clientSecret);
+      
       if (!clientId || !clientSecret) {
-        throw new Error("Credenciais do PayPal não configuradas");
+        console.error("❌ Credenciais do PayPal não encontradas no config");
+        throw new Error("Credenciais do PayPal não configuradas. Configure o gateway PayPal na página de Pagamentos.");
       }
 
-      console.log("Criando pedido PayPal...");
-
       const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
+      console.log("  - Base URL:", baseUrl);
 
       // Get access token
+      console.log("🔐 Obtendo access token do PayPal...");
+      const authString = `${clientId}:${clientSecret}`;
+      const base64Auth = btoa(authString);
+      
       const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
         method: "POST",
         headers: {
-          "Authorization": `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+          "Authorization": `Basic ${base64Auth}`,
           "Content-Type": "application/x-www-form-urlencoded",
+          "Accept": "application/json",
         },
         body: "grant_type=client_credentials",
       });
 
+      console.log("  - Auth response status:", authResponse.status);
+
       if (!authResponse.ok) {
         const error = await authResponse.text();
+        console.error("❌ Erro ao autenticar no PayPal:", error);
         throw new Error(`Erro ao autenticar no PayPal: ${error}`);
       }
 
       const authData = await authResponse.json();
       const accessToken = authData.access_token;
+      console.log("✅ Access token obtido com sucesso");
 
       // Create order
+      console.log("📦 Criando pedido PayPal...");
       const ppResponse = await fetch(`${baseUrl}/v2/checkout/orders`, {
         method: "POST",
         headers: {
@@ -331,16 +353,20 @@ serve(async (req) => {
         }),
       });
 
+      console.log("  - Order response status:", ppResponse.status);
+
       if (!ppResponse.ok) {
         const error = await ppResponse.text();
-        console.error("Erro PayPal:", error);
+        console.error("❌ Erro PayPal:", error);
         throw new Error(`Erro ao criar pedido PayPal: ${error}`);
       }
 
       const ppData = await ppResponse.json();
       externalId = ppData.id;
       checkoutUrl = ppData.links.find((link: any) => link.rel === 'approve')?.href || '';
-      console.log("Pedido PayPal criado:", externalId);
+      console.log("✅ Pedido PayPal criado:");
+      console.log("  - Order ID:", externalId);
+      console.log("  - Checkout URL:", checkoutUrl);
 
     } else {
       throw new Error(`Gateway ${gatewayName} não suportado`);
