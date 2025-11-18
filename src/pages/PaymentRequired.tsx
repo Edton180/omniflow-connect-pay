@@ -64,6 +64,7 @@ export default function PaymentRequired() {
 
       // VERIFICAÇÃO: Buscar gateway global ativo antes de tentar iniciar checkout
       console.log("🔍 [Step 1] Verificando gateways globais ativos...");
+      console.log("  - Critério: is_active = true AND tenant_id IS NULL");
       
       const { data: gateways, error: gatewayError, count } = await supabase
         .from("payment_gateways")
@@ -71,38 +72,51 @@ export default function PaymentRequired() {
         .eq("is_active", true)
         .is("tenant_id", null); // Apenas gateways globais
 
-      console.log("📊 [Step 2] Resultado da busca:");
-      console.log("  - Total de gateways ativos:", count);
+      console.log("📊 [Step 2] Resultado da busca de gateways:");
+      console.log("  - Total de gateways (ativos e globais):", count);
       console.log("  - Gateways retornados:", gateways?.length || 0);
-      console.log("  - Erro:", gatewayError);
+      console.log("  - Erro na query:", gatewayError);
       
       if (gateways && gateways.length > 0) {
-        console.log("  - Gateway(s) encontrado(s):");
+        console.log("  ✅ Gateway(s) encontrado(s):");
         gateways.forEach((gw: any, idx: number) => {
-          console.log(`    ${idx + 1}. ${gw.gateway_name} (ID: ${gw.id}, tenant_id: ${gw.tenant_id})`);
+          console.log(`    ${idx + 1}. ${gw.gateway_name}`);
+          console.log(`       - ID: ${gw.id}`);
+          console.log(`       - tenant_id: ${gw.tenant_id}`);
+          console.log(`       - is_active: ${gw.is_active}`);
+          console.log(`       - Credenciais: ${gw.api_key_encrypted ? 'Configuradas' : 'Não configuradas'}`);
         });
+      } else {
+        console.log("  ⚠️ Nenhum gateway encontrado com os critérios");
       }
       
       if (gatewayError) {
         console.error("❌ [Error] Erro ao buscar gateways:", gatewayError);
-        throw new Error("Erro ao verificar gateways de pagamento: " + gatewayError.message);
+        toast.error("Erro ao verificar gateways de pagamento: " + gatewayError.message);
+        return;
       }
 
       if (!gateways || gateways.length === 0) {
         console.error("❌ [Error] Nenhum gateway global configurado");
-        console.error("💡 Sugestão: Acesse Configurações > Pagamentos e configure um gateway");
+        console.error("💡 Verificações necessárias:");
+        console.error("  1. Existe gateway na tabela payment_gateways?");
+        console.error("  2. O gateway tem is_active = true?");
+        console.error("  3. O gateway tem tenant_id = NULL (global)?");
+        console.error("  4. O gateway tem credenciais configuradas?");
         toast.error(
           "Nenhum gateway de pagamento configurado",
           {
-            description: "Configure um gateway de pagamento em Configurações > Pagamentos para processar pagamentos.",
+            description: "Por favor, acesse Configurações > Pagamentos e configure um gateway global.",
+            duration: 6000,
           }
         );
         return;
       }
 
-      console.log("✅ [Step 3] Gateway ativo encontrado:", gateways[0].gateway_name);
+      console.log("✅ [Step 3] Gateway válido encontrado:", gateways[0].gateway_name);
       console.log("🚀 [Step 4] Iniciando checkout via edge function init-checkout...");
       console.log("  - Invoice ID:", invoiceId);
+      console.log("  - Gateway selecionado:", gateways[0].gateway_name);
 
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
