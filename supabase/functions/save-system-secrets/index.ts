@@ -70,25 +70,28 @@ serve(async (req: Request) => {
 
     console.log(`Salvando ${secrets.length} secret(s) por usuário ${user.id}`);
 
-    // Atualizar cada secret
+    // Inserir ou atualizar cada secret (UPSERT)
     const results = await Promise.all(
       secrets.map(async (secret) => {
         const { data, error } = await supabase
           .from("system_secrets")
-          .update({
+          .upsert({
+            secret_name: secret.name,
             secret_value: secret.value,
             created_by: user.id,
+            description: `Configurado via interface em ${new Date().toISOString()}`,
+          }, {
+            onConflict: "secret_name"
           })
-          .eq("secret_name", secret.name)
           .select()
           .single();
 
         if (error) {
-          console.error(`Error updating secret ${secret.name}:`, error);
+          console.error(`❌ Error saving secret ${secret.name}:`, error);
           return { name: secret.name, success: false, error: error.message };
         }
 
-        console.log(`Secret ${secret.name} atualizado com sucesso`);
+        console.log(`✅ Secret ${secret.name} salvo com sucesso`);
         return { name: secret.name, success: true };
       })
     );

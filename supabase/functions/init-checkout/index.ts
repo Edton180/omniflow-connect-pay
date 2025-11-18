@@ -44,36 +44,55 @@ serve(async (req) => {
 
     // CORREÇÃO: Buscar apenas gateways GLOBAIS (configurados pelo Super Admin)
     // Os gateways são globais no sistema, não por tenant
-    console.log("🔍 Buscando gateways globais ativos...");
+    console.log("🔍 [STEP 2] Buscando gateways globais ativos...");
+    console.log("  - Critério: is_active = true AND tenant_id IS NULL");
     
-    const { data: gateways, error: gatewayError } = await supabaseClient
+    const { data: gateways, error: gatewayError, count } = await supabaseClient
       .from("payment_gateways")
-      .select("*")
+      .select("*", { count: 'exact' })
       .eq("is_active", true)
       .is("tenant_id", null); // APENAS gateways globais
 
-    console.log("📊 Resultado da busca de gateways:");
-    console.log("  - Quantidade encontrada:", gateways?.length || 0);
-    console.log("  - Erro:", gatewayError);
+    console.log("📊 [STEP 2] Resultado da busca de gateways:");
+    console.log("  - Total de gateways (ativos e globais):", count);
+    console.log("  - Gateways retornados:", gateways?.length || 0);
+    console.log("  - Erro:", gatewayError ? JSON.stringify(gatewayError) : "nenhum");
+    
+    if (gateways && gateways.length > 0) {
+      console.log("  ✅ Gateway(s) encontrado(s):");
+      gateways.forEach((gw: any, idx: number) => {
+        console.log(`    ${idx + 1}. ${gw.gateway_name}`);
+        console.log(`       - ID: ${gw.id}`);
+        console.log(`       - tenant_id: ${gw.tenant_id}`);
+        console.log(`       - is_active: ${gw.is_active}`);
+        console.log(`       - Config keys: ${Object.keys(gw.config || {}).join(', ')}`);
+      });
+    } else {
+      console.log("  ⚠️ Nenhum gateway encontrado com os critérios");
+    }
     
     if (gatewayError) {
-      console.error("❌ Gateway error:", gatewayError);
+      console.error("❌ [ERROR] Erro ao buscar gateways:", gatewayError);
       throw new Error("Erro ao buscar gateways de pagamento: " + gatewayError.message);
     }
 
     if (!gateways || gateways.length === 0) {
-      console.error("❌ Nenhum gateway global encontrado");
-      console.error("💡 IMPORTANTE: Os gateways devem ser configurados pelo Super Admin na página de Pagamentos");
+      console.error("❌ [ERROR] Nenhum gateway global encontrado");
+      console.error("💡 VERIFICAÇÕES NECESSÁRIAS:");
+      console.error("  1. Existe gateway na tabela payment_gateways?");
+      console.error("  2. O gateway tem is_active = true?");
+      console.error("  3. O gateway tem tenant_id = NULL (global)?");
+      console.error("  4. O gateway tem credenciais (api_key) configuradas no config?");
       throw new Error("Nenhum gateway de pagamento configurado no sistema. Configure um gateway global na página de Pagamentos (Super Admin).");
     }
 
     const gateway = gateways[0];
 
-    console.log("✅ Gateway global encontrado:");
+    console.log("✅ [STEP 2] Gateway global selecionado:");
     console.log("  - Nome:", gateway.gateway_name);
     console.log("  - ID:", gateway.id);
     console.log("  - tenant_id:", gateway.tenant_id);
-    console.log("  - Config keys:", Object.keys(gateway.config || {}));
+    console.log("  - Config keys:", Object.keys(gateway.config || {}).join(', '));
 
     let checkoutUrl = "";
     let qrCode = "";
