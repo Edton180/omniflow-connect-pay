@@ -42,57 +42,93 @@ serve(async (req) => {
 
     console.log("Fatura encontrada:", invoice.id);
 
-    // CORREÇÃO: Buscar apenas gateways GLOBAIS (configurados pelo Super Admin)
-    // Os gateways são globais no sistema, não por tenant
-    console.log("🔍 [STEP 2] Buscando gateways globais ativos...");
-    console.log("  - Critério: is_active = true AND tenant_id IS NULL");
+    // ULTRA CRITICAL: Buscar gateways GLOBAIS com múltiplas verificações
+    console.log("🔍🔍🔍 [STEP 2] Iniciando busca de gateways...");
+    console.log("  📋 Critérios:");
+    console.log("    - is_active = true");
+    console.log("    - tenant_id IS NULL (gateways globais)");
+    console.log("  📝 Tenant da fatura:", invoice.tenant_id);
     
-    const { data: gateways, error: gatewayError, count } = await supabaseClient
+    // Primeira tentativa: buscar gateways globais ativos
+    let gateways: any[] | null = null;
+    let gatewayError: any = null;
+    let count: number | null = null;
+
+    const queryResult = await supabaseClient
       .from("payment_gateways")
       .select("*", { count: 'exact' })
       .eq("is_active", true)
-      .is("tenant_id", null); // APENAS gateways globais
+      .is("tenant_id", null);
 
-    console.log("📊 [STEP 2] Resultado da busca de gateways:");
-    console.log("  - Total de gateways (ativos e globais):", count);
-    console.log("  - Gateways retornados:", gateways?.length || 0);
-    console.log("  - Erro:", gatewayError ? JSON.stringify(gatewayError) : "nenhum");
+    gateways = queryResult.data;
+    gatewayError = queryResult.error;
+    count = queryResult.count;
+
+    console.log("📊📊📊 [STEP 2] RESULTADO DA CONSULTA:");
+    console.log("  🔢 Count total:", count);
+    console.log("  📦 Registros retornados:", gateways?.length || 0);
+    console.log("  ❗ Erro?:", gatewayError ? "SIM" : "NÃO");
     
-    if (gateways && gateways.length > 0) {
-      console.log("  ✅ Gateway(s) encontrado(s):");
-      gateways.forEach((gw: any, idx: number) => {
-        console.log(`    ${idx + 1}. ${gw.gateway_name}`);
-        console.log(`       - ID: ${gw.id}`);
-        console.log(`       - tenant_id: ${gw.tenant_id}`);
-        console.log(`       - is_active: ${gw.is_active}`);
-        console.log(`       - Config keys: ${Object.keys(gw.config || {}).join(', ')}`);
-      });
+    if (gatewayError) {
+      console.error("❌❌❌ ERRO AO CONSULTAR:", JSON.stringify(gatewayError, null, 2));
+    }
+
+    // Se não encontrou, vamos fazer debug completo
+    if (!gateways || gateways.length === 0) {
+      console.log("⚠️⚠️⚠️ NENHUM GATEWAY GLOBAL ENCONTRADO!");
+      console.log("🔎 Vamos fazer debug completo...");
+      
+      // Buscar TODOS os gateways para debug
+      const { data: allGateways } = await supabaseClient
+        .from("payment_gateways")
+        .select("*");
+      
+      console.log("  📋 Total de gateways na tabela:", allGateways?.length || 0);
+      
+      if (allGateways && allGateways.length > 0) {
+        allGateways.forEach((gw: any, idx: number) => {
+          console.log(`  ${idx + 1}. ${gw.gateway_name}:`);
+          console.log(`     - ID: ${gw.id}`);
+          console.log(`     - is_active: ${gw.is_active}`);
+          console.log(`     - tenant_id: ${gw.tenant_id}`);
+          console.log(`     - config: ${JSON.stringify(gw.config || {})}`);
+        });
+      } else {
+        console.log("  ⚠️ Nenhum gateway existe na tabela!");
+      }
     } else {
-      console.log("  ⚠️ Nenhum gateway encontrado com os critérios");
+      console.log("✅✅✅ Gateway(s) global(is) encontrado(s):");
+      gateways.forEach((gw: any, idx: number) => {
+        console.log(`  ${idx + 1}. ${gw.gateway_name}`);
+        console.log(`     - ID: ${gw.id}`);
+        console.log(`     - tenant_id: ${gw.tenant_id}`);
+        console.log(`     - is_active: ${gw.is_active}`);
+        console.log(`     - Config keys: ${Object.keys(gw.config || {}).join(', ')}`);
+      });
     }
     
     if (gatewayError) {
-      console.error("❌ [ERROR] Erro ao buscar gateways:", gatewayError);
-      throw new Error("Erro ao buscar gateways de pagamento: " + gatewayError.message);
+      console.error("❌ [FATAL] Erro ao buscar gateways:", gatewayError);
+      throw new Error("Erro crítico ao buscar gateways: " + gatewayError.message);
     }
 
     if (!gateways || gateways.length === 0) {
-      console.error("❌ [ERROR] Nenhum gateway global encontrado");
-      console.error("💡 VERIFICAÇÕES NECESSÁRIAS:");
-      console.error("  1. Existe gateway na tabela payment_gateways?");
-      console.error("  2. O gateway tem is_active = true?");
-      console.error("  3. O gateway tem tenant_id = NULL (global)?");
-      console.error("  4. O gateway tem credenciais (api_key) configuradas no config?");
-      throw new Error("Nenhum gateway de pagamento configurado no sistema. Configure um gateway global na página de Pagamentos (Super Admin).");
+      console.error("❌❌❌ [FATAL] NENHUM GATEWAY CONFIGURADO");
+      console.error("💡💡💡 COMO RESOLVER:");
+      console.error("  1. Acesse Pagamentos como Super Admin");
+      console.error("  2. Configure um gateway (Asaas, Stripe, Mercado Pago ou PayPal)");
+      console.error("  3. Certifique-se que is_active = true");
+      console.error("  4. Certifique-se que tenant_id = NULL (gateway global)");
+      throw new Error("Nenhum gateway de pagamento ativo encontrado. Por favor, configure um gateway global no painel de Pagamentos.");
     }
 
     const gateway = gateways[0];
 
-    console.log("✅ [STEP 2] Gateway global selecionado:");
-    console.log("  - Nome:", gateway.gateway_name);
-    console.log("  - ID:", gateway.id);
-    console.log("  - tenant_id:", gateway.tenant_id);
-    console.log("  - Config keys:", Object.keys(gateway.config || {}).join(', '));
+    console.log("✅✅✅ [STEP 2] Gateway selecionado para uso:");
+    console.log("  🏷️ Nome:", gateway.gateway_name);
+    console.log("  🆔 ID:", gateway.id);
+    console.log("  🏢 tenant_id:", gateway.tenant_id);
+    console.log("  ⚙️ Config keys:", Object.keys(gateway.config || {}).join(', '));
 
     let checkoutUrl = "";
     let qrCode = "";
@@ -320,6 +356,8 @@ serve(async (req) => {
       // Get access token
       console.log("🔐 Obtendo access token do PayPal...");
       const authString = `${clientId}:${clientSecret}`;
+      // CRITICAL FIX: In Deno, we need to use proper base64 encoding
+      // btoa() is browser-only, but in Deno edge functions it's available
       const base64Auth = btoa(authString);
       
       const authResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {

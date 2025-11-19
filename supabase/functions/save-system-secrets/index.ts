@@ -56,11 +56,18 @@ serve(async (req: Request) => {
       );
     }
 
-    const { secrets }: { secrets: SecretUpdate[] } = await req.json();
+    const body = await req.json();
+    console.log("📦 Body recebido:", JSON.stringify(body, null, 2));
+    
+    const { secrets }: { secrets: SecretUpdate[] } = body;
 
     if (!Array.isArray(secrets) || secrets.length === 0) {
+      console.error("❌ Nenhum secret fornecido ou formato inválido");
       return new Response(
-        JSON.stringify({ error: "Nenhum secret fornecido para atualização" }),
+        JSON.stringify({ 
+          error: "Nenhum secret fornecido para atualização",
+          received: body
+        }),
         {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -68,31 +75,39 @@ serve(async (req: Request) => {
       );
     }
 
-    console.log(`Salvando ${secrets.length} secret(s) por usuário ${user.id}`);
+    console.log(`💾 Salvando ${secrets.length} secret(s) por usuário ${user.id}`);
 
     // Inserir ou atualizar cada secret (UPSERT)
+    console.log("🔄 Iniciando UPSERT dos secrets...");
     const results = await Promise.all(
-      secrets.map(async (secret) => {
-        const { data, error } = await supabase
-          .from("system_secrets")
-          .upsert({
-            secret_name: secret.name,
-            secret_value: secret.value,
-            created_by: user.id,
-            description: `Configurado via interface em ${new Date().toISOString()}`,
-          }, {
-            onConflict: "secret_name"
-          })
-          .select()
-          .single();
+      secrets.map(async (secret, index) => {
+        console.log(`  [${index + 1}/${secrets.length}] Processando secret: ${secret.name}`);
+        
+        try {
+          const { data, error } = await supabase
+            .from("system_secrets")
+            .upsert({
+              secret_name: secret.name,
+              secret_value: secret.value,
+              created_by: user.id,
+              description: `Configurado via interface em ${new Date().toISOString()}`,
+            }, {
+              onConflict: "secret_name"
+            })
+            .select()
+            .single();
 
-        if (error) {
-          console.error(`❌ Error saving secret ${secret.name}:`, error);
-          return { name: secret.name, success: false, error: error.message };
+          if (error) {
+            console.error(`❌ Error saving secret ${secret.name}:`, error);
+            return { name: secret.name, success: false, error: error.message };
+          }
+
+          console.log(`✅ Secret ${secret.name} salvo com sucesso (ID: ${data.id})`);
+          return { name: secret.name, success: true };
+        } catch (err: any) {
+          console.error(`❌ Exception saving secret ${secret.name}:`, err);
+          return { name: secret.name, success: false, error: err.message };
         }
-
-        console.log(`✅ Secret ${secret.name} salvo com sucesso`);
-        return { name: secret.name, success: true };
       })
     );
 

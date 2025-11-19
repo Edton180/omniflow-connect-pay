@@ -72,22 +72,45 @@ export default function PaymentRequired() {
         .eq("is_active", true)
         .is("tenant_id", null); // Apenas gateways globais
 
-      console.log("📊 [Step 2] Resultado da busca de gateways:");
-      console.log("  - Total de gateways (ativos e globais):", count);
-      console.log("  - Gateways retornados:", gateways?.length || 0);
-      console.log("  - Erro na query:", gatewayError);
+      console.log("📊📊📊 [Step 2] RESULTADO DA BUSCA DE GATEWAYS:");
+      console.log("  🔢 Count total:", count);
+      console.log("  📦 Registros retornados:", gateways?.length || 0);
+      console.log("  ❗ Erro na query?:", gatewayError ? "SIM" : "NÃO");
+      
+      if (gatewayError) {
+        console.error("❌❌❌ ERRO CRÍTICO:", JSON.stringify(gatewayError, null, 2));
+      }
       
       if (gateways && gateways.length > 0) {
-        console.log("  ✅ Gateway(s) encontrado(s):");
+        console.log("✅✅✅ Gateway(s) GLOBAL(IS) ENCONTRADO(S):");
         gateways.forEach((gw: any, idx: number) => {
-          console.log(`    ${idx + 1}. ${gw.gateway_name}`);
-          console.log(`       - ID: ${gw.id}`);
-          console.log(`       - tenant_id: ${gw.tenant_id}`);
-          console.log(`       - is_active: ${gw.is_active}`);
-          console.log(`       - Credenciais: ${gw.api_key_encrypted ? 'Configuradas' : 'Não configuradas'}`);
+          console.log(`  ${idx + 1}. ${gw.gateway_name}:`);
+          console.log(`     - ID: ${gw.id}`);
+          console.log(`     - tenant_id: ${gw.tenant_id} (NULL = GLOBAL)`);
+          console.log(`     - is_active: ${gw.is_active}`);
+          console.log(`     - API key: ${gw.api_key_encrypted ? 'CONFIGURADA ✓' : 'NÃO CONFIGURADA ✗'}`);
+          console.log(`     - Config keys: ${Object.keys(gw.config || {}).join(', ')}`);
         });
       } else {
-        console.log("  ⚠️ Nenhum gateway encontrado com os critérios");
+        console.log("⚠️⚠️⚠️ NENHUM GATEWAY ENCONTRADO!");
+        
+        // Debug: buscar TODOS os gateways para diagnóstico
+        console.log("🔎 Executando busca DEBUG (todos os gateways)...");
+        const { data: allGateways } = await supabase
+          .from("payment_gateways")
+          .select("*");
+        
+        console.log("  📋 Total na tabela:", allGateways?.length || 0);
+        if (allGateways && allGateways.length > 0) {
+          allGateways.forEach((gw: any, idx: number) => {
+            console.log(`  ${idx + 1}. ${gw.gateway_name}:`);
+            console.log(`     - is_active: ${gw.is_active}`);
+            console.log(`     - tenant_id: ${gw.tenant_id}`);
+            console.log(`     - ⚠️ Este gateway ${gw.tenant_id === null ? 'É' : 'NÃO É'} global!`);
+          });
+        } else {
+          console.log("  ⚠️ Tabela payment_gateways está VAZIA!");
+        }
       }
       
       if (gatewayError) {
@@ -97,21 +120,24 @@ export default function PaymentRequired() {
       }
 
       if (!gateways || gateways.length === 0) {
-        console.error("❌ [Error] Nenhum gateway global configurado");
-        console.error("💡 Verificações necessárias:");
-        console.error("  1. Existe gateway na tabela payment_gateways?");
-        console.error("  2. O gateway tem is_active = true?");
-        console.error("  3. O gateway tem tenant_id = NULL (global)?");
-        console.error("  4. O gateway tem credenciais configuradas?");
+        console.error("❌❌❌ [FATAL] NENHUM GATEWAY GLOBAL CONFIGURADO!");
+        console.error("💡💡💡 COMO RESOLVER:");
+        console.error("  1. Acesse Pagamentos como Super Admin");
+        console.error("  2. Clique em 'Conectar' em um gateway (Asaas, Stripe, PayPal, etc)");
+        console.error("  3. Configure as credenciais");
+        console.error("  4. Salve a configuração");
+        console.error("  5. IMPORTANTE: O gateway deve ter tenant_id = NULL");
         toast.error(
           "Nenhum gateway de pagamento configurado",
           {
-            description: "Por favor, acesse Configurações > Pagamentos e configure um gateway global.",
-            duration: 6000,
+            description: "Configure um gateway global no painel de Pagamentos (Super Admin). O gateway deve ter tenant_id = NULL.",
+            duration: 8000,
           }
         );
         return;
       }
+      
+      console.log("✅✅✅ Gateways disponíveis para uso:", gateways.map(g => g.gateway_name).join(', '));
 
       console.log("✅ [Step 3] Gateway válido encontrado:", gateways[0].gateway_name);
       console.log("🚀 [Step 4] Iniciando checkout via edge function init-checkout...");

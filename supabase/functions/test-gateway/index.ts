@@ -174,21 +174,31 @@ async function testPayPal(credentials: any) {
     const clientSecret = credentials.client_secret;
     const mode = credentials.mode || 'sandbox';
     
+    console.log("🔐 PayPal: Testing connection...");
+    console.log("  - Mode:", mode);
+    console.log("  - Client ID:", clientId ? "Present ✓" : "Missing ✗");
+    console.log("  - Client Secret:", clientSecret ? "Present ✓" : "Missing ✗");
+    
     if (!clientId || !clientSecret) {
+      console.error("❌ PayPal: Missing credentials");
       return { success: false, message: 'Client ID e Client Secret são obrigatórios' };
     }
 
-    const baseUrl = mode === 'live' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com';
-
-    console.log('Testing PayPal connection:', { mode, baseUrl });
+    const baseUrl = mode === 'live' 
+      ? 'https://api-m.paypal.com' 
+      : 'https://api-m.sandbox.paypal.com';
+    
+    console.log("🌐 PayPal: API URL:", baseUrl);
 
     // Encode credentials properly for Basic Auth
+    // btoa() works in Deno edge functions
     const authString = `${clientId}:${clientSecret}`;
     const base64Auth = btoa(authString);
 
-    console.log('Auth header created (length):', base64Auth.length);
+    console.log("✅ PayPal: Authorization header encoded (length:", base64Auth.length, ")");
 
     // Test API connectivity by getting access token
+    console.log("📡 PayPal: Requesting access token...");
     const response = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
@@ -199,11 +209,11 @@ async function testPayPal(credentials: any) {
       body: 'grant_type=client_credentials',
     });
 
-    console.log('PayPal API response status:', response.status);
+    console.log("📥 PayPal: Response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('PayPal API error:', errorText);
+      console.error("❌ PayPal: API error response:", errorText);
       
       let error;
       try {
@@ -211,6 +221,8 @@ async function testPayPal(credentials: any) {
       } catch {
         error = { error_description: errorText };
       }
+      
+      console.error("❌ PayPal: Parsed error:", error);
       
       return {
         success: false,
@@ -220,7 +232,9 @@ async function testPayPal(credentials: any) {
     }
 
     const data = await response.json();
-    console.log('PayPal test successful');
+    console.log("✅ PayPal: Connection successful!");
+    console.log("  - Token type:", data.token_type);
+    console.log("  - Expires in:", data.expires_in, "seconds");
 
     return {
       success: true,
@@ -229,7 +243,7 @@ async function testPayPal(credentials: any) {
       tokenType: data.token_type,
     };
   } catch (error: any) {
-    console.error('PayPal test error:', error);
+    console.error("❌ PayPal: Exception during test:", error);
     return { success: false, message: `Erro ao conectar: ${error.message}` };
   }
 }
