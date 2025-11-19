@@ -155,34 +155,54 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         return;
       }
 
+      console.log("🔐 Verificando autenticação e permissões...");
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      if (!user) {
+        console.error("❌ Usuário não autenticado");
+        throw new Error('Usuário não autenticado');
+      }
+      console.log("✅ Usuário autenticado:", user.id);
 
       // CRÍTICO: Verificar se é Super Admin
-      const { data: isSuperAdmin } = await supabase
+      console.log("🔍 Verificando se é Super Admin...");
+      const { data: isSuperAdmin, error: roleError } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "super_admin")
         .maybeSingle();
 
-      console.log("Salvando gateway - Super Admin:", !!isSuperAdmin);
-      console.log("Gateway:", gateway.id);
+      if (roleError) {
+        console.error("❌ Erro ao verificar role:", roleError);
+      }
+
+      console.log("📋 É Super Admin?", !!isSuperAdmin);
+      console.log("🏷️ Gateway a ser salvo:", gateway.id);
 
       // APENAS Super Admins podem configurar gateways globais
       if (!isSuperAdmin) {
+        console.error("❌ Acesso negado: usuário não é Super Admin");
         throw new Error('Apenas Super Admins podem configurar gateways de pagamento globais');
       }
+      console.log("✅ Permissões confirmadas");
 
       // Buscar gateway global existente
-      const { data: existingGateway } = await supabase
+      console.log("🔍 Buscando gateway global existente...");
+      const { data: existingGateway, error: searchError } = await supabase
         .from("payment_gateways")
         .select("id")
         .eq("gateway_name", gateway.id)
         .is("tenant_id", null)
         .maybeSingle();
 
-      console.log("Gateway existente encontrado:", !!existingGateway);
+      if (searchError) {
+        console.error("⚠️ Erro ao buscar gateway existente:", searchError);
+      }
+      
+      console.log("📋 Gateway existente encontrado?", !!existingGateway);
+      if (existingGateway) {
+        console.log("  - ID do gateway existente:", existingGateway.id);
+      }
 
       // CRÍTICO: Sempre salvar com tenant_id = NULL (gateway global)
       const gatewayData: any = {
@@ -193,7 +213,11 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
         tenant_id: null, // SEMPRE NULL - gateway global
       };
 
-      console.log("Salvando gateway com tenant_id:", gatewayData.tenant_id);
+      console.log("💾 Preparando para salvar gateway:");
+      console.log("  - gateway_name:", gatewayData.gateway_name);
+      console.log("  - tenant_id:", gatewayData.tenant_id, "(NULL = GLOBAL)");
+      console.log("  - is_active:", gatewayData.is_active);
+      console.log("  - Tem credenciais?", !!gatewayData.api_key_encrypted);
 
       let error;
       
