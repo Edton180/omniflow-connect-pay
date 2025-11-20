@@ -131,7 +131,14 @@ export const PaymentSecretsTab = () => {
         body: { secrets: secretsToSave },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error from edge function:", error);
+        throw new Error(error.message || "Erro ao salvar secrets");
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || "Erro desconhecido ao salvar secrets");
+      }
 
       toast.success(data.message || `${secretsToSave.length} secret(s) salvos com sucesso`);
 

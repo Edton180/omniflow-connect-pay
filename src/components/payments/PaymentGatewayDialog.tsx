@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, XCircle, Info } from "lucide-react";
@@ -20,6 +21,7 @@ interface PaymentGatewayDialogProps {
 // Validation schemas
 const asaasSchema = z.object({
   api_key: z.string().min(1, "API Key é obrigatória").max(500),
+  mode: z.enum(['sandbox', 'production']).default('production'),
 });
 
 const stripeSchema = z.object({
@@ -269,6 +271,24 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
       case 'asaas':
         return (
           <>
+            <div className="space-y-2">
+              <Label htmlFor="mode">Ambiente *</Label>
+              <Select
+                value={credentials.mode || 'production'}
+                onValueChange={(value) => setCredentials({ ...credentials, mode: value })}
+              >
+                <SelectTrigger id="mode">
+                  <SelectValue placeholder="Selecione o ambiente" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="sandbox">Sandbox (Testes)</SelectItem>
+                  <SelectItem value="production">Produção</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Escolha o ambiente que corresponde à sua API Key
+              </p>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="api_key">API Key *</Label>
               <Input
