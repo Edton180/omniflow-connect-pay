@@ -53,12 +53,19 @@ serve(async (req) => {
 async function testAsaas(credentials: any) {
   try {
     const apiKey = credentials.api_key;
+    const mode = credentials.mode || 'production';
+    
     if (!apiKey) {
       return { success: false, message: 'API Key é obrigatória' };
     }
 
+    // Determine API URL based on mode
+    const baseUrl = mode === 'sandbox' 
+      ? 'https://sandbox.asaas.com/api/v3' 
+      : 'https://api.asaas.com/v3';
+
     // Test API connectivity by fetching account info
-    const response = await fetch('https://api.asaas.com/v3/myAccount', {
+    const response = await fetch(`${baseUrl}/myAccount`, {
       headers: {
         'access_token': apiKey,
         'Content-Type': 'application/json',
@@ -71,7 +78,7 @@ async function testAsaas(credentials: any) {
       if (data.errors?.[0]?.code === 'invalid_environment') {
         return {
           success: false,
-          message: 'API Key inválida ou de ambiente incorreto (Sandbox vs Produção)',
+          message: 'API Key inválida ou de ambiente incorreto (Sandbox vs Produção). Verifique se a API Key corresponde ao ambiente selecionado.',
           details: data.errors[0].description,
         };
       }
@@ -87,7 +94,7 @@ async function testAsaas(credentials: any) {
       message: 'Conexão estabelecida com sucesso',
       accountName: data.name,
       email: data.email,
-      environment: apiKey.includes('sandbox') ? 'Sandbox' : 'Produção',
+      environment: mode === 'sandbox' ? 'Sandbox' : 'Produção',
     };
   } catch (error: any) {
     return { success: false, message: `Erro ao conectar: ${error.message}` };
