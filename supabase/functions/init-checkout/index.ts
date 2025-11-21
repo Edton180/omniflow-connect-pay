@@ -191,14 +191,35 @@ serve(async (req) => {
         // Criar customer no ASAAS
         console.log("  - Criando novo customer...");
         
-        // CPF/CNPJ: usar o do tenant se válido, senão gerar um genérico para sandbox
-        let cpfCnpj = invoice.tenant?.cnpj_cpf;
+        // Função para validar CPF básico (verificar se não é sequência de números iguais)
+        const isValidCPF = (cpf: string): boolean => {
+          if (!cpf || cpf.length !== 11) return false;
+          // Remover caracteres não numéricos
+          const cleanCPF = cpf.replace(/\D/g, '');
+          if (cleanCPF.length !== 11) return false;
+          // Verificar se não é sequência de números iguais (00000000000, 11111111111, etc)
+          if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
+          return true;
+        };
         
-        // Validar se o CPF/CNPJ existe e tem formato válido
-        if (!cpfCnpj || cpfCnpj.length < 11) {
-          // Para sandbox, podemos usar um CPF de teste válido
-          cpfCnpj = mode === 'sandbox' ? '24971563792' : null; // CPF válido para testes
-          console.log("  ⚠️ CPF/CNPJ não configurado, usando valor padrão para", mode);
+        // CPF/CNPJ: usar o do tenant se válido, senão gerar um genérico para sandbox
+        let cpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, ''); // Remove formatação
+        
+        // Validar CPF/CNPJ
+        const isValid = cpfCnpj && (isValidCPF(cpfCnpj) || cpfCnpj.length === 14);
+        
+        if (!isValid) {
+          if (mode === 'sandbox') {
+            // Para sandbox, usar CPF de teste válido
+            cpfCnpj = '24971563792';
+            console.log("  ⚠️ CPF/CNPJ inválido ou não configurado, usando CPF de teste para sandbox");
+          } else {
+            // Para produção, não enviar CPF/CNPJ se inválido
+            cpfCnpj = undefined;
+            console.log("  ⚠️ CPF/CNPJ inválido ou não configurado, criando customer sem CPF/CNPJ");
+          }
+        } else {
+          console.log("  ✅ CPF/CNPJ válido:", cpfCnpj);
         }
         
         const customerPayload: any = {
