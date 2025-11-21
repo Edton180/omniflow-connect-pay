@@ -56,8 +56,22 @@ serve(async (req: Request) => {
       );
     }
 
-    const body = await req.json();
-    console.log("📦 Body recebido:", JSON.stringify(body, null, 2));
+    let body;
+    try {
+      body = await req.json();
+      console.log("📦 Body recebido:", JSON.stringify(body, null, 2));
+    } catch (e: any) {
+      console.error("❌ Erro ao fazer parse do body:", e.message);
+      return new Response(
+        JSON.stringify({ 
+          error: "Erro ao processar requisição: " + e.message
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
     
     const { secrets }: { secrets: SecretUpdate[] } = body;
 

@@ -19,12 +19,16 @@ serve(async (req) => {
 
     const body = await req.json();
     const invoiceId = body.invoiceId || body.invoice_id;
+    const preferredGateway = body.gateway; // Gateway preferido pelo usuário
 
     if (!invoiceId) {
       throw new Error("invoiceId é obrigatório");
     }
 
     console.log("Iniciando checkout para fatura:", invoiceId);
+    if (preferredGateway) {
+      console.log("Gateway preferido:", preferredGateway);
+    }
 
     // Buscar fatura com dados do tenant
     const { data: invoice, error: invoiceError } = await supabaseClient
@@ -122,7 +126,18 @@ serve(async (req) => {
       throw new Error("Nenhum gateway de pagamento ativo encontrado. Por favor, configure um gateway global no painel de Pagamentos.");
     }
 
-    const gateway = gateways[0];
+    // Selecionar gateway - usar o preferido ou o primeiro disponível
+    let gateway = gateways[0];
+    
+    if (preferredGateway) {
+      const preferred = gateways.find(g => g.gateway_name === preferredGateway);
+      if (preferred) {
+        gateway = preferred;
+        console.log("✅ Usando gateway preferido:", preferredGateway);
+      } else {
+        console.log("⚠️ Gateway preferido não encontrado, usando primeiro disponível");
+      }
+    }
 
     console.log("✅✅✅ [STEP 2] Gateway selecionado para uso:");
     console.log("  🏷️ Nome:", gateway.gateway_name);
@@ -145,12 +160,20 @@ serve(async (req) => {
     // Lógica por gateway
     if (gatewayName === "asaas") {
       const apiKey = gateway.config?.api_key;
+      const mode = gateway.config?.mode || 'production';
       
       if (!apiKey) {
         throw new Error("API Key do ASAAS não configurada");
       }
 
+      // Determinar URL base conforme o modo
+      const asaasBaseUrl = mode === 'sandbox' 
+        ? 'https://sandbox.asaas.com/api/v3'
+        : 'https://api.asaas.com/v3';
+      
       console.log("Criando/buscando customer ASAAS...");
+      console.log("  - Modo:", mode);
+      console.log("  - Base URL:", asaasBaseUrl);
 
       // Buscar ou criar customer
       let customerId: string;
@@ -165,7 +188,7 @@ serve(async (req) => {
         customerId = existingCustomer.gateway_customer_id;
       } else {
         // Criar customer no ASAAS
-        const customerResponse = await fetch("https://www.asaas.com/api/v3/customers", {
+        const customerResponse = await fetch(`${asaasBaseUrl}/customers`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -197,7 +220,7 @@ serve(async (req) => {
       }
 
       // Criar cobrança PIX
-      const asaasResponse = await fetch("https://www.asaas.com/api/v3/payments", {
+      const asaasResponse = await fetch(`${asaasBaseUrl}/payments`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +255,7 @@ serve(async (req) => {
       
       // Buscar QR Code PIX
       const qrResponse = await fetch(
-        `https://www.asaas.com/api/v3/payments/${externalId}/pixQrCode`,
+        `${asaasBaseUrl}/payments/${externalId}/pixQrCode`,
         {
           headers: { "access_token": apiKey },
         }
