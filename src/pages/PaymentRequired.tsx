@@ -14,6 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export default function PaymentRequired() {
   const navigate = useNavigate();
@@ -22,6 +30,10 @@ export default function PaymentRequired() {
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [checkoutData, setCheckoutData] = useState<any>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [availableGateways, setAvailableGateways] = useState<any[]>([]);
+  const [selectedGateway, setSelectedGateway] = useState<string>("");
+  const [gatewaySelectionDialogOpen, setGatewaySelectionDialogOpen] = useState(false);
+  const [pendingInvoiceId, setPendingInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     loadInvoices();
@@ -58,95 +70,57 @@ export default function PaymentRequired() {
   };
 
   const handlePayInvoice = async (invoiceId: string) => {
-    setProcessingId(invoiceId);
     try {
       console.log("💳 Iniciando processo de pagamento para fatura:", invoiceId);
 
-      // VERIFICAÇÃO: Buscar gateway global ativo antes de tentar iniciar checkout
-      console.log("🔍 [Step 1] Verificando gateways globais ativos...");
-      console.log("  - Critério: is_active = true AND tenant_id IS NULL");
-      
-      const { data: gateways, error: gatewayError, count } = await supabase
+      // Buscar gateways globais ativos
+      const { data: gateways, error: gatewayError } = await supabase
         .from("payment_gateways")
-        .select("*", { count: 'exact' })
+        .select("*")
         .eq("is_active", true)
-        .is("tenant_id", null); // Apenas gateways globais
-
-      console.log("📊📊📊 [Step 2] RESULTADO DA BUSCA DE GATEWAYS:");
-      console.log("  🔢 Count total:", count);
-      console.log("  📦 Registros retornados:", gateways?.length || 0);
-      console.log("  ❗ Erro na query?:", gatewayError ? "SIM" : "NÃO");
+        .is("tenant_id", null);
       
       if (gatewayError) {
-        console.error("❌❌❌ ERRO CRÍTICO:", JSON.stringify(gatewayError, null, 2));
-      }
-      
-      if (gateways && gateways.length > 0) {
-        console.log("✅✅✅ Gateway(s) GLOBAL(IS) ENCONTRADO(S):");
-        gateways.forEach((gw: any, idx: number) => {
-          console.log(`  ${idx + 1}. ${gw.gateway_name}:`);
-          console.log(`     - ID: ${gw.id}`);
-          console.log(`     - tenant_id: ${gw.tenant_id} (NULL = GLOBAL)`);
-          console.log(`     - is_active: ${gw.is_active}`);
-          console.log(`     - API key: ${gw.api_key_encrypted ? 'CONFIGURADA ✓' : 'NÃO CONFIGURADA ✗'}`);
-          console.log(`     - Config keys: ${Object.keys(gw.config || {}).join(', ')}`);
-        });
-      } else {
-        console.log("⚠️⚠️⚠️ NENHUM GATEWAY ENCONTRADO!");
-        
-        // Debug: buscar TODOS os gateways para diagnóstico
-        console.log("🔎 Executando busca DEBUG (todos os gateways)...");
-        const { data: allGateways } = await supabase
-          .from("payment_gateways")
-          .select("*");
-        
-        console.log("  📋 Total na tabela:", allGateways?.length || 0);
-        if (allGateways && allGateways.length > 0) {
-          allGateways.forEach((gw: any, idx: number) => {
-            console.log(`  ${idx + 1}. ${gw.gateway_name}:`);
-            console.log(`     - is_active: ${gw.is_active}`);
-            console.log(`     - tenant_id: ${gw.tenant_id}`);
-            console.log(`     - ⚠️ Este gateway ${gw.tenant_id === null ? 'É' : 'NÃO É'} global!`);
-          });
-        } else {
-          console.log("  ⚠️ Tabela payment_gateways está VAZIA!");
-        }
-      }
-      
-      if (gatewayError) {
-        console.error("❌ [Error] Erro ao buscar gateways:", gatewayError);
-        toast.error("Erro ao verificar gateways de pagamento: " + gatewayError.message);
+        console.error("❌ Erro ao buscar gateways:", gatewayError);
+        toast.error("Erro ao verificar gateways de pagamento");
         return;
       }
 
       if (!gateways || gateways.length === 0) {
-        console.error("❌❌❌ [FATAL] NENHUM GATEWAY GLOBAL CONFIGURADO!");
-        console.error("💡💡💡 COMO RESOLVER:");
-        console.error("  1. Acesse Pagamentos como Super Admin");
-        console.error("  2. Clique em 'Conectar' em um gateway (Asaas, Stripe, PayPal, etc)");
-        console.error("  3. Configure as credenciais");
-        console.error("  4. Salve a configuração");
-        console.error("  5. IMPORTANTE: O gateway deve ter tenant_id = NULL");
-        toast.error(
-          "Nenhum gateway de pagamento configurado",
-          {
-            description: "Configure um gateway global no painel de Pagamentos (Super Admin). O gateway deve ter tenant_id = NULL.",
-            duration: 8000,
-          }
-        );
+        toast.error("Nenhum gateway de pagamento configurado");
         return;
       }
-      
-      console.log("✅✅✅ Gateways disponíveis para uso:", gateways.map(g => g.gateway_name).join(', '));
 
-      console.log("✅ [Step 3] Gateway válido encontrado:", gateways[0].gateway_name);
-      console.log("🚀 [Step 4] Iniciando checkout via edge function init-checkout...");
+      setAvailableGateways(gateways);
+      
+      // Se há apenas 1 gateway, usar diretamente
+      if (gateways.length === 1) {
+        await processPayment(invoiceId, gateways[0].gateway_name);
+      } else {
+        // Se há múltiplos gateways, mostrar seleção
+        setPendingInvoiceId(invoiceId);
+        setSelectedGateway(gateways[0].gateway_name);
+        setGatewaySelectionDialogOpen(true);
+      }
+    } catch (error: any) {
+      console.error("❌ Erro ao iniciar pagamento:", error);
+      toast.error(error.message || "Erro ao iniciar pagamento");
+    }
+  };
+
+  const processPayment = async (invoiceId: string, gatewayName: string) => {
+    setProcessingId(invoiceId);
+    setGatewaySelectionDialogOpen(false);
+    
+    try {
+      console.log("🚀 Processando pagamento...");
       console.log("  - Invoice ID:", invoiceId);
-      console.log("  - Gateway selecionado:", gateways[0].gateway_name);
+      console.log("  - Gateway:", gatewayName);
 
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
           invoiceId: invoiceId,
+          gateway: gatewayName,
         },
       });
 
@@ -273,6 +247,44 @@ export default function PaymentRequired() {
         </CardContent>
       </Card>
 
+      {/* Dialog de Seleção de Gateway */}
+      <Dialog open={gatewaySelectionDialogOpen} onOpenChange={setGatewaySelectionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Selecione o Método de Pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Gateway de Pagamento</Label>
+              <Select value={selectedGateway} onValueChange={setSelectedGateway}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um gateway" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableGateways.map((gateway) => (
+                    <SelectItem key={gateway.id} value={gateway.gateway_name}>
+                      {gateway.gateway_name === "asaas" && "ASAAS"}
+                      {gateway.gateway_name === "stripe" && "Stripe"}
+                      {gateway.gateway_name === "mercadopago" && "Mercado Pago"}
+                      {gateway.gateway_name === "paypal" && "PayPal"}
+                      {gateway.gateway_name === "infinitepay" && "InfinitePay"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button 
+              className="w-full" 
+              onClick={() => pendingInvoiceId && processPayment(pendingInvoiceId, selectedGateway)}
+              disabled={!selectedGateway}
+            >
+              Continuar com {selectedGateway}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Checkout */}
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
         <DialogContent>
           <DialogHeader>
