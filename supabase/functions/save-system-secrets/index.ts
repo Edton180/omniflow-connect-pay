@@ -20,17 +20,22 @@ serve(async (req: Request) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const authHeader = req.headers.get("Authorization")!;
 
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    // Cliente para verificação de autenticação (com token do usuário)
+    const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
       global: { headers: { Authorization: authHeader } },
     });
+
+    // Cliente com privilégios elevados para operações no banco
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
     // Verificar se usuário é super admin
     const {
       data: { user },
-    } = await supabase.auth.getUser();
+    } = await supabaseAuth.auth.getUser();
 
     if (!user) {
       return new Response(JSON.stringify({ error: "Não autenticado" }), {
@@ -39,7 +44,7 @@ serve(async (req: Request) => {
       });
     }
 
-    const { data: roles } = await supabase
+    const { data: roles } = await supabaseAuth
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
@@ -91,14 +96,14 @@ serve(async (req: Request) => {
 
     console.log(`💾 Salvando ${secrets.length} secret(s) por usuário ${user.id}`);
 
-    // Inserir ou atualizar cada secret (UPSERT)
+    // Inserir ou atualizar cada secret (UPSERT) usando cliente admin
     console.log("🔄 Iniciando UPSERT dos secrets...");
     const results = await Promise.all(
       secrets.map(async (secret, index) => {
         console.log(`  [${index + 1}/${secrets.length}] Processando secret: ${secret.name}`);
         
         try {
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from("system_secrets")
             .upsert({
               secret_name: secret.name,
