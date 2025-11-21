@@ -186,19 +186,40 @@ serve(async (req) => {
 
       if (existingCustomer?.gateway_customer_id) {
         customerId = existingCustomer.gateway_customer_id;
+        console.log("  - Customer existente:", customerId);
       } else {
         // Criar customer no ASAAS
+        console.log("  - Criando novo customer...");
+        
+        // CPF/CNPJ: usar o do tenant se válido, senão gerar um genérico para sandbox
+        let cpfCnpj = invoice.tenant?.cnpj_cpf;
+        
+        // Validar se o CPF/CNPJ existe e tem formato válido
+        if (!cpfCnpj || cpfCnpj.length < 11) {
+          // Para sandbox, podemos usar um CPF de teste válido
+          cpfCnpj = mode === 'sandbox' ? '24971563792' : null; // CPF válido para testes
+          console.log("  ⚠️ CPF/CNPJ não configurado, usando valor padrão para", mode);
+        }
+        
+        const customerPayload: any = {
+          name: invoice.tenant?.name || 'Cliente',
+          email: `${invoice.tenant?.slug || 'cliente'}@omniflow.app`,
+        };
+        
+        // Só adicionar cpfCnpj se tiver um valor válido
+        if (cpfCnpj) {
+          customerPayload.cpfCnpj = cpfCnpj;
+        }
+        
+        console.log("  - Payload do customer:", JSON.stringify(customerPayload, null, 2));
+        
         const customerResponse = await fetch(`${asaasBaseUrl}/customers`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "access_token": apiKey,
           },
-          body: JSON.stringify({
-            name: invoice.tenant.name,
-            cpfCnpj: invoice.tenant.cnpj_cpf,
-            email: `${invoice.tenant.slug}@omniflow.app`,
-          }),
+          body: JSON.stringify(customerPayload),
         });
 
         if (!customerResponse.ok) {
