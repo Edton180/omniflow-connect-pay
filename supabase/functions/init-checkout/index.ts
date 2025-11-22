@@ -216,46 +216,33 @@ serve(async (req) => {
         // Criar customer no ASAAS
         console.log("  - Criando novo customer...");
         
-        // CPF/CNPJ é completamente opcional - não enviar se inválido
-        const rawCpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, '');
-        
-        // Criar payload básico SEM CPF/CNPJ
+        // Criar payload básico
         const customerPayload: any = {
           name: invoice.tenant?.name || 'Cliente OmniFlow',
           email: `${invoice.tenant?.slug || 'cliente'}@omniflow.app`,
         };
         
-        // Validações rigorosas antes de adicionar CPF/CNPJ
-        let shouldAddDocument = false;
-        
-        if (rawCpfCnpj) {
-          // 1. Verificar tamanho (11 para CPF, 14 para CNPJ)
-          const isValidLength = rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14;
-          
-          // 2. Verificar se não é sequência de números iguais (00000000000, 11111111111, etc)
-          const isSequence = /^(\d)\1+$/.test(rawCpfCnpj);
-          
-          // 3. Verificar se não começa com muitos zeros (CPFs/CNPJs inválidos comuns)
-          const startsWithManyZeros = /^0{3,}/.test(rawCpfCnpj);
-          
-          // 4. Verificar se tem variação nos dígitos (não pode ser 00200002024, etc)
-          const uniqueDigits = new Set(rawCpfCnpj.split('')).size;
-          const hasVariation = uniqueDigits >= 3; // Pelo menos 3 dígitos diferentes
-          
-          shouldAddDocument = isValidLength && !isSequence && !startsWithManyZeros && hasVariation;
-          
-          if (shouldAddDocument) {
-            customerPayload.cpfCnpj = rawCpfCnpj;
-            console.log("  ✅ CPF/CNPJ validado e adicionado:", rawCpfCnpj.substring(0, 3) + '***');
-          } else {
-            console.log("  ⚠️ CPF/CNPJ inválido detectado, NÃO será enviado");
-            console.log("     - Tamanho correto?", isValidLength);
-            console.log("     - É sequência?", isSequence);
-            console.log("     - Muitos zeros?", startsWithManyZeros);
-            console.log("     - Tem variação?", hasVariation);
-          }
+        // CRITICAL: Em modo SANDBOX, NUNCA adicionar CPF/CNPJ
+        // Dados de teste podem causar erros de validação no ASAAS
+        if (mode === 'sandbox') {
+          console.log("  🧪 Modo SANDBOX: customer será criado SEM documento (recomendado para testes)");
         } else {
-          console.log("  ℹ️ Nenhum CPF/CNPJ configurado - customer será criado sem documento");
+          // Em PRODUÇÃO, tentar adicionar CPF/CNPJ se válido
+          const rawCpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, '');
+          
+          if (rawCpfCnpj && (rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14)) {
+            // Validação básica: não aceitar sequências de números iguais
+            const isSequence = /^(\d)\1+$/.test(rawCpfCnpj);
+            
+            if (!isSequence) {
+              customerPayload.cpfCnpj = rawCpfCnpj;
+              console.log("  ✅ CPF/CNPJ adicionado (produção):", rawCpfCnpj.substring(0, 3) + '***');
+            } else {
+              console.log("  ⚠️ CPF/CNPJ é sequência inválida, criando sem documento");
+            }
+          } else {
+            console.log("  ℹ️ CPF/CNPJ ausente ou inválido, criando customer sem documento");
+          }
         }
         
         console.log("  - Payload do customer:", JSON.stringify(customerPayload, null, 2));
