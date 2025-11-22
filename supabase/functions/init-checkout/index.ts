@@ -216,32 +216,46 @@ serve(async (req) => {
         // Criar customer no ASAAS
         console.log("  - Criando novo customer...");
         
-        // CPF/CNPJ é completamente opcional
-        // Remover formatação se existir
+        // CPF/CNPJ é completamente opcional - não enviar se inválido
         const rawCpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, '');
         
-        // Criar payload básico sem CPF/CNPJ
+        // Criar payload básico SEM CPF/CNPJ
         const customerPayload: any = {
           name: invoice.tenant?.name || 'Cliente OmniFlow',
           email: `${invoice.tenant?.slug || 'cliente'}@omniflow.app`,
         };
         
-        // Apenas adicionar CPF/CNPJ se:
-        // 1. Existir um valor
-        // 2. Tiver pelo menos 11 dígitos (CPF) ou 14 dígitos (CNPJ)
-        // 3. Não for uma sequência de números iguais
-        if (rawCpfCnpj && rawCpfCnpj.length >= 11) {
-          // Validar se não é sequência de números iguais
+        // Validações rigorosas antes de adicionar CPF/CNPJ
+        let shouldAddDocument = false;
+        
+        if (rawCpfCnpj) {
+          // 1. Verificar tamanho (11 para CPF, 14 para CNPJ)
+          const isValidLength = rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14;
+          
+          // 2. Verificar se não é sequência de números iguais (00000000000, 11111111111, etc)
           const isSequence = /^(\d)\1+$/.test(rawCpfCnpj);
           
-          if (!isSequence && (rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14)) {
+          // 3. Verificar se não começa com muitos zeros (CPFs/CNPJs inválidos comuns)
+          const startsWithManyZeros = /^0{3,}/.test(rawCpfCnpj);
+          
+          // 4. Verificar se tem variação nos dígitos (não pode ser 00200002024, etc)
+          const uniqueDigits = new Set(rawCpfCnpj.split('')).size;
+          const hasVariation = uniqueDigits >= 3; // Pelo menos 3 dígitos diferentes
+          
+          shouldAddDocument = isValidLength && !isSequence && !startsWithManyZeros && hasVariation;
+          
+          if (shouldAddDocument) {
             customerPayload.cpfCnpj = rawCpfCnpj;
-            console.log("  ✅ CPF/CNPJ adicionado:", rawCpfCnpj.substring(0, 3) + '***');
+            console.log("  ✅ CPF/CNPJ validado e adicionado:", rawCpfCnpj.substring(0, 3) + '***');
           } else {
-            console.log("  ⚠️ CPF/CNPJ inválido, criando customer sem documento");
+            console.log("  ⚠️ CPF/CNPJ inválido detectado, NÃO será enviado");
+            console.log("     - Tamanho correto?", isValidLength);
+            console.log("     - É sequência?", isSequence);
+            console.log("     - Muitos zeros?", startsWithManyZeros);
+            console.log("     - Tem variação?", hasVariation);
           }
         } else {
-          console.log("  ℹ️ Nenhum CPF/CNPJ fornecido, criando customer sem documento");
+          console.log("  ℹ️ Nenhum CPF/CNPJ configurado - customer será criado sem documento");
         }
         
         console.log("  - Payload do customer:", JSON.stringify(customerPayload, null, 2));
