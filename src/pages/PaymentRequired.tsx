@@ -113,6 +113,15 @@ export default function PaymentRequired() {
     setGatewaySelectionDialogOpen(false);
     
     try {
+      // Validações básicas
+      if (!invoiceId || typeof invoiceId !== 'string') {
+        throw new Error("ID da fatura inválido");
+      }
+
+      if (!gatewayName || typeof gatewayName !== 'string') {
+        throw new Error("Gateway de pagamento não selecionado");
+      }
+
       console.log("🚀 Processando pagamento...");
       console.log("  - Invoice ID:", invoiceId);
       console.log("  - Gateway:", gatewayName);
@@ -138,21 +147,33 @@ export default function PaymentRequired() {
         throw new Error(data.error);
       }
 
-      if (!data?.checkout_url) {
-        console.error("❌ [Error] URL de checkout não retornada");
+      if (!data?.checkout_url && !data?.qr_code) {
+        console.error("❌ [Error] Nenhum método de pagamento retornado");
         console.error("  - Data recebido:", data);
-        throw new Error("URL de checkout não foi gerada. Verifique a configuração do gateway.");
+        throw new Error("Método de pagamento não foi gerado. Verifique a configuração do gateway.");
       }
 
       console.log("✅ [Step 6] Checkout iniciado com sucesso!");
       console.log("  - Gateway:", data.gateway);
-      console.log("  - URL:", data.checkout_url);
+      console.log("  - URL:", data.checkout_url ? "Presente" : "Não presente");
+      console.log("  - QR Code:", data.qr_code ? "Presente" : "Não presente");
       
       setCheckoutData(data);
       setCheckoutDialogOpen(true);
+      toast.success("Checkout gerado com sucesso!");
     } catch (error: any) {
       console.error("❌ [Fatal Error] Error initiating payment:", error);
-      toast.error(error.message || "Erro ao iniciar pagamento");
+      
+      // Melhorar mensagem de erro para o usuário
+      let userMessage = error.message || "Erro ao iniciar pagamento";
+      
+      if (userMessage.includes("API Key")) {
+        userMessage = "Erro de configuração do gateway. Contate o administrador.";
+      } else if (userMessage.includes("conexão") || userMessage.includes("fetch")) {
+        userMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+      }
+      
+      toast.error(userMessage);
     } finally {
       setProcessingId(null);
     }

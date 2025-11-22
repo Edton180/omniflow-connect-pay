@@ -17,12 +17,25 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    const body = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      console.error("❌ Erro ao fazer parse do body:", e);
+      throw new Error("Requisição inválida: body JSON malformado");
+    }
+
     const invoiceId = body.invoiceId || body.invoice_id;
     const preferredGateway = body.gateway; // Gateway preferido pelo usuário
 
     if (!invoiceId) {
       throw new Error("invoiceId é obrigatório");
+    }
+
+    // Validar formato do UUID
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(invoiceId)) {
+      throw new Error("invoiceId inválido (formato UUID esperado)");
     }
 
     console.log("Iniciando checkout para fatura:", invoiceId);
@@ -35,16 +48,28 @@ serve(async (req) => {
       .from("invoices")
       .select(`
         *,
-        tenant:tenants(id, name, cnpj_cpf, whatsapp, address, city, state, zip_code)
+        tenant:tenants(id, name, cnpj_cpf, whatsapp, address, city, state, zip_code, slug)
       `)
       .eq("id", invoiceId)
       .single();
 
-    if (invoiceError || !invoice) {
+    if (invoiceError) {
+      console.error("❌ Erro ao buscar fatura:", invoiceError);
+      throw new Error("Fatura não encontrada: " + invoiceError.message);
+    }
+
+    if (!invoice) {
       throw new Error("Fatura não encontrada");
     }
 
+    if (invoice.status === 'paid') {
+      throw new Error("Esta fatura já foi paga");
+    }
+
     console.log("Fatura encontrada:", invoice.id);
+    console.log("  - Tenant:", invoice.tenant?.name);
+    console.log("  - Valor:", invoice.amount, invoice.currency);
+    console.log("  - Status:", invoice.status);
 
     // ULTRA CRITICAL: Buscar gateways GLOBAIS com múltiplas verificações
     console.log("🔍🔍🔍 [STEP 2] Iniciando busca de gateways...");
@@ -191,45 +216,32 @@ serve(async (req) => {
         // Criar customer no ASAAS
         console.log("  - Criando novo customer...");
         
-        // Função para validar CPF básico (verificar se não é sequência de números iguais)
-        const isValidCPF = (cpf: string): boolean => {
-          if (!cpf || cpf.length !== 11) return false;
-          // Remover caracteres não numéricos
-          const cleanCPF = cpf.replace(/\D/g, '');
-          if (cleanCPF.length !== 11) return false;
-          // Verificar se não é sequência de números iguais (00000000000, 11111111111, etc)
-          if (/^(\d)\1{10}$/.test(cleanCPF)) return false;
-          return true;
-        };
+        // CPF/CNPJ é completamente opcional
+        // Remover formatação se existir
+        const rawCpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, '');
         
-        // CPF/CNPJ: usar o do tenant se válido, senão gerar um genérico para sandbox
-        let cpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, ''); // Remove formatação
-        
-        // Validar CPF/CNPJ
-        const isValid = cpfCnpj && (isValidCPF(cpfCnpj) || cpfCnpj.length === 14);
-        
-        if (!isValid) {
-          if (mode === 'sandbox') {
-            // Para sandbox, usar CPF de teste válido
-            cpfCnpj = '24971563792';
-            console.log("  ⚠️ CPF/CNPJ inválido ou não configurado, usando CPF de teste para sandbox");
-          } else {
-            // Para produção, não enviar CPF/CNPJ se inválido
-            cpfCnpj = undefined;
-            console.log("  ⚠️ CPF/CNPJ inválido ou não configurado, criando customer sem CPF/CNPJ");
-          }
-        } else {
-          console.log("  ✅ CPF/CNPJ válido:", cpfCnpj);
-        }
-        
+        // Criar payload básico sem CPF/CNPJ
         const customerPayload: any = {
-          name: invoice.tenant?.name || 'Cliente',
+          name: invoice.tenant?.name || 'Cliente OmniFlow',
           email: `${invoice.tenant?.slug || 'cliente'}@omniflow.app`,
         };
         
-        // Só adicionar cpfCnpj se tiver um valor válido
-        if (cpfCnpj) {
-          customerPayload.cpfCnpj = cpfCnpj;
+        // Apenas adicionar CPF/CNPJ se:
+        // 1. Existir um valor
+        // 2. Tiver pelo menos 11 dígitos (CPF) ou 14 dígitos (CNPJ)
+        // 3. Não for uma sequência de números iguais
+        if (rawCpfCnpj && rawCpfCnpj.length >= 11) {
+          // Validar se não é sequência de números iguais
+          const isSequence = /^(\d)\1+$/.test(rawCpfCnpj);
+          
+          if (!isSequence && (rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14)) {
+            customerPayload.cpfCnpj = rawCpfCnpj;
+            console.log("  ✅ CPF/CNPJ adicionado:", rawCpfCnpj.substring(0, 3) + '***');
+          } else {
+            console.log("  ⚠️ CPF/CNPJ inválido, criando customer sem documento");
+          }
+        } else {
+          console.log("  ℹ️ Nenhum CPF/CNPJ fornecido, criando customer sem documento");
         }
         
         console.log("  - Payload do customer:", JSON.stringify(customerPayload, null, 2));
@@ -243,10 +255,25 @@ serve(async (req) => {
           body: JSON.stringify(customerPayload),
         });
 
+        console.log("  - Status da resposta:", customerResponse.status);
+
         if (!customerResponse.ok) {
-          const error = await customerResponse.text();
-          console.error("Erro ao criar customer:", error);
-          throw new Error(`Erro ao criar cliente: ${error}`);
+          const errorText = await customerResponse.text();
+          console.error("❌ Erro ao criar customer ASAAS:");
+          console.error("  - Status:", customerResponse.status);
+          console.error("  - Response:", errorText);
+          
+          let errorMessage = "Erro ao criar cliente no ASAAS";
+          try {
+            const errorJson = JSON.parse(errorText);
+            if (errorJson.errors && errorJson.errors.length > 0) {
+              errorMessage = errorJson.errors.map((e: any) => e.description).join(", ");
+            }
+          } catch (e) {
+            errorMessage = errorText;
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const customer = await customerResponse.json();
@@ -278,17 +305,29 @@ serve(async (req) => {
         }),
       });
 
+      console.log("  - Status da cobrança:", asaasResponse.status);
+
       if (!asaasResponse.ok) {
-        const error = await asaasResponse.text();
-        console.error("Erro ASAAS:", error);
-        const errorObj = JSON.parse(error);
+        const errorText = await asaasResponse.text();
+        console.error("❌ Erro ao criar cobrança ASAAS:");
+        console.error("  - Status:", asaasResponse.status);
+        console.error("  - Response:", errorText);
         
-        // Mensagem específica para erro de ambiente
-        if (errorObj.errors?.[0]?.code === "invalid_environment") {
-          throw new Error("API Key inválida ou de ambiente incorreto. Verifique se está usando a chave correta (Produção vs Sandbox) no painel ASAAS.");
+        let errorMessage = "Erro ao criar cobrança no ASAAS";
+        try {
+          const errorObj = JSON.parse(errorText);
+          
+          // Mensagem específica para erro de ambiente
+          if (errorObj.errors?.[0]?.code === "invalid_environment") {
+            errorMessage = "API Key inválida ou de ambiente incorreto. Verifique se está usando a chave correta (Produção vs Sandbox).";
+          } else if (errorObj.errors && errorObj.errors.length > 0) {
+            errorMessage = errorObj.errors.map((e: any) => e.description || e.message).join(", ");
+          }
+        } catch (e) {
+          errorMessage = errorText;
         }
         
-        throw new Error(`Erro ao criar cobrança ASAAS: ${error}`);
+        throw new Error(errorMessage);
       }
 
       const asaasData = await asaasResponse.json();
@@ -546,9 +585,22 @@ serve(async (req) => {
       }
     );
   } catch (error: any) {
-    console.error("Error in init-checkout:", error);
+    console.error("❌❌❌ Error in init-checkout:", error);
+    console.error("  - Message:", error.message);
+    console.error("  - Stack:", error.stack);
+    
+    // Retornar mensagem de erro mais específica
+    let errorMessage = error.message || "Erro desconhecido ao processar pagamento";
+    
+    // Se for um erro de rede ou timeout
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      errorMessage = "Erro de conexão com o gateway de pagamento. Tente novamente.";
+    }
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: errorMessage,
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 400,
