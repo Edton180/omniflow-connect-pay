@@ -222,12 +222,13 @@ serve(async (req) => {
           email: `${invoice.tenant?.slug || 'cliente'}@omniflow.app`,
         };
         
-        // CRITICAL: Em modo SANDBOX, NUNCA adicionar CPF/CNPJ
-        // Dados de teste podem causar erros de validação no ASAAS
+        // CRITICAL: ASAAS exige CPF/CNPJ mesmo no sandbox
         if (mode === 'sandbox') {
-          console.log("  🧪 Modo SANDBOX: customer será criado SEM documento (recomendado para testes)");
+          // No sandbox, usar CPF de teste válido do ASAAS
+          customerPayload.cpfCnpj = '24971563792'; // CPF de teste válido do ASAAS
+          console.log("  🧪 Modo SANDBOX: usando CPF de teste válido");
         } else {
-          // Em PRODUÇÃO, tentar adicionar CPF/CNPJ se válido
+          // Em PRODUÇÃO, tentar usar CPF/CNPJ do tenant
           const rawCpfCnpj = invoice.tenant?.cnpj_cpf?.replace(/\D/g, '');
           
           if (rawCpfCnpj && (rawCpfCnpj.length === 11 || rawCpfCnpj.length === 14)) {
@@ -236,12 +237,14 @@ serve(async (req) => {
             
             if (!isSequence) {
               customerPayload.cpfCnpj = rawCpfCnpj;
-              console.log("  ✅ CPF/CNPJ adicionado (produção):", rawCpfCnpj.substring(0, 3) + '***');
+              console.log("  ✅ CPF/CNPJ do tenant adicionado:", rawCpfCnpj.substring(0, 3) + '***');
             } else {
-              console.log("  ⚠️ CPF/CNPJ é sequência inválida, criando sem documento");
+              console.log("  ⚠️ CPF/CNPJ inválido, usando CPF de teste");
+              customerPayload.cpfCnpj = '24971563792'; // Fallback para CPF válido
             }
           } else {
-            console.log("  ℹ️ CPF/CNPJ ausente ou inválido, criando customer sem documento");
+            console.log("  ⚠️ Nenhum CPF/CNPJ configurado, usando CPF de teste");
+            customerPayload.cpfCnpj = '24971563792'; // Fallback para CPF válido
           }
         }
         
@@ -289,6 +292,15 @@ serve(async (req) => {
         });
       }
 
+      // Calcular data de vencimento (mínimo: hoje)
+      const invoiceDueDate = new Date(invoice.due_date);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const dueDate = invoiceDueDate < today ? today : invoiceDueDate;
+      const dueDateStr = dueDate.toISOString().split("T")[0];
+      
+      console.log("  - Data de vencimento ajustada:", dueDateStr);
+
       // Criar cobrança PIX
       const asaasResponse = await fetch(`${asaasBaseUrl}/payments`, {
         method: "POST",
@@ -300,9 +312,9 @@ serve(async (req) => {
           customer: customerId,
           billingType: "PIX",
           value: parseFloat(invoice.amount),
-          dueDate: invoice.due_date.split("T")[0],
+          dueDate: dueDateStr,
           description: invoice.description || `Fatura #${invoice.id.slice(0, 8)}`,
-          externalReference: JSON.stringify(metadata),
+          externalReference: invoiceId, // Usar apenas invoice ID (UUID < 100 chars)
         }),
       });
 
