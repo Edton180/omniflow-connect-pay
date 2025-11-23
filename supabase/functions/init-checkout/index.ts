@@ -320,7 +320,13 @@ serve(async (req) => {
       const dueDate = invoiceDueDate < today ? today : invoiceDueDate;
       const dueDateStr = dueDate.toISOString().split("T")[0];
       
+      // Calcular data de expiração do PIX (48 horas a partir de agora)
+      const pixExpiration = new Date();
+      pixExpiration.setDate(pixExpiration.getDate() + 2);
+      const pixExpirationStr = pixExpiration.toISOString().split("T")[0];
+      
       console.log("  - Data de vencimento ajustada:", dueDateStr);
+      console.log("  - Data de expiração do PIX:", pixExpirationStr);
 
       // Criar cobrança PIX
       const asaasResponse = await fetch(`${asaasBaseUrl}/payments`, {
@@ -336,6 +342,7 @@ serve(async (req) => {
           dueDate: dueDateStr,
           description: invoice.description || `Fatura #${invoice.id.slice(0, 8)}`,
           externalReference: invoiceId, // Usar apenas invoice ID (UUID < 100 chars)
+          expirationDate: pixExpirationStr, // PIX válido por 48 horas
         }),
       });
 
