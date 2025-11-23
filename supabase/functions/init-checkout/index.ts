@@ -211,7 +211,28 @@ serve(async (req) => {
 
       if (existingCustomer?.gateway_customer_id) {
         customerId = existingCustomer.gateway_customer_id;
-        console.log("  - Customer existente:", customerId);
+        console.log("  - Customer existente encontrado:", customerId);
+        
+        // CRITICAL: Atualizar customer com CPF de teste se não tiver
+        console.log("  - Atualizando customer com CPF de teste...");
+        const updatePayload: any = {
+          cpfCnpj: '24971563792', // CPF de teste válido do ASAAS
+        };
+        
+        const updateResponse = await fetch(`${asaasBaseUrl}/customers/${customerId}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "access_token": apiKey,
+          },
+          body: JSON.stringify(updatePayload),
+        });
+        
+        if (!updateResponse.ok) {
+          console.warn("  ⚠️ Não foi possível atualizar customer, continuando...");
+        } else {
+          console.log("  ✅ Customer atualizado com CPF de teste");
+        }
       } else {
         // Criar customer no ASAAS
         console.log("  - Criando novo customer...");
