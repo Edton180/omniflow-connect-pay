@@ -386,8 +386,15 @@ serve(async (req) => {
       if (qrResponse.ok) {
         const qrData = await qrResponse.json();
         qrCode = qrData.payload;
-        checkoutUrl = qrData.encodedImage;
-        console.log("QR Code PIX gerado");
+        // Adicionar prefixo data URL se não existir
+        checkoutUrl = qrData.encodedImage?.startsWith('data:') 
+          ? qrData.encodedImage 
+          : `data:image/png;base64,${qrData.encodedImage}`;
+        console.log("✅ QR Code PIX gerado com sucesso");
+        console.log("  - Payload (Copia e Cola):", qrCode?.substring(0, 50) + "...");
+        console.log("  - Imagem QR Code salva como Data URL");
+      } else {
+        console.error("❌ Erro ao buscar QR Code PIX:", qrResponse.status);
       }
 
     } else if (gatewayName === "stripe") {
