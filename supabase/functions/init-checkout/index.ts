@@ -386,13 +386,29 @@ serve(async (req) => {
       if (qrResponse.ok) {
         const qrData = await qrResponse.json();
         qrCode = qrData.payload;
-        // Adicionar prefixo data URL se não existir
-        checkoutUrl = qrData.encodedImage?.startsWith('data:') 
-          ? qrData.encodedImage 
-          : `data:image/png;base64,${qrData.encodedImage}`;
-        console.log("✅ QR Code PIX gerado com sucesso");
-        console.log("  - Payload (Copia e Cola):", qrCode?.substring(0, 50) + "...");
-        console.log("  - Imagem QR Code salva como Data URL");
+        
+        // Gerar QR Code localmente para garantir legibilidade
+        try {
+          const QRCode = await import('https://esm.sh/qrcode@1.5.4');
+          checkoutUrl = await QRCode.toDataURL(qrCode, {
+            width: 400,
+            margin: 2,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            },
+            errorCorrectionLevel: 'H'
+          });
+          console.log("✅ QR Code PIX gerado localmente com sucesso");
+          console.log("  - Payload (Copia e Cola):", qrCode?.substring(0, 50) + "...");
+          console.log("  - QR Code gerado com 400x400px para melhor leitura");
+        } catch (qrError) {
+          console.error("❌ Erro ao gerar QR Code local:", qrError);
+          // Fallback para imagem do ASAAS
+          checkoutUrl = qrData.encodedImage?.startsWith('data:') 
+            ? qrData.encodedImage 
+            : `data:image/png;base64,${qrData.encodedImage}`;
+        }
       } else {
         console.error("❌ Erro ao buscar QR Code PIX:", qrResponse.status);
       }
