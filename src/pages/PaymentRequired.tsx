@@ -316,20 +316,30 @@ export default function PaymentRequired() {
               {checkoutData.qr_code && (
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-2">Escaneie o QR Code PIX:</p>
-                  <img src={checkoutData.checkout_url} alt="QR Code PIX" className="mx-auto max-w-xs" />
-                  <p className="text-xs mt-2">Ou copie o código abaixo:</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <code className="text-xs bg-muted p-2 rounded block flex-1 break-all">
+                  {checkoutData.checkout_url && (
+                    <img 
+                      src={checkoutData.checkout_url.startsWith('data:') ? checkoutData.checkout_url : `data:image/png;base64,${checkoutData.checkout_url}`} 
+                      alt="QR Code PIX" 
+                      className="mx-auto max-w-xs border-2 border-border rounded-lg p-2 bg-white" 
+                    />
+                  )}
+                  <p className="text-xs mt-4 font-medium">Ou copie o código PIX abaixo:</p>
+                  <div className="flex items-center gap-2 mt-2">
+                    <code className="text-xs bg-muted p-3 rounded block flex-1 break-all max-h-32 overflow-y-auto">
                       {checkoutData.qr_code}
                     </code>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => copyToClipboard(checkoutData.qr_code)}
+                      title="Copiar código PIX"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    ⚠️ Este código PIX é válido por 48 horas
+                  </p>
                 </div>
               )}
               {checkoutData.checkout_url && !checkoutData.qr_code && (
