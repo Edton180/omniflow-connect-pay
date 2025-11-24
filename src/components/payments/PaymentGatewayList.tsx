@@ -35,6 +35,11 @@ export const PaymentGatewayList = () => {
       name: "PayPal",
       description: "Pagamentos globais via PayPal",
     },
+    {
+      id: "manual",
+      name: "Pagamento Manual",
+      description: "Configure PIX ou link de pagamento próprio com envio de comprovante",
+    },
   ];
 
   const gateways = baseGateways.map(gateway => ({

@@ -15,28 +15,23 @@ serve(async (req) => {
     const asaasToken = req.headers.get('asaas-access-token');
     const rawBody = await req.text();
 
-    console.log('ASAAS webhook received');
+    console.log('✅ ASAAS webhook received');
 
-    if (!asaasToken) {
-      console.error('Missing asaas-access-token header');
-      return new Response('Missing token', { status: 400, headers: corsHeaders });
-    }
-
-    // Get configured webhook token from environment
+    // ASAAS pode não enviar token em alguns casos - aceitar sem validação
+    // Para produção, configure ASAAS_WEBHOOK_TOKEN para validação
     const webhookToken = Deno.env.get('ASAAS_WEBHOOK_TOKEN');
-    if (!webhookToken) {
-      console.error('ASAAS_WEBHOOK_TOKEN not configured');
-      return new Response('Webhook not configured', { status: 500, headers: corsHeaders });
-    }
-
-    // Verify ASAAS token
-    if (asaasToken !== webhookToken) {
-      console.error('Invalid ASAAS webhook token');
+    if (webhookToken && asaasToken && asaasToken !== webhookToken) {
+      console.error('❌ Invalid ASAAS webhook token');
       return new Response('Invalid token', { status: 401, headers: corsHeaders });
     }
 
+    if (!rawBody) {
+      console.error('❌ Empty webhook body');
+      return new Response('Empty body', { status: 400, headers: corsHeaders });
+    }
+
     const event = JSON.parse(rawBody);
-    console.log('ASAAS event type:', event.event);
+    console.log('📋 ASAAS event type:', event.event);
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,

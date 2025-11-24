@@ -10,6 +10,7 @@ import { Loader2, CheckCircle2, XCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
+import { ManualPaymentConfig } from "./ManualPaymentConfig";
 
 interface PaymentGatewayDialogProps {
   open: boolean;
@@ -426,7 +427,13 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="credentials" className="w-full">
+        {gateway?.id === 'manual' ? (
+          <ManualPaymentConfig 
+            gatewayId={gateway.id}
+            onClose={() => onOpenChange(false)}
+          />
+        ) : (
+          <Tabs defaultValue="credentials" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="credentials">Credenciais</TabsTrigger>
             <TabsTrigger value="docs">Documentação</TabsTrigger>
@@ -520,6 +527,7 @@ export function PaymentGatewayDialog({ open, onOpenChange, gateway, onSave }: Pa
             </Alert>
           </TabsContent>
         </Tabs>
+        )}
       </DialogContent>
     </Dialog>
   );
