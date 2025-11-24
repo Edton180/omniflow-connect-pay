@@ -593,6 +593,27 @@ serve(async (req) => {
       console.log("  - Order ID:", externalId);
       console.log("  - Checkout URL:", checkoutUrl);
 
+    } else if (gatewayName === "manual") {
+      console.log("💰 Processando pagamento manual...");
+      
+      const manualConfig = gateway.config || {};
+      
+      // Para pagamento manual, retornamos as informações de pagamento configuradas
+      console.log("  - Tipo de pagamento manual detectado");
+      console.log("  - Configurações:", Object.keys(manualConfig).join(", "));
+      
+      // O pagamento manual não gera checkout automático
+      // O cliente deve acessar a página de envio de comprovante
+      externalId = `manual_${invoiceId}_${Date.now()}`;
+      
+      // Retornar dados do pagamento manual
+      checkoutUrl = ""; // Sem URL de checkout
+      qrCode = manualConfig.pix_key || ""; // Chave PIX se configurada
+      
+      console.log("✅ Processamento manual iniciado:");
+      console.log("  - External ID:", externalId);
+      console.log("  - PIX configurado:", !!qrCode);
+
     } else {
       throw new Error(`Gateway ${gatewayName} não suportado`);
     }
@@ -634,15 +655,28 @@ serve(async (req) => {
 
     console.log("Checkout criado com sucesso:", session?.id);
 
+    // Para pagamento manual, retornar dados de configuração adicionais
+    const response: any = {
+      success: true,
+      checkout_url: checkoutUrl,
+      qr_code: qrCode,
+      external_id: externalId,
+      gateway: gatewayName,
+      session_id: session?.id,
+    };
+
+    // Se for manual, adicionar configurações do gateway
+    if (gatewayName === "manual" && gateway.config) {
+      response.manual_config = {
+        pix_key: gateway.config.pix_key || "",
+        payment_link: gateway.config.payment_link || "",
+        notification_email: gateway.config.notification_email || "",
+        instructions: gateway.config.instructions || "Entre em contato com nosso suporte para efetuar o pagamento.",
+      };
+    }
+
     return new Response(
-      JSON.stringify({
-        success: true,
-        checkout_url: checkoutUrl,
-        qr_code: qrCode,
-        external_id: externalId,
-        gateway: gatewayName,
-        session_id: session?.id,
-      }),
+      JSON.stringify(response),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,

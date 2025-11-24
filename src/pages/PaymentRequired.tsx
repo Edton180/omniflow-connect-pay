@@ -126,6 +126,13 @@ export default function PaymentRequired() {
       console.log("  - Invoice ID:", invoiceId);
       console.log("  - Gateway:", gatewayName);
 
+      // Para pagamento manual, redirecionar para página de envio de comprovante
+      if (gatewayName === "manual") {
+        toast.success("Redirecionando para envio de comprovante...");
+        navigate("/manual-payment-proof");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("init-checkout", {
         body: {
           invoiceId: invoiceId,
@@ -289,6 +296,8 @@ export default function PaymentRequired() {
                       {gateway.gateway_name === "mercadopago" && "Mercado Pago"}
                       {gateway.gateway_name === "paypal" && "PayPal"}
                       {gateway.gateway_name === "infinitepay" && "InfinitePay"}
+                      {gateway.gateway_name === "manual" && "Pagamento Manual"}
+                      {!["asaas", "stripe", "mercadopago", "paypal", "infinitepay", "manual"].includes(gateway.gateway_name) && gateway.gateway_name.toUpperCase()}
                     </SelectItem>
                   ))}
                 </SelectContent>
