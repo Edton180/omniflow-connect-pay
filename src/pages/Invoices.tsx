@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, FileText, Calendar, DollarSign, AlertCircle, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 interface Invoice {
   id: string;
@@ -131,13 +132,43 @@ const Invoices = () => {
   const handleGenerateCheckout = async (invoiceId: string) => {
     setGeneratingCheckout(invoiceId);
     try {
+      // Buscar gateways disponíveis
+      const { data: gateways, error: gatewayError } = await supabase
+        .from("payment_gateways")
+        .select("*")
+        .eq("is_active", true)
+        .is("tenant_id", null);
+      
+      if (gatewayError) throw gatewayError;
+
+      if (!gateways || gateways.length === 0) {
+        toast({
+          title: "Erro",
+          description: "Nenhum gateway de pagamento configurado",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Se houver múltiplos gateways, redirecionar para página de pagamento
+      if (gateways.length > 1) {
+        navigate("/payment-required");
+        return;
+      }
+
+      // Se houver apenas 1 gateway, processar diretamente
       const { data, error } = await supabase.functions.invoke("init-checkout", {
-        body: { invoiceId },
+        body: { 
+          invoiceId,
+          gateway: gateways[0].gateway_name 
+        },
       });
 
       if (error) throw error;
 
-      if (data.checkout_url) {
+      if (data?.error) throw new Error(data.error);
+
+      if (data.checkout_url && !data.qr_code) {
         window.open(data.checkout_url, "_blank");
         toast({
           title: "Checkout gerado",
@@ -148,7 +179,12 @@ const Invoices = () => {
           title: "PIX gerado",
           description: "Escaneie o QR Code para pagar",
         });
+      } else if (data.gateway === "manual") {
+        // Para pagamento manual, redirecionar para página de envio de comprovante
+        navigate("/manual-payment-proof");
       }
+
+      loadInvoices();
     } catch (error: any) {
       console.error("Erro ao gerar checkout:", error);
       toast({
@@ -195,14 +231,17 @@ const Invoices = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
+      <AppLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Faturas</h1>
@@ -334,7 +373,8 @@ const Invoices = () => {
           })}
         </div>
       )}
-    </div>
+      </div>
+    </AppLayout>
   );
 };
 

@@ -75,6 +75,7 @@ const App = () => (
           <Route path="/channels/:id/config" element={<AuthGuard requireAuth><ChannelConfig /></AuthGuard>} />
           <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
           <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
+          <Route path="/invoices" element={<AuthGuard requireAuth><Invoices /></AuthGuard>} />
           <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
           <Route path="/webhooks" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookDashboard /></AuthGuard>} />
           <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><FinancialReports /></AuthGuard>} />
