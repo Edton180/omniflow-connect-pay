@@ -39,17 +39,6 @@ export function ManualPaymentConfig({ gatewayId, onClose }: ManualPaymentConfigP
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Get tenant_id from user_roles
-      const { data: userRole } = await supabase
-        .from('user_roles')
-        .select('tenant_id')
-        .eq('user_id', user.id)
-        .single();
-
-      if (!userRole?.tenant_id) {
-        throw new Error('Tenant não encontrado');
-      }
-
       // Check if gateway already exists
       const { data: existing } = await supabase
         .from('payment_gateways')

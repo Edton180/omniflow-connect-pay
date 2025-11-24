@@ -1,5 +1,5 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CreditCard, Package, History } from "lucide-react";
+import { CreditCard, Package, History, Receipt } from "lucide-react";
 import { PaymentGatewayList } from "@/components/payments/PaymentGatewayList";
 import { PlansList } from "@/components/plans/PlansList";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -14,15 +14,24 @@ export default function Payments() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Pagamentos</h1>
-            <p className="text-muted-foreground">Gerencie gateways e planos</p>
+            <p className="text-muted-foreground">Gerencie gateways, planos e faturas</p>
           </div>
-          <button
-            onClick={() => navigate("/transactions")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <History className="h-4 w-4" />
-            Ver Histórico
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => navigate("/invoices")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-colors"
+            >
+              <Receipt className="h-4 w-4" />
+              Faturas
+            </button>
+            <button
+              onClick={() => navigate("/transactions")}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <History className="h-4 w-4" />
+              Histórico
+            </button>
+          </div>
         </div>
 
         <Tabs defaultValue="gateways" className="space-y-6">
