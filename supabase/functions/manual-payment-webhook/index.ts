@@ -37,10 +37,8 @@ serve(async (req) => {
       .from('invoices')
       .update({
         status: 'pending_verification',
-        metadata: {
-          proof_url: proof_file_url,
-          submitted_at: new Date().toISOString()
-        },
+        proof_file_url: proof_file_url,
+        proof_submitted_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', invoice_id)

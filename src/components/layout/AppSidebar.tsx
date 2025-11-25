@@ -63,6 +63,7 @@ const superAdminItems: NavItem[] = [
   { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
   { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
+  { title: "Comprovantes", href: "/admin/payment-proofs", icon: FileText, roles: ["super_admin"] },
   { title: "Webhooks", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
   { title: "Relatórios Financeiros", href: "/financial-reports", icon: TrendingUp, roles: ["super_admin"] },
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },

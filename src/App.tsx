@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
+import { AppLayout } from "./components/layout/AppLayout";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Signup from "./pages/Signup";
@@ -41,6 +42,7 @@ import EvaluationDashboard from "./pages/EvaluationDashboard";
 import TicketKanban from "./pages/TicketKanban";
 import PaymentRequired from "./pages/PaymentRequired";
 import ManualPaymentProof from "./pages/ManualPaymentProof";
+import ManualPaymentProofs from "./pages/ManualPaymentProofs";
 import TransactionHistory from "./pages/TransactionHistory";
 import WebhookDashboard from "./pages/WebhookDashboard";
 import FinancialReports from "./pages/FinancialReports";
@@ -63,6 +65,7 @@ const App = () => (
           <Route path="/system-reset" element={<SystemReset />} />
           <Route path="/payment-required" element={<PaymentRequired />} />
           <Route path="/manual-payment-proof" element={<ManualPaymentProof />} />
+          <Route path="/admin/payment-proofs" element={<AppLayout><ManualPaymentProofs /></AppLayout>} />
           <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
           <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
           <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
