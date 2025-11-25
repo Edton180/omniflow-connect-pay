@@ -129,7 +129,7 @@ export default function PaymentRequired() {
       // Para pagamento manual, redirecionar para página de envio de comprovante
       if (gatewayName === "manual") {
         toast.success("Redirecionando para envio de comprovante...");
-        navigate("/manual-payment-proof");
+        navigate(`/manual-payment-proof?invoice_id=${invoiceId}`);
         return;
       }
 
@@ -316,13 +316,77 @@ export default function PaymentRequired() {
 
       {/* Dialog de Checkout */}
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Complete o Pagamento</DialogTitle>
           </DialogHeader>
           {checkoutData && (
             <div className="space-y-4">
-              {checkoutData.qr_code && (
+              {/* Pagamento Manual */}
+              {checkoutData.gateway === "manual" && (
+                <div className="space-y-4">
+                  <div className="bg-muted p-4 rounded-lg space-y-3">
+                    <h3 className="font-semibold">Instruções de Pagamento</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">
+                      {checkoutData.instructions || "Realize o pagamento e envie o comprovante."}
+                    </p>
+                    
+                    {checkoutData.pix_key && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Chave PIX:</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-xs bg-background p-2 rounded border">
+                            {checkoutData.pix_key}
+                          </code>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => copyToClipboard(checkoutData.pix_key)}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        {checkoutData.pix_name && (
+                          <p className="text-xs text-muted-foreground">
+                            Titular: {checkoutData.pix_name}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {checkoutData.payment_link && (
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Link de Pagamento:</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => window.open(checkoutData.payment_link, "_blank")}
+                        >
+                          Abrir Link de Pagamento
+                        </Button>
+                      </div>
+                    )}
+                    
+                    {checkoutData.notification_email && (
+                      <div className="text-xs text-muted-foreground mt-4 p-2 bg-blue-50 rounded border border-blue-200">
+                        <p className="font-medium text-blue-900">📧 Após o pagamento:</p>
+                        <p className="text-blue-800">Envie o comprovante através do botão abaixo. Nossa equipe receberá em: {checkoutData.notification_email}</p>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button
+                    className="w-full"
+                    onClick={() => navigate(`/manual-payment-proof?invoice_id=${pendingInvoiceId}`)}
+                  >
+                    Enviar Comprovante de Pagamento
+                  </Button>
+                </div>
+              )}
+              
+              {/* Pagamento com PIX QR Code */}
+              {checkoutData.qr_code && checkoutData.gateway !== "manual" && (
                 <div className="text-center">
                   <p className="text-sm text-muted-foreground mb-2">Escaneie o QR Code PIX:</p>
                   {checkoutData.checkout_url && (
@@ -351,7 +415,9 @@ export default function PaymentRequired() {
                   </p>
                 </div>
               )}
-              {checkoutData.checkout_url && !checkoutData.qr_code && (
+              
+              {/* Pagamento com Link Externo */}
+              {checkoutData.checkout_url && !checkoutData.qr_code && checkoutData.gateway !== "manual" && (
                 <Button
                   className="w-full"
                   onClick={() => window.open(checkoutData.checkout_url, "_blank")}

@@ -874,6 +874,8 @@ export type Database = {
           metadata: Json | null
           paid_at: string | null
           payment_id: string | null
+          proof_file_url: string | null
+          proof_submitted_at: string | null
           status: string
           subscription_id: string | null
           tenant_id: string
@@ -889,6 +891,8 @@ export type Database = {
           metadata?: Json | null
           paid_at?: string | null
           payment_id?: string | null
+          proof_file_url?: string | null
+          proof_submitted_at?: string | null
           status?: string
           subscription_id?: string | null
           tenant_id: string
@@ -904,6 +908,8 @@ export type Database = {
           metadata?: Json | null
           paid_at?: string | null
           payment_id?: string | null
+          proof_file_url?: string | null
+          proof_submitted_at?: string | null
           status?: string
           subscription_id?: string | null
           tenant_id?: string
