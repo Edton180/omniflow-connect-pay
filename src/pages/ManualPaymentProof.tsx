@@ -100,6 +100,12 @@ export default function ManualPaymentProof() {
         return;
       }
 
+      // Validate file name (prevent path traversal)
+      if (selectedFile.name.includes('..') || selectedFile.name.includes('/') || selectedFile.name.includes('\\')) {
+        toast.error('Nome de arquivo inválido');
+        return;
+      }
+
       setFile(selectedFile);
     }
   };

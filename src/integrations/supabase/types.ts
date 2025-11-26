@@ -2048,6 +2048,7 @@ export type Database = {
             }
             Returns: Json
           }
+      sanitize_text_input: { Args: { input_text: string }; Returns: string }
       update_overdue_invoices: { Args: never; Returns: undefined }
     }
     Enums: {
