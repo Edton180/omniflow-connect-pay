@@ -113,22 +113,30 @@ export default function ManualPaymentProof() {
     try {
       setUploading(true);
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Usuário não autenticado');
+      // Get current session
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        toast.error('Você precisa estar autenticado para enviar o comprovante');
+        navigate('/auth');
+        return;
+      }
 
-      // Get tenant_id
-      const { data: userRole } = await supabase
-        .from('user_roles')
+      // Get tenant_id from profile
+      const { data: profile } = await supabase
+        .from('profiles')
         .select('tenant_id')
-        .eq('user_id', user.id)
+        .eq('id', session.user.id)
         .single();
 
-      if (!userRole?.tenant_id) throw new Error('Tenant não encontrado');
+      if (!profile?.tenant_id) {
+        toast.error('Tenant não encontrado. Entre em contato com o suporte.');
+        return;
+      }
 
       // Upload file to storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${invoiceId}_${Date.now()}.${fileExt}`;
-      const filePath = `payment-proofs/${userRole.tenant_id}/${fileName}`;
+      const filePath = `payment-proofs/${profile.tenant_id}/${fileName}`;
 
       const { error: uploadError, data: uploadData } = await supabase.storage
         .from('ticket-media')
@@ -148,12 +156,15 @@ export default function ManualPaymentProof() {
       const { error: webhookError } = await supabase.functions.invoke('manual-payment-webhook', {
         body: {
           invoice_id: invoiceId,
-          tenant_id: userRole.tenant_id,
+          tenant_id: profile.tenant_id,
           proof_file_url: urlData.publicUrl
         }
       });
 
-      if (webhookError) throw webhookError;
+      if (webhookError) {
+        console.error('Webhook error:', webhookError);
+        throw new Error(webhookError.message || 'Erro ao processar comprovante');
+      }
 
       setSubmitted(true);
       toast.success('Comprovante enviado com sucesso!');
