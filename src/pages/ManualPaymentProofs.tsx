@@ -152,8 +152,8 @@ export default function ManualPaymentProofs() {
           {invoices.map((invoice) => (
             <Card key={invoice.id}>
               <CardContent className="pt-6">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-2">
+                <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-4">
+                  <div className="space-y-2 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-semibold">{invoice.tenants.name}</h3>
                       <Badge variant="outline">{invoice.description}</Badge>
@@ -172,10 +172,39 @@ export default function ManualPaymentProofs() {
                       }).format(invoice.amount)}
                     </p>
                   </div>
-                  <Button onClick={() => openPreview(invoice)} variant="outline">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Ver Comprovante
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={() => openPreview(invoice)} variant="outline" size="sm">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Ver Comprovante
+                    </Button>
+                    <Button 
+                      onClick={() => handleApprove(invoice)} 
+                      variant="default"
+                      size="sm"
+                      disabled={processing === invoice.id}
+                    >
+                      {processing === invoice.id ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processando...
+                        </>
+                      ) : (
+                        <>
+                          <Check className="mr-2 h-4 w-4" />
+                          Aprovar
+                        </>
+                      )}
+                    </Button>
+                    <Button 
+                      onClick={() => handleReject(invoice)} 
+                      variant="destructive"
+                      size="sm"
+                      disabled={processing === invoice.id}
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Recusar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
