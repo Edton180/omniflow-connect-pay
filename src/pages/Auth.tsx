@@ -128,31 +128,8 @@ const Auth = () => {
     }
   };
 
-  const handleDeleteAllUsers = async () => {
-    if (!confirm("Tem certeza que deseja deletar TODOS os usuários? Esta ação não pode ser desfeita!")) {
-      return;
-    }
-
-    setDeleting(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('delete-all-users');
-      
-      if (error) throw error;
-
-      toast({
-        title: "Sucesso",
-        description: data.message || "Todos os usuários foram deletados",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao deletar usuários",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setDeleting(false);
-    }
-  };
+  // Função de deletar usuários removida por segurança
+  // Use o painel de administração do backend para operações sensíveis
 
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">

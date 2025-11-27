@@ -6,16 +6,38 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Função para validar UUID
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
+    // Verificar autenticação
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Autenticação necessária');
+    }
+
     const supabaseClient = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
     );
+
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      throw new Error('Usuário não autenticado');
+    }
 
     const { invoiceId, paymentId, gateway, gatewayPaymentId } = await req.json();
 
@@ -23,10 +45,25 @@ serve(async (req) => {
       throw new Error("ID da fatura é obrigatório");
     }
 
+    // Validar UUIDs
+    if (!isValidUUID(invoiceId)) {
+      throw new Error('ID da fatura inválido');
+    }
+
+    if (paymentId && !isValidUUID(paymentId)) {
+      throw new Error('ID do pagamento inválido');
+    }
+
     console.log("Processando pagamento para fatura:", invoiceId);
 
+    // Criar client admin para operações privilegiadas
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
     // Usar a função SQL para processar o pagamento
-    const { data: result, error: processError } = await supabaseClient
+    const { data: result, error: processError } = await supabaseAdmin
       .rpc('process_invoice_payment', { 
         p_invoice_id: invoiceId,
         p_payment_id: paymentId || null,

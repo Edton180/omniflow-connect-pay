@@ -6,6 +6,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Função para validar UUID
+const isValidUUID = (uuid: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+};
+
+// Função para validar URL do Supabase Storage
+const isValidStorageUrl = (url: string): boolean => {
+  return /^https?:\/\/[a-zA-Z0-9\-]+\.supabase\.(co|in)\/storage\/v1\/object\/public\//.test(url);
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -23,6 +34,21 @@ serve(async (req) => {
     if (!invoice_id || !tenant_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Validações
+    if (!isValidUUID(invoice_id) || !isValidUUID(tenant_id)) {
+      return new Response(
+        JSON.stringify({ error: 'IDs inválidos' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (proof_file_url && !isValidStorageUrl(proof_file_url)) {
+      return new Response(
+        JSON.stringify({ error: 'URL de comprovante inválida. Deve ser do storage do Supabase.' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
