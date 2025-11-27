@@ -10,15 +10,26 @@ import { useToast } from "@/hooks/use-toast";
 import { Zap } from "lucide-react";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
+import { validateCNPJCPF, validatePasswordStrength, sanitizeText } from "@/lib/security";
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator";
 
 const signupSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres"),
-  companyName: z.string().min(2, "Nome da empresa é obrigatório"),
-  cnpjCpf: z.string().min(11, "CPF/CNPJ é obrigatório"),
-  address: z.string().min(5, "Endereço completo é obrigatório"),
-  city: z.string().min(2, "Cidade é obrigatória"),
+  password: z.string().min(8, "Senha deve ter no mínimo 8 caracteres")
+    .refine((pwd) => {
+      const validation = validatePasswordStrength(pwd);
+      return validation.valid;
+    }, {
+      message: "Senha fraca. Deve conter maiúsculas, minúsculas, números e caracteres especiais"
+    }),
+  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres").max(100, "Nome muito longo"),
+  companyName: z.string().min(2, "Nome da empresa é obrigatório").max(100, "Nome muito longo"),
+  cnpjCpf: z.string().min(11, "CPF/CNPJ é obrigatório")
+    .refine((doc) => validateCNPJCPF(doc), {
+      message: "CPF/CNPJ inválido"
+    }),
+  address: z.string().min(5, "Endereço completo é obrigatório").max(200, "Endereço muito longo"),
+  city: z.string().min(2, "Cidade é obrigatória").max(100, "Cidade muito longa"),
   state: z.string().length(2, "Estado deve ter 2 caracteres (UF)"),
   zipCode: z.string().min(8, "CEP é obrigatório"),
   planId: z.string().min(1, "Selecione um plano"),
@@ -80,8 +91,18 @@ const Signup = () => {
     setErrors({});
 
     try {
+      // Sanitizar inputs
+      const sanitizedData = {
+        ...formData,
+        fullName: sanitizeText(formData.fullName),
+        companyName: sanitizeText(formData.companyName),
+        cnpjCpf: formData.cnpjCpf.replace(/\D/g, ''), // Remove não-numéricos
+        address: sanitizeText(formData.address),
+        city: sanitizeText(formData.city),
+      };
+
       // Validate input
-      const validatedData = signupSchema.parse(formData);
+      const validatedData = signupSchema.parse(sanitizedData);
 
       // Create auth user
       const { data: authData, error: authError } = await signUp(
@@ -205,8 +226,9 @@ const Signup = () => {
                     type="password"
                     value={formData.password}
                     onChange={(e) => handleChange("password", e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder="Mínimo 8 caracteres"
                   />
+                  <PasswordStrengthIndicator password={formData.password} />
                   {errors.password && <p className="text-sm text-destructive">{errors.password}</p>}
                 </div>
               </div>

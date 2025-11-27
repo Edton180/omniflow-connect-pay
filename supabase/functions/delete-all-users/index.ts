@@ -5,6 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Secret token for extra security (should be stored in secrets)
+const DELETION_SECRET = Deno.env.get('USER_DELETION_SECRET') || 'CHANGE_ME_IN_PRODUCTION';
+
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -14,6 +17,29 @@ Deno.serve(async (req) => {
   try {
     console.log('Starting user deletion process...')
     
+    // Verificar autenticação
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Autenticação necessária');
+    }
+
+    // Create client with user's token
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      {
+        global: {
+          headers: { Authorization: authHeader }
+        }
+      }
+    );
+
+    // Verificar se usuário está autenticado
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !user) {
+      throw new Error('Usuário não autenticado');
+    }
+
     // Create admin client with service role key
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -25,6 +51,39 @@ Deno.serve(async (req) => {
         }
       }
     )
+
+    // Verificar se o usuário é super_admin
+    const { data: roles, error: roleError } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'super_admin')
+      .single();
+
+    if (roleError || !roles) {
+      console.error('Acesso negado: usuário não é super_admin');
+      throw new Error('Acesso negado: apenas super_admin pode executar esta operação');
+    }
+
+    // Verificar secret token no body
+    const { secret } = await req.json().catch(() => ({ secret: null }));
+    if (secret !== DELETION_SECRET) {
+      console.error('Secret token inválido');
+      throw new Error('Token de confirmação inválido');
+    }
+
+    // Registrar auditoria antes de deletar
+    const { error: auditError } = await supabaseAdmin.rpc('log_audit', {
+      p_action: 'DELETE_ALL_USERS',
+      p_entity_type: 'system',
+      p_entity_id: user.id,
+      p_old_data: { initiated_by: user.email },
+      p_new_data: null
+    });
+    
+    if (auditError) {
+      console.error('Erro ao registrar auditoria:', auditError);
+    }
 
     // First, clean up all related data in public schema
     console.log('Cleaning up public schema data...')
