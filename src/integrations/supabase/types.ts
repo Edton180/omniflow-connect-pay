@@ -102,6 +102,59 @@ export type Database = {
           },
         ]
       }
+      automations: {
+        Row: {
+          actions: Json
+          conditions: Json
+          created_at: string | null
+          description: string | null
+          execution_count: number | null
+          id: string
+          is_active: boolean | null
+          last_executed_at: string | null
+          name: string
+          tenant_id: string
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name: string
+          tenant_id: string
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          actions?: Json
+          conditions?: Json
+          created_at?: string | null
+          description?: string | null
+          execution_count?: number | null
+          id?: string
+          is_active?: boolean | null
+          last_executed_at?: string | null
+          name?: string
+          tenant_id?: string
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "automations_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       baileys_sessions: {
         Row: {
           channel_id: string
@@ -407,6 +460,65 @@ export type Database = {
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_notes: {
+        Row: {
+          contact_id: string
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          contact_id: string
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          contact_id?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "contact_notes_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_notes_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -836,8 +948,22 @@ export type Database = {
             foreignKeyName: "internal_messages_recipient_id_fkey"
             columns: ["recipient_id"]
             isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "internal_messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "internal_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
           },
           {
             foreignKeyName: "internal_messages_sender_id_fkey"
@@ -1122,8 +1248,10 @@ export type Database = {
           deleted_at: string | null
           id: string
           is_from_contact: boolean | null
+          is_private: boolean | null
           media_type: string | null
           media_url: string | null
+          mentioned_users: string[] | null
           sender_id: string | null
           status: string | null
           telegram_message_id: number | null
@@ -1136,8 +1264,10 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_from_contact?: boolean | null
+          is_private?: boolean | null
           media_type?: string | null
           media_url?: string | null
+          mentioned_users?: string[] | null
           sender_id?: string | null
           status?: string | null
           telegram_message_id?: number | null
@@ -1150,8 +1280,10 @@ export type Database = {
           deleted_at?: string | null
           id?: string
           is_from_contact?: boolean | null
+          is_private?: boolean | null
           media_type?: string | null
           media_url?: string | null
+          mentioned_users?: string[] | null
           sender_id?: string | null
           status?: string | null
           telegram_message_id?: number | null
@@ -1346,12 +1478,59 @@ export type Database = {
           },
         ]
       }
+      pre_chat_forms: {
+        Row: {
+          channel_id: string
+          created_at: string | null
+          fields: Json
+          id: string
+          is_active: boolean | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string | null
+          fields?: Json
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pre_chat_forms_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pre_chat_forms_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
+          current_ticket_count: number | null
           full_name: string
           id: string
+          max_concurrent_tickets: number | null
           phone: string | null
           setup_completed: boolean | null
           tenant_id: string | null
@@ -1360,8 +1539,10 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
+          current_ticket_count?: number | null
           full_name: string
           id: string
+          max_concurrent_tickets?: number | null
           phone?: string | null
           setup_completed?: boolean | null
           tenant_id?: string | null
@@ -1370,8 +1551,10 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string | null
+          current_ticket_count?: number | null
           full_name?: string
           id?: string
+          max_concurrent_tickets?: number | null
           phone?: string | null
           setup_completed?: boolean | null
           tenant_id?: string | null
@@ -1812,6 +1995,13 @@ export type Database = {
             foreignKeyName: "tickets_assigned_to_fkey"
             columns: ["assigned_to"]
             isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1996,6 +2186,26 @@ export type Database = {
       }
     }
     Views: {
+      agent_performance: {
+        Row: {
+          agent_id: string | null
+          avg_resolution_min: number | null
+          avg_satisfaction: number | null
+          closed_tickets: number | null
+          full_name: string | null
+          tenant_id: string | null
+          total_tickets: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evaluation_rankings: {
         Row: {
           agent_id: string | null
