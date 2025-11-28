@@ -2269,6 +2269,18 @@ export type Database = {
             Args: { p_event_id: string; p_gateway: string; p_payload: Json }
             Returns: boolean
           }
+      get_agent_performance: {
+        Args: { p_tenant_id?: string }
+        Returns: {
+          agent_id: string
+          avg_resolution_min: number
+          avg_satisfaction: number
+          closed_tickets: number
+          full_name: string
+          tenant_id: string
+          total_tickets: number
+        }[]
+      }
       get_users_with_emails: {
         Args: never
         Returns: {

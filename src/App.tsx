@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
 import { AppLayout } from "./components/layout/AppLayout";
+import { CommandPalette } from "./components/CommandPalette";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Signup from "./pages/Signup";
@@ -47,6 +48,9 @@ import TransactionHistory from "./pages/TransactionHistory";
 import WebhookDashboard from "./pages/WebhookDashboard";
 import FinancialReports from "./pages/FinancialReports";
 import WebhookConfig from "./pages/WebhookConfig";
+import Automations from "./pages/Automations";
+import AgentReports from "./pages/AgentReports";
+import AuditLogs from "./pages/AuditLogs";
 
 const queryClient = new QueryClient();
 
@@ -56,6 +60,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <CommandPalette />
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
@@ -99,6 +104,9 @@ const App = () => (
           <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
+          <Route path="/automations" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Automations /></AuthGuard>} />
+          <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
+          <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AuditLogs /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
