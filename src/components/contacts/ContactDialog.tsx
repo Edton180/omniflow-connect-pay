@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ContactNotes } from "./ContactNotes";
 
 interface ContactDialogProps {
   open: boolean;
@@ -108,9 +110,100 @@ export const ContactDialog = ({ open, onOpenChange, contact, onSuccess }: Contac
     }
   };
 
+  const renderForm = () => (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Nome *</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="phone">Telefone</Label>
+          <Input
+            id="phone"
+            value={formData.phone}
+            onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            placeholder="+55 11 99999-9999"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            placeholder="contato@exemplo.com"
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="avatar_url">Avatar URL</Label>
+        <Input
+          id="avatar_url"
+          value={formData.avatar_url}
+          onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+          placeholder="https://exemplo.com/avatar.jpg"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="tags">Tags</Label>
+        <div className="flex gap-2">
+          <Input
+            id="tags"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleAddTag();
+              }
+            }}
+            placeholder="Adicionar tag"
+          />
+          <Button type="button" onClick={handleAddTag} variant="secondary">
+            Adicionar
+          </Button>
+        </div>
+        {formData.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {formData.tags.map((tag, index) => (
+              <Badge key={index} variant="secondary" className="gap-1">
+                {tag}
+                <X
+                  className="h-3 w-3 cursor-pointer"
+                  onClick={() => handleRemoveTag(tag)}
+                />
+              </Badge>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex justify-end gap-2 pt-4">
+        <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          Cancelar
+        </Button>
+        <Button type="submit" disabled={loading}>
+          {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {contact ? "Atualizar" : "Criar"}
+        </Button>
+      </div>
+    </form>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{contact ? "Editar Contato" : "Novo Contato"}</DialogTitle>
           <DialogDescription>
@@ -118,94 +211,24 @@ export const ContactDialog = ({ open, onOpenChange, contact, onSuccess }: Contac
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome *</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
+        {contact ? (
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="info">Informações</TabsTrigger>
+              <TabsTrigger value="notes">Notas</TabsTrigger>
+            </TabsList>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+55 11 99999-9999"
-              />
-            </div>
+            <TabsContent value="info">
+              {renderForm()}
+            </TabsContent>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="contato@exemplo.com"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="avatar_url">Avatar URL</Label>
-            <Input
-              id="avatar_url"
-              value={formData.avatar_url}
-              onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-              placeholder="https://exemplo.com/avatar.jpg"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="tags">Tags</Label>
-            <div className="flex gap-2">
-              <Input
-                id="tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-                placeholder="Adicionar tag"
-              />
-              <Button type="button" onClick={handleAddTag} variant="secondary">
-                Adicionar
-              </Button>
-            </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1 mt-2">
-                {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="gap-1">
-                    {tag}
-                    <X
-                      className="h-3 w-3 cursor-pointer"
-                      onClick={() => handleRemoveTag(tag)}
-                    />
-                  </Badge>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {contact ? "Atualizar" : "Criar"}
-            </Button>
-          </div>
-        </form>
+            <TabsContent value="notes">
+              <ContactNotes contactId={contact.id} />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          renderForm()
+        )}
       </DialogContent>
     </Dialog>
   );

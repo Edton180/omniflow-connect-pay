@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck, FileText } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck, FileText, Lock } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,8 @@ import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TicketStatusBadge } from "@/components/tickets/TicketStatusBadge";
+import { AISuggestions } from "@/components/tickets/AISuggestions";
+import { Switch } from "@/components/ui/switch";
 
 export default function TicketDetail() {
   const { id } = useParams();
@@ -53,6 +55,7 @@ export default function TicketDetail() {
   const [tenant, setTenant] = useState<any>(null);
   const [isSignatureEnabled, setIsSignatureEnabled] = useState(false);
   const [canToggleSignature, setCanToggleSignature] = useState(true);
+  const [isPrivateNote, setIsPrivateNote] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -282,7 +285,6 @@ export default function TicketDetail() {
         }
       }
 
-      // Insert message into database
       const { data: insertedMessage, error: insertError } = await supabase
         .from("messages")
         .insert([
@@ -291,6 +293,7 @@ export default function TicketDetail() {
             sender_id: user.id,
             content: finalMessage || "[Mídia]",
             is_from_contact: false,
+            is_private: isPrivateNote,
             media_url: mediaUrl,
             media_type: mediaType,
             status: "sending",
@@ -307,8 +310,10 @@ export default function TicketDetail() {
         .update({ last_message: finalMessage || "[Mídia enviada]" })
         .eq("id", id);
 
-      // Send message through the appropriate channel
-      if (ticket?.channel === "telegram") {
+      // Only send through channel if it's NOT a private note
+      if (!isPrivateNote) {
+        // Send message through the appropriate channel
+        if (ticket?.channel === "telegram") {
         const chatId = ticket?.contact?.metadata?.telegram_chat_id;
 
         if (chatId) {
@@ -407,12 +412,20 @@ export default function TicketDetail() {
               variant: "destructive",
             });
           }
+          }
         }
+      } else {
+        // For private notes, just mark as sent immediately
+        await supabase
+          .from("messages")
+          .update({ status: "sent" })
+          .eq("id", insertedMessage.id);
       }
 
       setMessageText("");
       setMediaUrl(null);
       setMediaType(null);
+      setIsPrivateNote(false);
       // Aguardar 500ms para garantir que dados foram persistidos
       await new Promise(resolve => setTimeout(resolve, 500));
       // Recarregar mensagens para garantir que mídia apareça
@@ -842,11 +855,19 @@ export default function TicketDetail() {
                     >
                       <div
                         className={`max-w-[70%] rounded-lg p-3 ${
-                          message.is_from_contact
+                          message.is_private
+                            ? "bg-yellow-100 dark:bg-yellow-900 border-l-4 border-yellow-500"
+                            : message.is_from_contact
                             ? "bg-muted"
                             : "bg-primary text-primary-foreground"
                         }`}
                       >
+                        {message.is_private && (
+                          <div className="flex items-center gap-1 text-xs text-yellow-700 dark:text-yellow-300 mb-1">
+                            <Lock className="h-3 w-3" />
+                            <span>Nota Privada</span>
+                          </div>
+                        )}
                         {message.media_url && !message.deleted_at && (
                           <div className="mb-2">
                             {message.media_type === 'image' && (
@@ -907,7 +928,17 @@ export default function TicketDetail() {
               </div>
 
               {/* Input */}
-              <div className="border-t p-4">
+              <div className="border-t p-4 space-y-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Switch
+                    id="private-note"
+                    checked={isPrivateNote}
+                    onCheckedChange={setIsPrivateNote}
+                  />
+                  <Label htmlFor="private-note" className="text-sm cursor-pointer">
+                    {isPrivateNote ? "Nota Privada (visível apenas para agentes)" : "Mensagem Pública"}
+                  </Label>
+                </div>
                 <form onSubmit={handleSendMessage} className="flex gap-2">
                   <MediaUpload onMediaSelect={(url, type) => {
                     setMediaUrl(url);
@@ -918,6 +949,10 @@ export default function TicketDetail() {
                     setMediaUrl(url);
                     setMediaType("audio");
                   }} />
+                  <AISuggestions 
+                    messages={messages}
+                    onSelectSuggestion={(suggestion) => setMessageText(suggestion)}
+                  />
                   {tenant?.allow_agent_signature && profile?.full_name && canToggleSignature && (
                     <Button
                       type="button"

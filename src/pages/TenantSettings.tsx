@@ -8,7 +8,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import Invoices from './Invoices';
+import { InvoicesContent } from '@/components/invoices/InvoicesContent';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { AIConfigSection } from '@/components/settings/AIConfigSection';
@@ -366,7 +366,7 @@ export default function TenantSettings() {
           </TabsContent>
 
           <TabsContent value="invoices">
-            <Invoices />
+            <InvoicesContent />
           </TabsContent>
         </Tabs>
       </div>
