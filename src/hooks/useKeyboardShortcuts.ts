@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface ShortcutConfig {
@@ -10,8 +10,15 @@ interface ShortcutConfig {
   description: string;
 }
 
-export const useKeyboardShortcuts = () => {
+interface UseKeyboardShortcutsReturn {
+  shortcuts: ShortcutConfig[];
+  showHelp: boolean;
+  setShowHelp: (show: boolean) => void;
+}
+
+export const useKeyboardShortcuts = (): UseKeyboardShortcutsReturn => {
   const navigate = useNavigate();
+  const [showHelp, setShowHelp] = useState(false);
 
   const shortcuts: ShortcutConfig[] = [
     {
@@ -42,6 +49,11 @@ export const useKeyboardShortcuts = () => {
         searchInput?.focus();
       },
     },
+    {
+      key: "?",
+      description: "Mostrar atalhos de teclado",
+      action: () => setShowHelp(true),
+    },
   ];
 
   useEffect(() => {
@@ -70,7 +82,7 @@ export const useKeyboardShortcuts = () => {
 
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [navigate]);
+  }, [navigate, showHelp]);
 
-  return { shortcuts };
+  return { shortcuts, showHelp, setShowHelp };
 };

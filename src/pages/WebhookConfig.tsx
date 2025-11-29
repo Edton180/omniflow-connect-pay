@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AppLayout } from "@/components/layout/AppLayout";
 
 export default function WebhookConfig() {
   const [configs, setConfigs] = useState<any[]>([]);
@@ -166,7 +167,8 @@ export default function WebhookConfig() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <AppLayout>
+      <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Configuração de Webhooks</h1>
@@ -355,6 +357,7 @@ export default function WebhookConfig() {
           </Card>
         )}
       </div>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

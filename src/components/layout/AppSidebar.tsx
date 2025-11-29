@@ -21,7 +21,10 @@ import {
   Building2,
   Kanban,
   Activity,
-  Shield
+  Shield,
+  Keyboard,
+  Link2,
+  Bot
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -30,6 +33,7 @@ import { useState } from "react";
 import { useBranding } from "@/hooks/useBranding";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
 
 interface NavItem {
   title: string;
@@ -54,8 +58,8 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
-  { title: "Webhooks", href: "/webhook-config", icon: Zap, roles: ["tenant_admin"] },
-  { title: "Automações", href: "/automations", icon: Zap, roles: ["tenant_admin"] },
+  { title: "Webhooks", href: "/webhook-config", icon: Link2, roles: ["tenant_admin"] },
+  { title: "Automações", href: "/automations", icon: Bot, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["tenant_admin"] },
 ];
@@ -74,13 +78,15 @@ const superAdminItems: NavItem[] = [
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
-  { title: "Automações", href: "/automations", icon: Zap, roles: ["super_admin"] },
+  { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
+  { title: "Automações", href: "/automations", icon: Bot, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const { branding } = useBranding();
   const { hasRole, isSuperAdmin, signOut, roles } = useAuth();
   
@@ -217,6 +223,17 @@ export function AppSidebar() {
         </div>
         <Button
           variant="ghost"
+          onClick={() => setShowShortcutsHelp(true)}
+          className={cn(
+            "w-full hover:bg-white/10 text-primary-foreground hover:text-white",
+            collapsed ? "justify-center px-2" : "justify-start"
+          )}
+        >
+          <Keyboard className="h-5 w-5 flex-shrink-0" />
+          {!collapsed && <span className="ml-3">Atalhos</span>}
+        </Button>
+        <Button
+          variant="ghost"
           onClick={signOut}
           className={cn(
             "w-full hover:bg-white/10 text-primary-foreground hover:text-white",
@@ -227,6 +244,11 @@ export function AppSidebar() {
           {!collapsed && <span className="ml-3">Sair</span>}
         </Button>
       </div>
+
+      <KeyboardShortcutsHelp 
+        open={showShortcutsHelp} 
+        onOpenChange={setShowShortcutsHelp} 
+      />
     </aside>
   );
 }
