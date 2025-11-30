@@ -86,8 +86,8 @@ const App = () => (
           <Route path="/invoices" element={<AuthGuard requireAuth><Invoices /></AuthGuard>} />
           <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
           <Route path="/webhooks" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookDashboard /></AuthGuard>} />
-          <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><FinancialReports /></AuthGuard>} />
-          <Route path="/webhook-config" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WebhookConfig /></AuthGuard>} />
+          <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><FinancialReports /></AuthGuard>} />
+          <Route path="/webhook-config" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><WebhookConfig /></AuthGuard>} />
           <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
           <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
           <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
