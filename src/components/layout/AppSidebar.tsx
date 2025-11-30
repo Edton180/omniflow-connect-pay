@@ -58,7 +58,6 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
-  { title: "Webhooks", href: "/webhook-config", icon: Link2, roles: ["tenant_admin"] },
   { title: "Automações", href: "/automations", icon: Bot, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["tenant_admin"] },
@@ -73,7 +72,8 @@ const superAdminItems: NavItem[] = [
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
   { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
   { title: "Comprovantes", href: "/admin/payment-proofs", icon: FileText, roles: ["super_admin"] },
-  { title: "Webhooks", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
+  { title: "Webhooks Dashboard", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
+  { title: "Config. Webhooks Gateways", href: "/webhook-config", icon: Link2, roles: ["super_admin"] },
   { title: "Relatórios Financeiros", href: "/financial-reports", icon: TrendingUp, roles: ["super_admin"] },
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
