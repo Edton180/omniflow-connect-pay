@@ -906,6 +906,60 @@ export type Database = {
           },
         ]
       }
+      global_themes: {
+        Row: {
+          accent_color: string | null
+          background_gradient: string | null
+          created_at: string | null
+          css_overrides: Json | null
+          description: string | null
+          end_date: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          slug: string
+          start_date: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          accent_color?: string | null
+          background_gradient?: string | null
+          created_at?: string | null
+          css_overrides?: Json | null
+          description?: string | null
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          slug: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          accent_color?: string | null
+          background_gradient?: string | null
+          created_at?: string | null
+          css_overrides?: Json | null
+          description?: string | null
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string
+          slug?: string
+          start_date?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       internal_messages: {
         Row: {
           content: string
