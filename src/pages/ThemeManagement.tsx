@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Palette, Check, Calendar } from "lucide-react";
+import { Palette, Check, Calendar, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useState } from "react";
+import { ThemeEffects } from "@/components/theme/ThemeEffects";
 
 interface Theme {
   id: string;
@@ -24,6 +26,7 @@ interface Theme {
 
 export default function ThemeManagement() {
   const queryClient = useQueryClient();
+  const [previewTheme, setPreviewTheme] = useState<string | null>(null);
 
   const { data: themes, isLoading } = useQuery({
     queryKey: ["global-themes"],
@@ -146,8 +149,19 @@ export default function ThemeManagement() {
                       <CardDescription className="mt-1">
                         {theme.description}
                       </CardDescription>
-                    )}
+                   )}
                   </div>
+
+                  {previewTheme === theme.slug && (
+                    <div className="relative h-40 border rounded-lg overflow-hidden bg-muted/30 mb-4">
+                      <ThemeEffects themeSlug={theme.slug} />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Badge variant="outline" className="bg-background/80">
+                          Preview dos Efeitos
+                        </Badge>
+                      </div>
+                    </div>
+                  )}
 
                   <div className="flex gap-2 flex-wrap">
                     <div
@@ -181,6 +195,15 @@ export default function ThemeManagement() {
                   )}
 
                   <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPreviewTheme(previewTheme === theme.slug ? null : theme.slug)}
+                      className="flex-1"
+                    >
+                      <Eye className="h-4 w-4 mr-2" />
+                      {previewTheme === theme.slug ? "Ocultar" : "Preview"}
+                    </Button>
                     {theme.is_active ? (
                       <Button
                         variant="outline"

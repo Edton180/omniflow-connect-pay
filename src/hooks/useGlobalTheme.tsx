@@ -13,6 +13,46 @@ interface GlobalTheme {
   is_active: boolean;
 }
 
+const createClickEffect = (e: MouseEvent, theme: GlobalTheme) => {
+  const effect = document.createElement("div");
+  effect.className = "click-effect";
+  effect.style.left = `${e.clientX}px`;
+  effect.style.top = `${e.clientY}px`;
+
+  // Different effects based on theme
+  switch (theme.slug) {
+    case "christmas":
+    case "winter":
+      effect.innerHTML = "❄️";
+      effect.style.fontSize = "2rem";
+      break;
+    case "valentines":
+      effect.innerHTML = "❤️";
+      effect.style.fontSize = "2rem";
+      break;
+    case "carnival":
+    case "new-year":
+      effect.style.width = "20px";
+      effect.style.height = "20px";
+      effect.style.borderRadius = "50%";
+      effect.style.background = `hsl(${Math.random() * 360}, 70%, 60%)`;
+      break;
+    case "halloween":
+      effect.innerHTML = "🎃";
+      effect.style.fontSize = "2rem";
+      break;
+    case "easter":
+      effect.innerHTML = "🐰";
+      effect.style.fontSize = "2rem";
+      break;
+    default:
+      return;
+  }
+
+  document.body.appendChild(effect);
+  setTimeout(() => effect.remove(), 600);
+};
+
 export function useGlobalTheme() {
   const { data: activeTheme } = useQuery({
     queryKey: ["active-theme"],
@@ -91,9 +131,17 @@ export function useGlobalTheme() {
     // Adicionar classe de tema ao body para efeitos especiais
     document.body.classList.add(`theme-${activeTheme.slug}`);
 
+    // Add click effects listener
+    const handleClick = (e: MouseEvent) => {
+      createClickEffect(e, activeTheme);
+    };
+
+    document.addEventListener("click", handleClick);
+
     // Cleanup
     return () => {
       document.body.classList.remove(`theme-${activeTheme.slug}`);
+      document.removeEventListener("click", handleClick);
     };
   }, [activeTheme]);
 
