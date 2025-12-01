@@ -60,7 +60,6 @@ const adminItems: NavItem[] = [
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
   { title: "Automações", href: "/automations", icon: Bot, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
-  { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["tenant_admin"] },
 ];
 
 // Painel Super Admin - métricas e gestão global do sistema
@@ -78,6 +77,7 @@ const superAdminItems: NavItem[] = [
   { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
   { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
+  { title: "Temas Globais", href: "/admin/themes", icon: Palette, roles: ["super_admin"] },
   { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
   { title: "Automações", href: "/automations", icon: Bot, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },

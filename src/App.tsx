@@ -51,6 +51,7 @@ import WebhookConfig from "./pages/WebhookConfig";
 import Automations from "./pages/Automations";
 import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
+import ThemeManagement from "./pages/ThemeManagement";
 
 const queryClient = new QueryClient();
 
@@ -106,7 +107,8 @@ const App = () => (
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="/automations" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Automations /></AuthGuard>} />
           <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
-          <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AuditLogs /></AuthGuard>} />
+          <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
+          <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
