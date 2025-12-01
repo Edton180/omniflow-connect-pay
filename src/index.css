@@ -169,4 +169,81 @@ All colors MUST be HSL.
   .hover-scale:hover {
     @apply scale-105;
   }
+
+  /* Theme Effects Animations */
+
+  /* Snowfall animation for Christmas/Winter */
+  @keyframes snowfall {
+    0% {
+      transform: translateY(-10vh) translateX(0) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) translateX(50px) rotate(360deg);
+      opacity: 0.8;
+    }
+  }
+
+  .snowflake {
+    background: white;
+    border-radius: 50%;
+    animation: snowfall linear infinite;
+  }
+
+  /* Confetti animation for Carnival/New Year */
+  @keyframes confetti-fall {
+    0% {
+      transform: translateY(-10vh) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  .confetti {
+    animation: confetti-fall linear infinite;
+  }
+
+  /* Floating hearts for Valentine's */
+  @keyframes float-up {
+    0% {
+      transform: translateY(110vh) scale(0.5) rotate(0deg);
+      opacity: 0;
+    }
+    20% {
+      opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-10vh) scale(1) rotate(15deg);
+      opacity: 0;
+    }
+  }
+
+  .floating-heart {
+    animation: float-up ease-in-out infinite;
+  }
+
+  /* Click effects */
+  @keyframes click-burst {
+    0% {
+      transform: scale(0);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(3);
+      opacity: 0;
+    }
+  }
+
+  .click-effect {
+    position: fixed;
+    pointer-events: none;
+    animation: click-burst 0.6s ease-out forwards;
+    z-index: 9999;
+  }
 }

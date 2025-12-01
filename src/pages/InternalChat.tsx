@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Search, Send, Users as UsersIcon, LogOut, User, Settings, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -16,6 +17,10 @@ import { StickerPicker } from "@/components/chat/StickerPicker";
 import { TeamDialog } from "@/components/chat/TeamDialog";
 import { ChatConfigTab } from "@/components/chat/ChatConfigTab";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
+import { OnlineStatus } from "@/components/chat/OnlineStatus";
+import { usePresence } from "@/hooks/usePresence";
+import { useTypingIndicator } from "@/hooks/useTypingIndicator";
 
 interface UserWithRoles {
   id: string;
@@ -23,6 +28,9 @@ interface UserWithRoles {
   avatar_url?: string;
   phone?: string;
   roles: string[];
+  unreadCount?: number;
+  isOnline?: boolean;
+  status?: "available" | "busy" | "away";
 }
 
 export default function InternalChat() {
@@ -40,11 +48,19 @@ export default function InternalChat() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"users" | "teams" | "config">("users");
   const [showTeamDialog, setShowTeamDialog] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Presence and typing hooks
+  usePresence(tenantId);
+  const { typingUsers, sendTypingIndicator } = useTypingIndicator({
+    conversationUserId: selectedUser?.id,
+    teamId: selectedTeam?.id,
+    tenantId,
+  });
 
   useEffect(() => {
     const init = async () => {
       await loadUsers();
-      setupRealtimeSubscription();
     };
     init();
   }, []);
@@ -52,6 +68,7 @@ export default function InternalChat() {
   useEffect(() => {
     if (tenantId) {
       loadTeams();
+      setupPresenceSubscription();
     }
   }, [tenantId]);
 
@@ -59,6 +76,7 @@ export default function InternalChat() {
     if (selectedUser) {
       loadMessages();
       setSelectedTeam(null);
+      markMessagesAsRead(selectedUser.id);
     }
   }, [selectedUser]);
 
@@ -69,38 +87,94 @@ export default function InternalChat() {
     }
   }, [selectedTeam]);
 
-  const setupRealtimeSubscription = () => {
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    setupRealtimeSubscription();
+  }, [selectedUser, selectedTeam]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const setupPresenceSubscription = () => {
+    if (!tenantId) return;
+
     const channel = supabase
-      .channel('internal_messages_changes')
+      .channel(`presence:${tenantId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'internal_messages'
+          event: "*",
+          schema: "public",
+          table: "user_presence",
+          filter: `tenant_id=eq.${tenantId}`,
         },
         (payload) => {
+          const presence = payload.new as any;
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === presence.user_id
+                ? { ...u, isOnline: presence.is_online, status: presence.status }
+                : u
+            )
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const setupRealtimeSubscription = () => {
+    const channelName = selectedUser
+      ? `dm:${[user?.id, selectedUser.id].sort().join("-")}`
+      : selectedTeam
+      ? `team:${selectedTeam.id}`
+      : "global";
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "internal_messages",
+        },
+        async (payload) => {
+          const newMessage = payload.new as any;
+
           // Update messages if it's for the current conversation
-          if (selectedUser && 
-              ((payload.new.sender_id === selectedUser.id && payload.new.recipient_id === user?.id) ||
-               (payload.new.sender_id === user?.id && payload.new.recipient_id === selectedUser.id))) {
-            setMessages((prev) => [...prev, payload.new]);
+          if (
+            selectedUser &&
+            ((newMessage.sender_id === selectedUser.id && newMessage.recipient_id === user?.id) ||
+              (newMessage.sender_id === user?.id && newMessage.recipient_id === selectedUser.id))
+          ) {
+            setMessages((prev) => [...prev, newMessage]);
+            if (newMessage.sender_id === selectedUser.id) {
+              markMessagesAsRead(selectedUser.id);
+            }
           }
-          
+
           // Update messages if it's for the current team
-          if (selectedTeam && payload.new.team_id === selectedTeam.id) {
-            // Fetch sender info for team message
-            supabase
+          if (selectedTeam && newMessage.team_id === selectedTeam.id) {
+            const { data: sender } = await supabase
               .from("profiles")
               .select("full_name, avatar_url")
-              .eq("id", payload.new.sender_id)
-              .single()
-              .then(({ data }) => {
-                setMessages((prev) => [...prev, {
-                  ...payload.new,
-                  sender: data
-                }]);
-              });
+              .eq("id", newMessage.sender_id)
+              .single();
+
+            setMessages((prev) => [...prev, { ...newMessage, sender }]);
+          }
+
+          // Update unread count for users
+          if (!selectedUser || newMessage.sender_id !== selectedUser.id) {
+            loadUnreadCounts();
           }
         }
       )
@@ -111,26 +185,62 @@ export default function InternalChat() {
     };
   };
 
+  const markMessagesAsRead = async (userId: string) => {
+    if (!user?.id) return;
+
+    try {
+      await supabase
+        .from("internal_messages")
+        .update({ read_at: new Date().toISOString() })
+        .eq("sender_id", userId)
+        .eq("recipient_id", user.id)
+        .is("read_at", null);
+
+      loadUnreadCounts();
+    } catch (error) {
+      console.error("Error marking messages as read:", error);
+    }
+  };
+
+  const loadUnreadCounts = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data } = await supabase
+        .from("internal_messages")
+        .select("sender_id")
+        .eq("recipient_id", user.id)
+        .is("read_at", null);
+
+      const counts: Record<string, number> = {};
+      data?.forEach((msg) => {
+        counts[msg.sender_id] = (counts[msg.sender_id] || 0) + 1;
+      });
+
+      setUsers((prev) =>
+        prev.map((u) => ({ ...u, unreadCount: counts[u.id] || 0 }))
+      );
+    } catch (error) {
+      console.error("Error loading unread counts:", error);
+    }
+  };
+
   const loadUsers = async () => {
     if (!user) {
       console.log("No user found, cannot load users");
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      // Primeiro buscar o tenant_id do perfil do usuário
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("tenant_id")
         .eq("id", user.id)
         .single();
 
-      if (profileError) {
-        console.error("Error loading profile:", profileError);
-        throw profileError;
-      }
+      if (profileError) throw profileError;
 
       if (!profile?.tenant_id) {
         toast({
@@ -144,7 +254,7 @@ export default function InternalChat() {
 
       setTenantId(profile.tenant_id);
 
-      // Verificar se usuário tem role
+      // Check if user has role
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("role")
@@ -152,34 +262,25 @@ export default function InternalChat() {
         .eq("tenant_id", profile.tenant_id)
         .maybeSingle();
 
-      // Se não tiver role, criar uma
+      // Create role if doesn't exist
       if (!userRole) {
-        const { error: roleInsertError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: user.id,
-            tenant_id: profile.tenant_id,
-            role: "tenant_admin"
-          });
-
-        if (roleInsertError) {
-          console.error("Error creating role:", roleInsertError);
-        }
+        await supabase.from("user_roles").insert({
+          user_id: user.id,
+          tenant_id: profile.tenant_id,
+          role: "tenant_admin",
+        });
       }
 
-      // Buscar profiles e seus roles do mesmo tenant
+      // Fetch profiles with roles
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
         .select("*")
         .eq("tenant_id", profile.tenant_id)
         .neq("id", user.id);
 
-      if (profilesError) {
-        console.error("Error loading profiles:", profilesError);
-        throw profilesError;
-      }
+      if (profilesError) throw profilesError;
 
-      // Buscar roles de cada usuário
+      // Fetch roles and presence for each user
       const usersWithRoles = await Promise.all(
         (profiles || []).map(async (userProfile) => {
           const { data: roles } = await supabase
@@ -187,15 +288,24 @@ export default function InternalChat() {
             .select("role")
             .eq("user_id", userProfile.id)
             .eq("tenant_id", profile.tenant_id);
-          
+
+          const { data: presence } = await supabase
+            .from("user_presence")
+            .select("is_online, status")
+            .eq("user_id", userProfile.id)
+            .maybeSingle();
+
           return {
             ...userProfile,
-            roles: roles?.map(r => r.role) || []
+            roles: roles?.map((r) => r.role) || [],
+            isOnline: presence?.is_online || false,
+            status: (presence?.status as "available" | "busy" | "away") || "available",
           };
         })
       );
-      
+
       setUsers(usersWithRoles || []);
+      loadUnreadCounts();
     } catch (error: any) {
       console.error("Error loading users:", error);
       toast({
@@ -255,7 +365,9 @@ export default function InternalChat() {
       const { data, error } = await supabase
         .from("internal_messages")
         .select("*")
-        .or(`and(sender_id.eq.${user.id},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${user.id})`)
+        .or(
+          `and(sender_id.eq.${user.id},recipient_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},recipient_id.eq.${user.id})`
+        )
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -271,7 +383,7 @@ export default function InternalChat() {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate('/');
+    navigate("/");
   };
 
   const handleSend = async (mediaUrl?: string, mediaType?: string) => {
@@ -290,7 +402,6 @@ export default function InternalChat() {
         messageData.recipient_id = selectedUser.id;
       } else if (selectedTeam) {
         messageData.team_id = selectedTeam.id;
-        // For team messages, set recipient_id to sender_id to pass RLS
         messageData.recipient_id = user.id;
       }
 
@@ -299,15 +410,12 @@ export default function InternalChat() {
         messageData.media_type = mediaType;
       }
 
-      const { error } = await supabase
-        .from("internal_messages")
-        .insert(messageData);
+      const { error } = await supabase.from("internal_messages").insert(messageData);
 
       if (error) throw error;
-      
+
       setMessageText("");
-      
-      // Reload messages to get the new one with sender info for teams
+
       if (selectedTeam) {
         await loadTeamMessages();
       }
@@ -327,14 +435,18 @@ export default function InternalChat() {
   };
 
   const handleAudioRecorded = (url: string) => {
-    handleSend(url, 'audio');
+    handleSend(url, "audio");
   };
 
   const handleStickerSelect = (sticker: string) => {
     setMessageText(messageText + sticker);
   };
 
-  const filteredUsers = users.filter((u: UserWithRoles) => 
+  const handleTyping = () => {
+    sendTypingIndicator();
+  };
+
+  const filteredUsers = users.filter((u: UserWithRoles) =>
     u.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -394,7 +506,7 @@ export default function InternalChat() {
                     key={u.id}
                     onClick={() => setSelectedUser(u)}
                     className={`p-3 border-b cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedUser?.id === u.id ? 'bg-muted' : ''
+                      selectedUser?.id === u.id ? "bg-muted" : ""
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -405,26 +517,25 @@ export default function InternalChat() {
                             <User className="h-5 w-5" />
                           </AvatarFallback>
                         </Avatar>
-                        <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                        {u.isOnline && (
+                          <span className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-card" />
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm truncate block">
-                          {u.full_name || 'Sem nome'}
-                        </span>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {u.roles && u.roles.length > 0 ? (
-                            <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                              {u.roles.includes('tenant_admin') ? 'Admin' : 
-                               u.roles.includes('agent') ? 'Agente' : 
-                               u.roles[0]}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-foreground/40">Sem papel</span>
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-sm truncate block">
+                            {u.full_name || "Sem nome"}
+                          </span>
+                          {u.unreadCount && u.unreadCount > 0 && (
+                            <Badge variant="destructive" className="ml-2 h-5 min-w-5 flex items-center justify-center text-xs">
+                              {u.unreadCount}
+                            </Badge>
                           )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <OnlineStatus isOnline={u.isOnline || false} status={u.status} />
                           {u.phone && (
-                            <span className="text-xs text-foreground/60 truncate">
-                              {u.phone}
-                            </span>
+                            <span className="text-xs text-foreground/60 truncate">{u.phone}</span>
                           )}
                         </div>
                       </div>
@@ -433,7 +544,7 @@ export default function InternalChat() {
                 ))}
               </div>
             )}
-            
+
             {activeTab === "teams" && (
               <div className="h-full space-y-2 p-2">
                 <Button
@@ -460,7 +571,7 @@ export default function InternalChat() {
                     key={team.id}
                     onClick={() => setSelectedTeam(team)}
                     className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedTeam?.id === team.id ? 'bg-muted' : ''
+                      selectedTeam?.id === team.id ? "bg-muted" : ""
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -468,9 +579,7 @@ export default function InternalChat() {
                         <UsersIcon className="h-5 w-5 text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="font-medium text-sm truncate block">
-                          {team.name}
-                        </span>
+                        <span className="font-medium text-sm truncate block">{team.name}</span>
                         {team.description && (
                           <span className="text-xs text-foreground/60 truncate block">
                             {team.description}
@@ -482,14 +591,14 @@ export default function InternalChat() {
                 ))}
               </div>
             )}
-            
+
             {activeTab === "config" && tenantId && (
               <div className="p-4 h-full overflow-y-auto">
                 <ChatConfigTab tenantId={tenantId} />
               </div>
             )}
           </div>
-          
+
           {tenantId && (
             <TeamDialog
               open={showTeamDialog}
@@ -504,7 +613,7 @@ export default function InternalChat() {
         </div>
 
         {/* Área de Chat */}
-        {(selectedUser || selectedTeam) ? (
+        {selectedUser || selectedTeam ? (
           <div className="flex-1 flex flex-col">
             <div className="border-b p-4 bg-card shadow-sm">
               <div className="flex items-center gap-3">
@@ -516,12 +625,9 @@ export default function InternalChat() {
                         <User className="h-5 w-5" />
                       </AvatarFallback>
                     </Avatar>
-                     <div>
+                    <div>
                       <h3 className="font-semibold text-foreground">{selectedUser.full_name}</h3>
-                      <div className="flex items-center gap-1">
-                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                        <span className="text-xs text-foreground/60">Online</span>
-                      </div>
+                      <OnlineStatus isOnline={selectedUser.isOnline || false} status={selectedUser.status} />
                     </div>
                   </>
                 ) : (
@@ -549,29 +655,26 @@ export default function InternalChat() {
                 messages.map((msg) => {
                   const isOwnMessage = msg.sender_id === user?.id;
                   const showSenderName = selectedTeam && !isOwnMessage;
-                  
+
                   return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
-                    >
+                    <div key={msg.id} className={`flex ${isOwnMessage ? "justify-end" : "justify-start"}`}>
                       <div
                         className={`max-w-[70%] rounded-2xl px-4 py-2 shadow-sm ${
                           isOwnMessage
-                            ? 'bg-primary text-primary-foreground'
-                            : 'bg-card border border-border'
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-card border border-border"
                         }`}
                       >
                         {showSenderName && (
                           <p className="text-xs font-semibold mb-1 text-primary">
-                            {msg.sender?.full_name || 'Usuário'}
+                            {msg.sender?.full_name || "Usuário"}
                           </p>
                         )}
                         {msg.media_url && (
                           <div className="mb-2">
-                            {msg.media_type === 'image' ? (
+                            {msg.media_type === "image" ? (
                               <img src={msg.media_url} alt="Mídia" className="rounded-lg max-w-full" />
-                            ) : msg.media_type === 'audio' ? (
+                            ) : msg.media_type === "audio" ? (
                               <audio controls src={msg.media_url} className="max-w-full" />
                             ) : (
                               <a href={msg.media_url} target="_blank" rel="noopener noreferrer" className="text-xs underline">
@@ -581,7 +684,7 @@ export default function InternalChat() {
                           </div>
                         )}
                         <p className="text-sm break-words">{msg.content}</p>
-                        <span className={`text-xs mt-1 block ${isOwnMessage ? 'opacity-80' : 'text-foreground/60'}`}>
+                        <span className={`text-xs mt-1 block ${isOwnMessage ? "opacity-80" : "text-foreground/60"}`}>
                           {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true, locale: ptBR })}
                         </span>
                       </div>
@@ -589,6 +692,8 @@ export default function InternalChat() {
                   );
                 })
               )}
+              {typingUsers.length > 0 && <TypingIndicator userName={typingUsers[0]} />}
+              <div ref={messagesEndRef} />
             </div>
 
             <div className="border-t p-4 bg-card shadow-lg">
@@ -598,15 +703,18 @@ export default function InternalChat() {
                 <StickerPicker onStickerSelect={handleStickerSelect} />
                 <Input
                   value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                  onChange={(e) => {
+                    setMessageText(e.target.value);
+                    handleTyping();
+                  }}
+                  onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
                   placeholder="Digite sua mensagem..."
                   disabled={loading}
                   className="flex-1 bg-background"
                 />
-                <Button 
-                  onClick={() => handleSend()} 
-                  size="icon" 
+                <Button
+                  onClick={() => handleSend()}
+                  size="icon"
                   disabled={loading}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md"
                 >
