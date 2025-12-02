@@ -57,20 +57,26 @@ export function useGlobalTheme() {
   const { data: activeTheme } = useQuery({
     queryKey: ["active-theme"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("global_themes")
-        .select("*")
-        .eq("is_active", true)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from("global_themes")
+          .select("*")
+          .eq("is_active", true)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching active theme:", error);
+        if (error) {
+          console.error("Error fetching active theme:", error);
+          return null;
+        }
+        
+        return data as GlobalTheme | null;
+      } catch (err) {
+        console.error("Failed to fetch theme:", err);
         return null;
       }
-      
-      return data as GlobalTheme | null;
     },
-    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {

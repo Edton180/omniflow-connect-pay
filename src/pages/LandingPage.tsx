@@ -109,16 +109,36 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Stats Section */}
+      <section className="py-16 bg-gradient-to-b from-background to-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="text-center animate-fade-in">
+              <div className="text-5xl font-bold text-primary mb-2">99%</div>
+              <div className="text-muted-foreground">Satisfação dos Clientes</div>
+            </div>
+            <div className="text-center animate-fade-in">
+              <div className="text-5xl font-bold text-primary mb-2">5x</div>
+              <div className="text-muted-foreground">Aumento na Eficiência</div>
+            </div>
+            <div className="text-center animate-fade-in">
+              <div className="text-5xl font-bold text-primary mb-2">24/7</div>
+              <div className="text-muted-foreground">Suporte Automatizado</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="features" className="py-24 relative">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-fade-in">
             <Badge className="mb-4 text-sm px-4 py-2">Recursos</Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
               Tudo que você precisa em um só lugar
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Plataforma completa para gerenciar seu atendimento multicanal
+              Plataforma completa para gerenciar seu atendimento multicanal com eficiência
             </p>
           </div>
 
@@ -189,7 +209,7 @@ const Index = () => {
               </CardContent>
             </Card>
 
-            <Card className="gradient-card hover-scale border-2 hover:border-secondary/50 transition-all duration-300">
+            <Card className="gradient-card hover-scale border-2 hover:border-accent/50 transition-all duration-300">
               <CardHeader className="text-center pb-4">
                 <div 
                   className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg"
@@ -197,16 +217,16 @@ const Index = () => {
                     background: `linear-gradient(135deg, ${settings.secondary_color}20, ${settings.secondary_color}10)`
                   }}
                 >
-                  <MessageSquare 
+                  <BarChart 
                     className="w-8 h-8"
                     style={{ color: settings.secondary_color }}
                   />
                 </div>
-                <CardTitle className="text-2xl mb-3">Catálogo Online Integrado</CardTitle>
+                <CardTitle className="text-2xl mb-3">Automações Inteligentes</CardTitle>
               </CardHeader>
               <CardContent className="text-center">
                 <CardDescription className="text-base leading-relaxed">
-                  Cadastre produtos, gerencie vendas e processe pagamentos diretamente na plataforma
+                  Automatize respostas, crie fluxos de trabalho e configure bots para atendimento 24/7
                 </CardDescription>
               </CardContent>
             </Card>
@@ -214,25 +234,67 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Benefits Section */}
+      <section className="py-24 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-16">
+              <h2 className="text-4xl font-bold mb-4">Por que escolher nossa plataforma?</h2>
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                { icon: Check, title: "Integração Rápida", desc: "Configure em minutos e comece a atender" },
+                { icon: Check, title: "Multi-Canais", desc: "WhatsApp, Telegram, Email e mais em um só lugar" },
+                { icon: Check, title: "Relatórios Detalhados", desc: "Acompanhe métricas e performance em tempo real" },
+                { icon: Check, title: "Segurança Garantida", desc: "Seus dados protegidos com criptografia de ponta" },
+              ].map((benefit, i) => (
+                <Card key={i} className="p-6 hover-scale border-2 hover:border-primary/30 transition-all">
+                  <div className="flex gap-4 items-start">
+                    <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <benefit.icon className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-lg mb-2">{benefit.title}</h3>
+                      <p className="text-muted-foreground">{benefit.desc}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-secondary/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/20 via-secondary/15 to-accent/20" />
         <div className="container mx-auto px-4 relative">
-          <Card className="max-w-4xl mx-auto gradient-card border-2 border-primary/20 p-8 md:p-12">
+          <Card className="max-w-4xl mx-auto gradient-card border-2 border-primary/30 p-8 md:p-12 shadow-2xl">
             <div className="text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              <Badge className="mb-6 text-sm px-4 py-2 bg-primary/10">Teste Grátis</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                 Pronto para transformar seu atendimento?
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Junte-se a empresas que já otimizaram seu atendimento com nossa plataforma
+                Junte-se a centenas de empresas que já otimizaram seu atendimento com nossa plataforma
               </p>
-              <Button
-                size="lg"
-                className="text-lg px-10 py-7 hover-scale bg-gradient-to-r from-primary to-secondary"
-                onClick={() => navigate('/auth')}
-              >
-                Começar Agora Gratuitamente
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  size="lg"
+                  className="text-lg px-10 py-7 hover-scale bg-gradient-to-r from-primary to-secondary shadow-lg"
+                  onClick={() => navigate('/auth')}
+                >
+                  Começar Agora Gratuitamente
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="text-lg px-10 py-7 hover-scale"
+                  onClick={() => navigate('/auth')}
+                >
+                  Fazer Login
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
