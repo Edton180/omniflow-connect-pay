@@ -18,11 +18,13 @@ export default function LandingPageEditor() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
+    // Hero
     hero_title: "OmniFlow - Plataforma de Atendimento Multicanal",
     hero_subtitle: "Gerencie todos os seus canais de atendimento em um só lugar",
     hero_cta_text: "Começar Agora",
     hero_image_url: "",
     logo_url: "",
+    // Features
     feature_1_title: "Atendimento Multicanal",
     feature_1_description: "WhatsApp, Email, Telegram e mais",
     feature_1_icon: "MessageSquare",
@@ -32,11 +34,54 @@ export default function LandingPageEditor() {
     feature_3_title: "Relatórios Detalhados",
     feature_3_description: "Acompanhe métricas e performance",
     feature_3_icon: "BarChart",
-    pricing_title: "Planos e Preços",
-    pricing_subtitle: "Escolha o melhor plano para seu negócio",
+    // Stats
+    stats_1_value: "10K+",
+    stats_1_label: "Empresas Ativas",
+    stats_2_value: "99%",
+    stats_2_label: "Satisfação",
+    stats_3_value: "24/7",
+    stats_3_label: "Suporte",
+    // Benefits
+    benefit_1_title: "Integração Rápida",
+    benefit_1_description: "Configure em minutos e comece a atender",
+    benefit_2_title: "Multi-Canais",
+    benefit_2_description: "WhatsApp, Email, Telegram em um só lugar",
+    benefit_3_title: "Relatórios em Tempo Real",
+    benefit_3_description: "Dashboards completos e insights poderosos",
+    benefit_4_title: "Segurança Total",
+    benefit_4_description: "Criptografia e proteção de dados garantida",
+    // Testimonials
+    testimonial_1_text: "Excelente plataforma! Aumentou nossa produtividade em 300%.",
+    testimonial_1_author: "João Silva",
+    testimonial_1_role: "CEO, TechCorp",
+    testimonial_1_avatar: "",
+    testimonial_2_text: "O melhor sistema de atendimento que já usei. Recomendo!",
+    testimonial_2_author: "Maria Santos",
+    testimonial_2_role: "Gerente, StartupX",
+    testimonial_2_avatar: "",
+    testimonial_3_text: "Suporte incrível e interface intuitiva. Vale cada centavo.",
+    testimonial_3_author: "Pedro Costa",
+    testimonial_3_role: "CTO, FinTech",
+    testimonial_3_avatar: "",
+    // CTA
+    cta_title: "Pronto para transformar seu atendimento?",
+    cta_subtitle: "Junte-se a milhares de empresas que já revolucionaram seu suporte",
+    cta_button_text: "Começar Gratuitamente",
+    // Footer
+    footer_company_description: "A plataforma mais completa para gerenciar atendimento multicanal.",
+    footer_link_1_text: "Sobre",
+    footer_link_1_url: "#",
+    footer_link_2_text: "Recursos",
+    footer_link_2_url: "#",
+    footer_link_3_text: "Preços",
+    footer_link_3_url: "#",
+    footer_link_4_text: "Contato",
+    footer_link_4_url: "#",
     footer_text: "© 2025 OmniFlow. Todos os direitos reservados.",
+    // Colors
     primary_color: "#8B5CF6",
     secondary_color: "#3B82F6",
+    accent_color: "#10B981",
   });
 
   useEffect(() => {
@@ -68,11 +113,48 @@ export default function LandingPageEditor() {
           feature_3_title: data.feature_3_title,
           feature_3_description: data.feature_3_description,
           feature_3_icon: data.feature_3_icon,
-          pricing_title: data.pricing_title,
-          pricing_subtitle: data.pricing_subtitle,
+          stats_1_value: data.stats_1_value || "10K+",
+          stats_1_label: data.stats_1_label || "Empresas Ativas",
+          stats_2_value: data.stats_2_value || "99%",
+          stats_2_label: data.stats_2_label || "Satisfação",
+          stats_3_value: data.stats_3_value || "24/7",
+          stats_3_label: data.stats_3_label || "Suporte",
+          benefit_1_title: data.benefit_1_title || "Integração Rápida",
+          benefit_1_description: data.benefit_1_description || "Configure em minutos",
+          benefit_2_title: data.benefit_2_title || "Multi-Canais",
+          benefit_2_description: data.benefit_2_description || "Todos em um só lugar",
+          benefit_3_title: data.benefit_3_title || "Relatórios",
+          benefit_3_description: data.benefit_3_description || "Insights poderosos",
+          benefit_4_title: data.benefit_4_title || "Segurança",
+          benefit_4_description: data.benefit_4_description || "Dados protegidos",
+          testimonial_1_text: data.testimonial_1_text || "",
+          testimonial_1_author: data.testimonial_1_author || "",
+          testimonial_1_role: data.testimonial_1_role || "",
+          testimonial_1_avatar: data.testimonial_1_avatar || "",
+          testimonial_2_text: data.testimonial_2_text || "",
+          testimonial_2_author: data.testimonial_2_author || "",
+          testimonial_2_role: data.testimonial_2_role || "",
+          testimonial_2_avatar: data.testimonial_2_avatar || "",
+          testimonial_3_text: data.testimonial_3_text || "",
+          testimonial_3_author: data.testimonial_3_author || "",
+          testimonial_3_role: data.testimonial_3_role || "",
+          testimonial_3_avatar: data.testimonial_3_avatar || "",
+          cta_title: data.cta_title || "Pronto para começar?",
+          cta_subtitle: data.cta_subtitle || "Junte-se a nós",
+          cta_button_text: data.cta_button_text || "Começar Agora",
+          footer_company_description: data.footer_company_description || "",
+          footer_link_1_text: data.footer_link_1_text || "Sobre",
+          footer_link_1_url: data.footer_link_1_url || "#",
+          footer_link_2_text: data.footer_link_2_text || "Recursos",
+          footer_link_2_url: data.footer_link_2_url || "#",
+          footer_link_3_text: data.footer_link_3_text || "Preços",
+          footer_link_3_url: data.footer_link_3_url || "#",
+          footer_link_4_text: data.footer_link_4_text || "Contato",
+          footer_link_4_url: data.footer_link_4_url || "#",
           footer_text: data.footer_text,
           primary_color: data.primary_color,
           secondary_color: data.secondary_color,
+          accent_color: data.accent_color || "#10B981",
         });
       }
     } catch (error: any) {
@@ -160,12 +242,15 @@ export default function LandingPageEditor() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="hero" className="max-w-4xl mx-auto">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-8 h-auto flex-wrap">
             <TabsTrigger value="hero">Hero</TabsTrigger>
+            <TabsTrigger value="stats">Stats</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
-            <TabsTrigger value="pricing">Preços</TabsTrigger>
-            <TabsTrigger value="style">Estilo</TabsTrigger>
+            <TabsTrigger value="benefits">Benefícios</TabsTrigger>
+            <TabsTrigger value="testimonials">Depoimentos</TabsTrigger>
+            <TabsTrigger value="cta">CTA</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
+            <TabsTrigger value="style">Cores</TabsTrigger>
           </TabsList>
 
           <TabsContent value="hero" className="space-y-6 mt-6">
@@ -256,24 +341,151 @@ export default function LandingPageEditor() {
             ))}
           </TabsContent>
 
-          <TabsContent value="pricing" className="space-y-6 mt-6">
+          <TabsContent value="stats" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Seção de Preços</CardTitle>
+                <CardTitle>Estatísticas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {[1, 2, 3].map((num) => (
+                  <div key={num} className="grid grid-cols-2 gap-4 p-4 border rounded-lg">
+                    <div>
+                      <Label>Valor {num}</Label>
+                      <Input
+                        value={formData[`stats_${num}_value` as keyof typeof formData]}
+                        onChange={(e) =>
+                          setFormData({ ...formData, [`stats_${num}_value`]: e.target.value })
+                        }
+                        placeholder="10K+"
+                      />
+                    </div>
+                    <div>
+                      <Label>Descrição {num}</Label>
+                      <Input
+                        value={formData[`stats_${num}_label` as keyof typeof formData]}
+                        onChange={(e) =>
+                          setFormData({ ...formData, [`stats_${num}_label`]: e.target.value })
+                        }
+                        placeholder="Empresas Ativas"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="benefits" className="space-y-6 mt-6">
+            {[1, 2, 3, 4].map((num) => (
+              <Card key={num}>
+                <CardHeader>
+                  <CardTitle>Benefício {num}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Título</Label>
+                    <Input
+                      value={formData[`benefit_${num}_title` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`benefit_${num}_title`]: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Descrição</Label>
+                    <Textarea
+                      value={formData[`benefit_${num}_description` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`benefit_${num}_description`]: e.target.value })
+                      }
+                      rows={2}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="testimonials" className="space-y-6 mt-6">
+            {[1, 2, 3].map((num) => (
+              <Card key={num}>
+                <CardHeader>
+                  <CardTitle>Depoimento {num}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Texto do Depoimento</Label>
+                    <Textarea
+                      value={formData[`testimonial_${num}_text` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`testimonial_${num}_text`]: e.target.value })
+                      }
+                      rows={3}
+                      placeholder="O que o cliente disse..."
+                    />
+                  </div>
+                  <div>
+                    <Label>Nome do Autor</Label>
+                    <Input
+                      value={formData[`testimonial_${num}_author` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`testimonial_${num}_author`]: e.target.value })
+                      }
+                      placeholder="João Silva"
+                    />
+                  </div>
+                  <div>
+                    <Label>Cargo/Empresa</Label>
+                    <Input
+                      value={formData[`testimonial_${num}_role` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`testimonial_${num}_role`]: e.target.value })
+                      }
+                      placeholder="CEO, Empresa"
+                    />
+                  </div>
+                  <div>
+                    <Label>URL do Avatar</Label>
+                    <Input
+                      value={formData[`testimonial_${num}_avatar` as keyof typeof formData]}
+                      onChange={(e) =>
+                        setFormData({ ...formData, [`testimonial_${num}_avatar`]: e.target.value })
+                      }
+                      placeholder="https://..."
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="cta" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Call to Action Final</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Título</Label>
-                  <Input
-                    value={formData.pricing_title}
-                    onChange={(e) => setFormData({ ...formData, pricing_title: e.target.value })}
+                  <Label>Título Principal</Label>
+                  <Textarea
+                    value={formData.cta_title}
+                    onChange={(e) => setFormData({ ...formData, cta_title: e.target.value })}
+                    rows={2}
                   />
                 </div>
                 <div>
                   <Label>Subtítulo</Label>
+                  <Textarea
+                    value={formData.cta_subtitle}
+                    onChange={(e) => setFormData({ ...formData, cta_subtitle: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                <div>
+                  <Label>Texto do Botão</Label>
                   <Input
-                    value={formData.pricing_subtitle}
-                    onChange={(e) => setFormData({ ...formData, pricing_subtitle: e.target.value })}
+                    value={formData.cta_button_text}
+                    onChange={(e) => setFormData({ ...formData, cta_button_text: e.target.value })}
                   />
                 </div>
               </CardContent>
@@ -283,9 +495,9 @@ export default function LandingPageEditor() {
           <TabsContent value="style" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Cores</CardTitle>
+                <CardTitle>Paleta de Cores</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 <div>
                   <Label>Cor Primária</Label>
                   <div className="flex gap-2">
@@ -316,6 +528,21 @@ export default function LandingPageEditor() {
                     />
                   </div>
                 </div>
+                <div>
+                  <Label>Cor de Destaque (Accent)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={formData.accent_color}
+                      onChange={(e) => setFormData({ ...formData, accent_color: e.target.value })}
+                      className="w-20 h-10"
+                    />
+                    <Input
+                      value={formData.accent_color}
+                      onChange={(e) => setFormData({ ...formData, accent_color: e.target.value })}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -323,11 +550,40 @@ export default function LandingPageEditor() {
           <TabsContent value="footer" className="space-y-6 mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Rodapé</CardTitle>
+                <CardTitle>Informações do Rodapé</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div>
-                  <Label>Texto do Rodapé</Label>
+                  <Label>Descrição da Empresa</Label>
+                  <Textarea
+                    value={formData.footer_company_description}
+                    onChange={(e) => setFormData({ ...formData, footer_company_description: e.target.value })}
+                    rows={2}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {[1, 2, 3, 4].map((num) => (
+                    <div key={num} className="space-y-2">
+                      <Label>Link {num}</Label>
+                      <Input
+                        value={formData[`footer_link_${num}_text` as keyof typeof formData]}
+                        onChange={(e) =>
+                          setFormData({ ...formData, [`footer_link_${num}_text`]: e.target.value })
+                        }
+                        placeholder="Texto do Link"
+                      />
+                      <Input
+                        value={formData[`footer_link_${num}_url` as keyof typeof formData]}
+                        onChange={(e) =>
+                          setFormData({ ...formData, [`footer_link_${num}_url`]: e.target.value })
+                        }
+                        placeholder="URL"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div>
+                  <Label>Copyright</Label>
                   <Input
                     value={formData.footer_text}
                     onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}

@@ -1,0 +1,46 @@
+-- Expandir tabela landing_page_settings com novos campos para design moderno
+ALTER TABLE public.landing_page_settings
+ADD COLUMN IF NOT EXISTS stats_1_value TEXT DEFAULT '10K+',
+ADD COLUMN IF NOT EXISTS stats_1_label TEXT DEFAULT 'Empresas Ativas',
+ADD COLUMN IF NOT EXISTS stats_2_value TEXT DEFAULT '99%',
+ADD COLUMN IF NOT EXISTS stats_2_label TEXT DEFAULT 'Satisfação',
+ADD COLUMN IF NOT EXISTS stats_3_value TEXT DEFAULT '24/7',
+ADD COLUMN IF NOT EXISTS stats_3_label TEXT DEFAULT 'Suporte',
+ADD COLUMN IF NOT EXISTS testimonial_1_text TEXT DEFAULT 'Excelente plataforma! Aumentou nossa produtividade em 300%.',
+ADD COLUMN IF NOT EXISTS testimonial_1_author TEXT DEFAULT 'João Silva',
+ADD COLUMN IF NOT EXISTS testimonial_1_role TEXT DEFAULT 'CEO, TechCorp',
+ADD COLUMN IF NOT EXISTS testimonial_1_avatar TEXT,
+ADD COLUMN IF NOT EXISTS testimonial_2_text TEXT DEFAULT 'O melhor sistema de atendimento que já usei. Recomendo!',
+ADD COLUMN IF NOT EXISTS testimonial_2_author TEXT DEFAULT 'Maria Santos',
+ADD COLUMN IF NOT EXISTS testimonial_2_role TEXT DEFAULT 'Gerente, StartupX',
+ADD COLUMN IF NOT EXISTS testimonial_2_avatar TEXT,
+ADD COLUMN IF NOT EXISTS testimonial_3_text TEXT DEFAULT 'Suporte incrível e interface intuitiva. Vale cada centavo.',
+ADD COLUMN IF NOT EXISTS testimonial_3_author TEXT DEFAULT 'Pedro Costa',
+ADD COLUMN IF NOT EXISTS testimonial_3_role TEXT DEFAULT 'CTO, FinTech',
+ADD COLUMN IF NOT EXISTS testimonial_3_avatar TEXT,
+ADD COLUMN IF NOT EXISTS cta_title TEXT DEFAULT 'Pronto para transformar seu atendimento?',
+ADD COLUMN IF NOT EXISTS cta_subtitle TEXT DEFAULT 'Junte-se a milhares de empresas que já revolucionaram seu suporte',
+ADD COLUMN IF NOT EXISTS cta_button_text TEXT DEFAULT 'Começar Gratuitamente',
+ADD COLUMN IF NOT EXISTS benefit_1_title TEXT DEFAULT 'Integração Rápida',
+ADD COLUMN IF NOT EXISTS benefit_1_description TEXT DEFAULT 'Configure em minutos e comece a atender',
+ADD COLUMN IF NOT EXISTS benefit_2_title TEXT DEFAULT 'Multi-Canais',
+ADD COLUMN IF NOT EXISTS benefit_2_description TEXT DEFAULT 'WhatsApp, Email, Telegram em um só lugar',
+ADD COLUMN IF NOT EXISTS benefit_3_title TEXT DEFAULT 'Relatórios em Tempo Real',
+ADD COLUMN IF NOT EXISTS benefit_3_description TEXT DEFAULT 'Dashboards completos e insights poderosos',
+ADD COLUMN IF NOT EXISTS benefit_4_title TEXT DEFAULT 'Segurança Total',
+ADD COLUMN IF NOT EXISTS benefit_4_description TEXT DEFAULT 'Criptografia e proteção de dados garantida',
+ADD COLUMN IF NOT EXISTS footer_company_description TEXT DEFAULT 'A plataforma mais completa para gerenciar atendimento multicanal.',
+ADD COLUMN IF NOT EXISTS footer_link_1_text TEXT DEFAULT 'Sobre',
+ADD COLUMN IF NOT EXISTS footer_link_1_url TEXT DEFAULT '#',
+ADD COLUMN IF NOT EXISTS footer_link_2_text TEXT DEFAULT 'Recursos',
+ADD COLUMN IF NOT EXISTS footer_link_2_url TEXT DEFAULT '#',
+ADD COLUMN IF NOT EXISTS footer_link_3_text TEXT DEFAULT 'Preços',
+ADD COLUMN IF NOT EXISTS footer_link_3_url TEXT DEFAULT '#',
+ADD COLUMN IF NOT EXISTS footer_link_4_text TEXT DEFAULT 'Contato',
+ADD COLUMN IF NOT EXISTS footer_link_4_url TEXT DEFAULT '#',
+ADD COLUMN IF NOT EXISTS accent_color TEXT DEFAULT '#10B981';
+
+COMMENT ON COLUMN public.landing_page_settings.stats_1_value IS 'Valor da primeira estatística';
+COMMENT ON COLUMN public.landing_page_settings.testimonial_1_text IS 'Texto do primeiro depoimento';
+COMMENT ON COLUMN public.landing_page_settings.benefit_1_title IS 'Título do primeiro benefício';
+COMMENT ON COLUMN public.landing_page_settings.accent_color IS 'Cor de destaque/accent do design';

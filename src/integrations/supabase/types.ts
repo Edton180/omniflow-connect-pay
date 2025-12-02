@@ -1171,7 +1171,19 @@ export type Database = {
       }
       landing_page_settings: {
         Row: {
+          accent_color: string | null
+          benefit_1_description: string | null
+          benefit_1_title: string | null
+          benefit_2_description: string | null
+          benefit_2_title: string | null
+          benefit_3_description: string | null
+          benefit_3_title: string | null
+          benefit_4_description: string | null
+          benefit_4_title: string | null
           created_at: string | null
+          cta_button_text: string | null
+          cta_subtitle: string | null
+          cta_title: string | null
           feature_1_description: string
           feature_1_icon: string
           feature_1_title: string
@@ -1181,6 +1193,15 @@ export type Database = {
           feature_3_description: string
           feature_3_icon: string
           feature_3_title: string
+          footer_company_description: string | null
+          footer_link_1_text: string | null
+          footer_link_1_url: string | null
+          footer_link_2_text: string | null
+          footer_link_2_url: string | null
+          footer_link_3_text: string | null
+          footer_link_3_url: string | null
+          footer_link_4_text: string | null
+          footer_link_4_url: string | null
           footer_text: string
           hero_cta_text: string
           hero_image_url: string | null
@@ -1192,10 +1213,40 @@ export type Database = {
           pricing_title: string
           primary_color: string
           secondary_color: string
+          stats_1_label: string | null
+          stats_1_value: string | null
+          stats_2_label: string | null
+          stats_2_value: string | null
+          stats_3_label: string | null
+          stats_3_value: string | null
+          testimonial_1_author: string | null
+          testimonial_1_avatar: string | null
+          testimonial_1_role: string | null
+          testimonial_1_text: string | null
+          testimonial_2_author: string | null
+          testimonial_2_avatar: string | null
+          testimonial_2_role: string | null
+          testimonial_2_text: string | null
+          testimonial_3_author: string | null
+          testimonial_3_avatar: string | null
+          testimonial_3_role: string | null
+          testimonial_3_text: string | null
           updated_at: string | null
         }
         Insert: {
+          accent_color?: string | null
+          benefit_1_description?: string | null
+          benefit_1_title?: string | null
+          benefit_2_description?: string | null
+          benefit_2_title?: string | null
+          benefit_3_description?: string | null
+          benefit_3_title?: string | null
+          benefit_4_description?: string | null
+          benefit_4_title?: string | null
           created_at?: string | null
+          cta_button_text?: string | null
+          cta_subtitle?: string | null
+          cta_title?: string | null
           feature_1_description?: string
           feature_1_icon?: string
           feature_1_title?: string
@@ -1205,6 +1256,15 @@ export type Database = {
           feature_3_description?: string
           feature_3_icon?: string
           feature_3_title?: string
+          footer_company_description?: string | null
+          footer_link_1_text?: string | null
+          footer_link_1_url?: string | null
+          footer_link_2_text?: string | null
+          footer_link_2_url?: string | null
+          footer_link_3_text?: string | null
+          footer_link_3_url?: string | null
+          footer_link_4_text?: string | null
+          footer_link_4_url?: string | null
           footer_text?: string
           hero_cta_text?: string
           hero_image_url?: string | null
@@ -1216,10 +1276,40 @@ export type Database = {
           pricing_title?: string
           primary_color?: string
           secondary_color?: string
+          stats_1_label?: string | null
+          stats_1_value?: string | null
+          stats_2_label?: string | null
+          stats_2_value?: string | null
+          stats_3_label?: string | null
+          stats_3_value?: string | null
+          testimonial_1_author?: string | null
+          testimonial_1_avatar?: string | null
+          testimonial_1_role?: string | null
+          testimonial_1_text?: string | null
+          testimonial_2_author?: string | null
+          testimonial_2_avatar?: string | null
+          testimonial_2_role?: string | null
+          testimonial_2_text?: string | null
+          testimonial_3_author?: string | null
+          testimonial_3_avatar?: string | null
+          testimonial_3_role?: string | null
+          testimonial_3_text?: string | null
           updated_at?: string | null
         }
         Update: {
+          accent_color?: string | null
+          benefit_1_description?: string | null
+          benefit_1_title?: string | null
+          benefit_2_description?: string | null
+          benefit_2_title?: string | null
+          benefit_3_description?: string | null
+          benefit_3_title?: string | null
+          benefit_4_description?: string | null
+          benefit_4_title?: string | null
           created_at?: string | null
+          cta_button_text?: string | null
+          cta_subtitle?: string | null
+          cta_title?: string | null
           feature_1_description?: string
           feature_1_icon?: string
           feature_1_title?: string
@@ -1229,6 +1319,15 @@ export type Database = {
           feature_3_description?: string
           feature_3_icon?: string
           feature_3_title?: string
+          footer_company_description?: string | null
+          footer_link_1_text?: string | null
+          footer_link_1_url?: string | null
+          footer_link_2_text?: string | null
+          footer_link_2_url?: string | null
+          footer_link_3_text?: string | null
+          footer_link_3_url?: string | null
+          footer_link_4_text?: string | null
+          footer_link_4_url?: string | null
           footer_text?: string
           hero_cta_text?: string
           hero_image_url?: string | null
@@ -1240,6 +1339,24 @@ export type Database = {
           pricing_title?: string
           primary_color?: string
           secondary_color?: string
+          stats_1_label?: string | null
+          stats_1_value?: string | null
+          stats_2_label?: string | null
+          stats_2_value?: string | null
+          stats_3_label?: string | null
+          stats_3_value?: string | null
+          testimonial_1_author?: string | null
+          testimonial_1_avatar?: string | null
+          testimonial_1_role?: string | null
+          testimonial_1_text?: string | null
+          testimonial_2_author?: string | null
+          testimonial_2_avatar?: string | null
+          testimonial_2_role?: string | null
+          testimonial_2_text?: string | null
+          testimonial_3_author?: string | null
+          testimonial_3_avatar?: string | null
+          testimonial_3_role?: string | null
+          testimonial_3_text?: string | null
           updated_at?: string | null
         }
         Relationships: []
