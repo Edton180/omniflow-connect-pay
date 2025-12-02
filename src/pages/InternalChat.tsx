@@ -412,7 +412,10 @@ export default function InternalChat() {
 
       const { error } = await supabase.from("internal_messages").insert(messageData);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error sending message:", error);
+        throw new Error(error.message || "Erro ao enviar mensagem");
+      }
 
       setMessageText("");
 
