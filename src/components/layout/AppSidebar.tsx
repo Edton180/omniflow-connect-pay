@@ -66,6 +66,7 @@ const adminItems: NavItem[] = [
 const superAdminItems: NavItem[] = [
   { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
   { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
+  { title: "Chat Interno", href: "/internal-chat", icon: MessageCircle, roles: ["super_admin"] },
   { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
   { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
