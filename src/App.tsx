@@ -52,6 +52,7 @@ import Automations from "./pages/Automations";
 import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
 import ThemeManagement from "./pages/ThemeManagement";
+import BroadcastMessages from "./pages/BroadcastMessages";
 
 const queryClient = new QueryClient();
 
@@ -104,6 +105,7 @@ const App = () => (
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
           <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
+          <Route path="/broadcast" element={<AuthGuard requireAuth><BroadcastMessages /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
           <Route path="/automations" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Automations /></AuthGuard>} />
           <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
