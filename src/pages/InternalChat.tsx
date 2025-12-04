@@ -17,6 +17,7 @@ import { MediaUpload } from "@/components/tickets/MediaUpload";
 import { AudioRecorder } from "@/components/chat/AudioRecorder";
 import { StickerPicker } from "@/components/chat/StickerPicker";
 import { TeamDialog } from "@/components/chat/TeamDialog";
+import { TeamMembersDialog } from "@/components/chat/TeamMembersDialog";
 import { ChatConfigTab } from "@/components/chat/ChatConfigTab";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
@@ -56,6 +57,8 @@ export default function InternalChat() {
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"users" | "teams" | "config">("users");
   const [showTeamDialog, setShowTeamDialog] = useState(false);
+  const [showTeamMembersDialog, setShowTeamMembersDialog] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<{ id: string; name: string } | null>(null);
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -807,16 +810,18 @@ export default function InternalChat() {
                   teams.map((team) => (
                     <div
                       key={team.id}
-                      onClick={() => setSelectedTeam(team)}
                       className={`p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors ${
                         selectedTeam?.id === team.id ? "bg-muted" : ""
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <div 
+                          className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center cursor-pointer"
+                          onClick={() => setSelectedTeam(team)}
+                        >
                           <UsersIcon className="h-5 w-5 text-primary" />
                         </div>
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-0" onClick={() => setSelectedTeam(team)}>
                           <span className="font-medium text-sm truncate block">{team.name}</span>
                           {team.description && (
                             <span className="text-xs text-foreground/60 truncate block">
@@ -824,6 +829,18 @@ export default function InternalChat() {
                             </span>
                           )}
                         </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTeam({ id: team.id, name: team.name });
+                            setShowTeamMembersDialog(true);
+                          }}
+                          className="h-8 px-2"
+                        >
+                          <UserPlus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   ))
@@ -846,15 +863,28 @@ export default function InternalChat() {
           </div>
 
           {tenantId && (
-            <TeamDialog
-              open={showTeamDialog}
-              onOpenChange={setShowTeamDialog}
-              tenantId={tenantId}
-              onSuccess={() => {
-                setShowTeamDialog(false);
-                loadTeams();
-              }}
-            />
+            <>
+              <TeamDialog
+                open={showTeamDialog}
+                onOpenChange={setShowTeamDialog}
+                tenantId={tenantId}
+                onSuccess={() => {
+                  setShowTeamDialog(false);
+                  loadTeams();
+                }}
+              />
+              <TeamMembersDialog
+                open={showTeamMembersDialog}
+                onOpenChange={setShowTeamMembersDialog}
+                team={editingTeam}
+                tenantId={tenantId}
+                onSuccess={() => {
+                  setShowTeamMembersDialog(false);
+                  setEditingTeam(null);
+                  loadTeams();
+                }}
+              />
+            </>
           )}
         </div>
 

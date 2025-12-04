@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.manual-payment-webhook]
 verify_jwt = false
+
+[functions.webchat-webhook]
+verify_jwt = false
