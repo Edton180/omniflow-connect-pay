@@ -12,11 +12,18 @@ serve(async (req) => {
   }
 
   try {
-    const { chatId, message, botToken } = await req.json();
+    const { chatId, message, botToken, mediaUrl, mediaType } = await req.json();
 
-    if (!chatId || !message) {
+    if (!chatId) {
       return new Response(
-        JSON.stringify({ error: "Missing required fields: chatId, message" }),
+        JSON.stringify({ error: "Missing required field: chatId" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!message && !mediaUrl) {
+      return new Response(
+        JSON.stringify({ error: "Missing required field: message or mediaUrl" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -54,7 +61,7 @@ serve(async (req) => {
       );
     }
 
-    // Extrair userId do header de autorização para atribuição automática
+    // Auto-assignment logic
     const authHeader = req.headers.get("authorization");
     let sendingUserId = null;
     
@@ -69,18 +76,17 @@ serve(async (req) => {
       }
     }
 
-    // Atribuição automática: se houver userId, buscar ticket associado ao chatId
     if (sendingUserId) {
       try {
-        // Buscar contato pelo chatId (assumindo que chatId é armazenado em contacts)
-        const { data: contact } = await supabaseAdmin
+        // Find contact by telegram chat_id in metadata
+        const { data: contacts } = await supabaseAdmin
           .from("contacts")
           .select("id, tenant_id")
-          .eq("phone", chatId.toString())
-          .maybeSingle();
+          .or(`phone.eq.${chatId},metadata->>telegram_chat_id.eq.${chatId}`);
+
+        const contact = contacts?.[0];
 
         if (contact) {
-          // Buscar tickets abertos deste contato que não estão atribuídos
           const { data: unassignedTickets } = await supabaseAdmin
             .from("tickets")
             .select("id, assigned_to")
@@ -89,7 +95,6 @@ serve(async (req) => {
             .in("status", ["open", "pending"])
             .is("assigned_to", null);
 
-          // Atribuir automaticamente ao agente que está respondendo
           if (unassignedTickets && unassignedTickets.length > 0) {
             for (const ticket of unassignedTickets) {
               await supabaseAdmin
@@ -106,39 +111,77 @@ serve(async (req) => {
         }
       } catch (err) {
         console.error("⚠️ Erro na atribuição automática:", err);
-        // Não interromper o envio da mensagem
       }
     }
 
-    // Send message via Telegram Bot API
-    const response = await fetch(
-      `https://api.telegram.org/bot${telegramBotToken}/sendMessage`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: message,
-          parse_mode: "HTML",
-        }),
-      }
-    );
+    let response;
+    let data;
 
-    const data = await response.json();
+    // If media is present, send with appropriate method
+    if (mediaUrl) {
+      let method = "sendPhoto";
+      let bodyKey = "photo";
+
+      if (mediaType === "video") {
+        method = "sendVideo";
+        bodyKey = "video";
+      } else if (mediaType === "audio") {
+        method = "sendAudio";
+        bodyKey = "audio";
+      } else if (mediaType === "document") {
+        method = "sendDocument";
+        bodyKey = "document";
+      }
+
+      const body: any = {
+        chat_id: chatId,
+        [bodyKey]: mediaUrl,
+      };
+
+      if (message) {
+        body.caption = message;
+        body.parse_mode = "HTML";
+      }
+
+      response = await fetch(
+        `https://api.telegram.org/bot${telegramBotToken}/${method}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+
+      data = await response.json();
+    } else {
+      // Send text message only
+      response = await fetch(
+        `https://api.telegram.org/bot${telegramBotToken}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: message,
+            parse_mode: "HTML",
+          }),
+        }
+      );
+
+      data = await response.json();
+    }
 
     if (!response.ok) {
       console.error("Telegram API error:", data);
       return new Response(
-        JSON.stringify({ error: data.description || "Failed to send message" }),
+        JSON.stringify({ error: data.description || "Failed to send message", success: false }),
         { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     console.log("Telegram message sent successfully:", data);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify({ ...data, success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
@@ -146,7 +189,7 @@ serve(async (req) => {
     console.error("Error sending Telegram message:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ error: errorMessage, success: false }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,

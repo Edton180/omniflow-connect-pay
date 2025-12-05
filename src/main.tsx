@@ -8,11 +8,11 @@ import { ThemeEffects } from "./components/theme/ThemeEffects";
 const queryClient = new QueryClient();
 
 function AppWithTheme() {
-  const { activeTheme } = useGlobalTheme();
+  const { activeTheme, effectsEnabled } = useGlobalTheme();
   
   return (
     <>
-      {activeTheme && <ThemeEffects themeSlug={activeTheme.slug} />}
+      {activeTheme && <ThemeEffects themeSlug={activeTheme.slug} enabled={effectsEnabled} />}
       <App />
     </>
   );

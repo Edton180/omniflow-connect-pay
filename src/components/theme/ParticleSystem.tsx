@@ -176,7 +176,7 @@ export function ParticleSystem({
   };
 
   return (
-    <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+    <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden opacity-40">
       {particles.map(renderShape)}
     </div>
   );
