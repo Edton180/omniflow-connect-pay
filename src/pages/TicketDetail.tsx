@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 
 export default function TicketDetail() {
   const { id } = useParams();
+  // z-index relative para ficar acima dos efeitos de tema
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile } = useAuth();
@@ -757,8 +758,8 @@ export default function TicketDetail() {
   if (!ticket) return null;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="border-b bg-card sticky top-0 z-50">
+    <div className="min-h-screen bg-background flex flex-col relative z-10">
+      <header className="border-b bg-card sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

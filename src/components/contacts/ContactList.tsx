@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, Search, Plus, User, Mail, Phone, Pencil, Trash2, MessageSquare, PlusCircle } from "lucide-react";
+import { Loader2, Search, Plus, User, Mail, Phone, Pencil, Trash2, MessageSquare, PlusCircle, Filter } from "lucide-react";
 import { ContactDialog } from "./ContactDialog";
 import { useAuth } from "@/hooks/useAuth";
 import {
@@ -20,6 +21,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+type ChannelFilterType = "all" | "telegram" | "whatsapp" | "email" | "webchat";
+
 export const ContactList = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -27,6 +30,7 @@ export const ContactList = () => {
   const [contacts, setContacts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilterType>("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -56,6 +60,30 @@ export const ContactList = () => {
   useEffect(() => {
     fetchContacts();
   }, []);
+
+  const getContactChannel = (contact: any): ChannelFilterType => {
+    if (contact.metadata?.telegram_chat_id) return "telegram";
+    if (contact.metadata?.whatsapp_id || (contact.phone && !contact.metadata?.telegram_chat_id)) return "whatsapp";
+    if (contact.email && !contact.phone) return "email";
+    if (contact.metadata?.webchat_session_id) return "webchat";
+    return "whatsapp";
+  };
+
+  const getChannelBadge = (contact: any) => {
+    const channel = getContactChannel(contact);
+    switch (channel) {
+      case "telegram":
+        return <Badge variant="outline" className="text-xs bg-blue-500/10 text-blue-600 border-blue-500/20">📱 Telegram</Badge>;
+      case "whatsapp":
+        return <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">💬 WhatsApp</Badge>;
+      case "email":
+        return <Badge variant="outline" className="text-xs bg-orange-500/10 text-orange-600 border-orange-500/20">📧 Email</Badge>;
+      case "webchat":
+        return <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">🌐 WebChat</Badge>;
+      default:
+        return null;
+    }
+  };
 
   const handleCreate = () => {
     setSelectedContact(null);
@@ -107,7 +135,6 @@ export const ContactList = () => {
     e.stopPropagation();
     
     try {
-      // Get user's tenant_id
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("tenant_id")
@@ -123,7 +150,6 @@ export const ContactList = () => {
         return;
       }
 
-      // Find existing open ticket for this contact
       const { data: existingTicket } = await supabase
         .from("tickets")
         .select("*")
@@ -133,7 +159,6 @@ export const ContactList = () => {
         .maybeSingle();
 
       if (existingTicket) {
-        // Navigate to tickets page with this ticket selected
         navigate("/tickets-improved", { state: { ticketId: existingTicket.id } });
       } else {
         toast({
@@ -155,7 +180,6 @@ export const ContactList = () => {
     e.stopPropagation();
 
     try {
-      // Get user's tenant_id
       const { data: userRole } = await supabase
         .from("user_roles")
         .select("tenant_id")
@@ -171,11 +195,9 @@ export const ContactList = () => {
         return;
       }
 
-      // Check if contact has channel information
       const channel = contact.metadata?.telegram_chat_id ? "telegram" : 
                      contact.phone ? "whatsapp" : "email";
 
-      // Create new ticket
       const { data: newTicket, error } = await supabase
         .from("tickets")
         .insert({
@@ -196,7 +218,6 @@ export const ContactList = () => {
         description: "Nova conversa criada com sucesso",
       });
 
-      // Navigate to the new ticket
       navigate("/tickets-improved", { state: { ticketId: newTicket.id } });
     } catch (error: any) {
       toast({
@@ -207,16 +228,20 @@ export const ContactList = () => {
     }
   };
 
-  const filteredContacts = contacts.filter(contact =>
-    contact.name?.toLowerCase().includes(search.toLowerCase()) ||
-    contact.phone?.includes(search) ||
-    contact.email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredContacts = contacts.filter(contact => {
+    const matchesSearch = contact.name?.toLowerCase().includes(search.toLowerCase()) ||
+      contact.phone?.includes(search) ||
+      contact.email?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesChannel = channelFilter === "all" || getContactChannel(contact) === channelFilter;
+    
+    return matchesSearch && matchesChannel;
+  });
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar por nome, telefone ou email..."
@@ -225,6 +250,22 @@ export const ContactList = () => {
             className="pl-10"
           />
         </div>
+        
+        {/* Channel Filter */}
+        <Select value={channelFilter} onValueChange={(v) => setChannelFilter(v as ChannelFilterType)}>
+          <SelectTrigger className="w-[180px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Filtrar por canal" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os canais</SelectItem>
+            <SelectItem value="telegram">📱 Telegram</SelectItem>
+            <SelectItem value="whatsapp">💬 WhatsApp</SelectItem>
+            <SelectItem value="email">📧 Email</SelectItem>
+            <SelectItem value="webchat">🌐 WebChat</SelectItem>
+          </SelectContent>
+        </Select>
+        
         <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Contato
@@ -241,9 +282,9 @@ export const ContactList = () => {
             <User className="h-16 w-16 text-muted-foreground mb-4" />
             <p className="text-lg font-medium mb-2">Nenhum contato encontrado</p>
             <p className="text-sm text-muted-foreground mb-4">
-              {search ? "Tente ajustar sua busca" : "Crie seu primeiro contato"}
+              {search || channelFilter !== "all" ? "Tente ajustar seus filtros" : "Crie seu primeiro contato"}
             </p>
-            {!search && (
+            {!search && channelFilter === "all" && (
               <Button onClick={handleCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 Criar Primeiro Contato
@@ -269,7 +310,10 @@ export const ContactList = () => {
                         <User className="h-5 w-5" />
                       </div>
                     )}
-                    <CardTitle className="text-base">{contact.name}</CardTitle>
+                    <div>
+                      <CardTitle className="text-base">{contact.name}</CardTitle>
+                      {getChannelBadge(contact)}
+                    </div>
                   </div>
                   <div className="flex gap-1">
                     <Button size="icon" variant="ghost" onClick={(e) => handleEdit(contact, e)}>

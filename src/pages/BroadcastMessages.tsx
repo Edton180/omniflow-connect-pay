@@ -11,14 +11,13 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { 
   ArrowLeft, Send, Users, Search, MessageSquare, 
-  Phone, Mail, Upload, FileSpreadsheet, Loader2,
-  CheckCircle2, XCircle, Clock, Filter
+  Phone, Mail, Loader2, CheckCircle2, XCircle, Clock, 
+  Filter, Image, Paperclip, X
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -29,6 +28,7 @@ interface Contact {
   email?: string;
   avatar_url?: string;
   tags?: string[];
+  metadata?: any;
   selected: boolean;
 }
 
@@ -46,6 +46,8 @@ interface BroadcastStatus {
   pending: number;
 }
 
+type ChannelFilterType = "all" | "telegram" | "whatsapp" | "email" | "webchat";
+
 export default function BroadcastMessages() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -60,9 +62,13 @@ export default function BroadcastMessages() {
   const [message, setMessage] = useState("");
   const [selectAll, setSelectAll] = useState(false);
   const [tagFilter, setTagFilter] = useState<string>("");
+  const [channelFilter, setChannelFilter] = useState<ChannelFilterType>("all");
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [broadcastStatus, setBroadcastStatus] = useState<BroadcastStatus | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -73,7 +79,6 @@ export default function BroadcastMessages() {
   const loadTenantAndData = async () => {
     setLoading(true);
     try {
-      // Get tenant ID
       let tid = profile?.tenant_id;
       
       if (!tid && !isSuperAdmin) {
@@ -117,7 +122,7 @@ export default function BroadcastMessages() {
 
     const { data, error } = await supabase
       .from("contacts")
-      .select("id, name, phone, email, avatar_url, tags")
+      .select("id, name, phone, email, avatar_url, tags, metadata")
       .eq("tenant_id", tid)
       .order("name");
 
@@ -130,7 +135,6 @@ export default function BroadcastMessages() {
 
     setContacts(contactsWithSelection);
 
-    // Extract unique tags
     const tags = new Set<string>();
     data?.forEach(contact => {
       contact.tags?.forEach((tag: string) => tags.add(tag));
@@ -152,9 +156,20 @@ export default function BroadcastMessages() {
     setChannels(data || []);
   };
 
+  const getContactChannel = (contact: Contact): ChannelFilterType => {
+    if (contact.metadata?.telegram_chat_id) return "telegram";
+    if (contact.metadata?.whatsapp_id || (contact.phone && !contact.metadata?.telegram_chat_id)) return "whatsapp";
+    if (contact.email && !contact.phone) return "email";
+    if (contact.metadata?.webchat_session_id) return "webchat";
+    return "whatsapp";
+  };
+
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
-    setContacts(prev => prev.map(c => ({ ...c, selected: checked })));
+    setContacts(prev => prev.map(c => {
+      const matchesFilter = channelFilter === "all" || getContactChannel(c) === channelFilter;
+      return { ...c, selected: matchesFilter ? checked : c.selected };
+    }));
   };
 
   const handleSelectContact = (contactId: string, checked: boolean) => {
@@ -171,10 +186,64 @@ export default function BroadcastMessages() {
     
     const matchesTag = !tagFilter || contact.tags?.includes(tagFilter);
     
-    return matchesSearch && matchesTag;
+    const matchesChannel = channelFilter === "all" || getContactChannel(contact) === channelFilter;
+    
+    return matchesSearch && matchesTag && matchesChannel;
   });
 
   const selectedCount = contacts.filter(c => c.selected).length;
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `broadcast/${tenantId}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("media")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("media")
+        .getPublicUrl(filePath);
+
+      setMediaUrl(publicUrl);
+      
+      if (file.type.startsWith("image/")) {
+        setMediaType("image");
+      } else if (file.type.startsWith("video/")) {
+        setMediaType("video");
+      } else if (file.type.startsWith("audio/")) {
+        setMediaType("audio");
+      } else {
+        setMediaType("document");
+      }
+
+      toast({
+        title: "Arquivo enviado",
+        description: "O arquivo foi carregado com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar arquivo",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removeMedia = () => {
+    setMediaUrl(null);
+    setMediaType(null);
+  };
 
   const handleSendBroadcast = async () => {
     const selectedContacts = contacts.filter(c => c.selected);
@@ -197,7 +266,7 @@ export default function BroadcastMessages() {
       return;
     }
 
-    if (!message.trim()) {
+    if (!message.trim() && !mediaUrl) {
       toast({
         title: "Digite uma mensagem",
         description: "A mensagem não pode estar vazia.",
@@ -222,12 +291,30 @@ export default function BroadcastMessages() {
           let functionName = "";
           let body: any = { message: message.trim() };
 
+          // Replace variables in message
+          let personalizedMessage = message.trim()
+            .replace(/\{\{nome\}\}/g, contact.name || "")
+            .replace(/\{\{telefone\}\}/g, contact.phone || "");
+
+          body.message = personalizedMessage;
+
+          // Add media if present
+          if (mediaUrl) {
+            body.mediaUrl = mediaUrl;
+            body.mediaType = mediaType;
+          }
+
           if (channel?.type === "telegram") {
-            functionName = "send-telegram-message";
-            const chatId = contact.phone?.startsWith("@") 
-              ? contact.phone 
-              : contact.phone;
-            body.chatId = chatId;
+            functionName = mediaUrl ? "send-telegram-media" : "send-telegram-message";
+            // Use telegram_chat_id from metadata, NOT phone
+            const chatId = contact.metadata?.telegram_chat_id;
+            
+            if (!chatId) {
+              console.warn(`Contact ${contact.name} doesn't have telegram_chat_id`);
+              throw new Error("Contato sem chat_id do Telegram");
+            }
+            
+            body.chatId = String(chatId);
           } else if (channel?.type === "whatsapp" || channel?.type === "waba") {
             functionName = "send-waba-message";
             body.to = contact.phone;
@@ -284,7 +371,7 @@ export default function BroadcastMessages() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
+      <header className="border-b bg-card sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
@@ -339,10 +426,25 @@ export default function BroadcastMessages() {
                       className="pl-9"
                     />
                   </div>
+                  
+                  {/* Channel Filter */}
+                  <Select value={channelFilter} onValueChange={(v) => setChannelFilter(v as ChannelFilterType)}>
+                    <SelectTrigger className="w-[180px]">
+                      <Filter className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Filtrar por canal" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os canais</SelectItem>
+                      <SelectItem value="telegram">Telegram</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="webchat">WebChat</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   {availableTags.length > 0 && (
                     <Select value={tagFilter} onValueChange={setTagFilter}>
                       <SelectTrigger className="w-[180px]">
-                        <Filter className="h-4 w-4 mr-2" />
                         <SelectValue placeholder="Filtrar por tag" />
                       </SelectTrigger>
                       <SelectContent>
@@ -401,6 +503,13 @@ export default function BroadcastMessages() {
                               )}
                             </div>
                           </div>
+                          {/* Channel Badge */}
+                          <Badge variant="outline" className="text-xs">
+                            {getContactChannel(contact) === "telegram" && "📱 Telegram"}
+                            {getContactChannel(contact) === "whatsapp" && "💬 WhatsApp"}
+                            {getContactChannel(contact) === "email" && "📧 Email"}
+                            {getContactChannel(contact) === "webchat" && "🌐 WebChat"}
+                          </Badge>
                           {contact.tags && contact.tags.length > 0 && (
                             <div className="flex gap-1">
                               {contact.tags.slice(0, 2).map(tag => (
@@ -464,6 +573,74 @@ export default function BroadcastMessages() {
                   </p>
                 </div>
 
+                {/* Media Upload */}
+                <div>
+                  <Label>Mídia (opcional)</Label>
+                  {mediaUrl ? (
+                    <div className="border rounded-lg p-3 mt-2 relative">
+                      {mediaType === "image" && (
+                        <img src={mediaUrl} alt="Preview" className="max-h-32 rounded" />
+                      )}
+                      {mediaType === "video" && (
+                        <video src={mediaUrl} className="max-h-32 rounded" controls />
+                      )}
+                      {(mediaType === "document" || mediaType === "audio") && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Paperclip className="h-4 w-4" />
+                          <span>Arquivo anexado</span>
+                        </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1"
+                        onClick={removeMedia}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        onClick={() => document.getElementById("media-upload")?.click()}
+                      >
+                        {uploading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Image className="h-4 w-4 mr-2" />
+                        )}
+                        Imagem
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={uploading}
+                        onClick={() => document.getElementById("file-upload")?.click()}
+                      >
+                        <Paperclip className="h-4 w-4 mr-2" />
+                        Arquivo
+                      </Button>
+                      <input
+                        id="media-upload"
+                        type="file"
+                        accept="image/*,video/*"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                      <input
+                        id="file-upload"
+                        type="file"
+                        accept=".pdf,.doc,.docx,.xls,.xlsx"
+                        className="hidden"
+                        onChange={handleFileUpload}
+                      />
+                    </div>
+                  )}
+                </div>
+
                 <div className="text-xs text-muted-foreground bg-muted p-3 rounded-lg">
                   <p className="font-medium mb-1">Variáveis disponíveis:</p>
                   <p>{"{{nome}}"} - Nome do contato</p>
@@ -472,7 +649,7 @@ export default function BroadcastMessages() {
 
                 <Button
                   onClick={handleSendBroadcast}
-                  disabled={sending || selectedCount === 0 || !selectedChannel || !message.trim()}
+                  disabled={sending || selectedCount === 0 || !selectedChannel || (!message.trim() && !mediaUrl)}
                   className="w-full"
                 >
                   {sending ? (
@@ -494,27 +671,24 @@ export default function BroadcastMessages() {
             {broadcastStatus && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Status do Disparo</CardTitle>
+                  <CardTitle className="text-sm">Status do Envio</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <Progress 
                     value={((broadcastStatus.sent + broadcastStatus.failed) / broadcastStatus.total) * 100} 
                   />
-                  <div className="grid grid-cols-3 gap-2 text-center text-sm">
-                    <div className="p-2 bg-green-500/10 rounded-lg">
-                      <CheckCircle2 className="h-4 w-4 mx-auto text-green-500 mb-1" />
-                      <p className="font-bold">{broadcastStatus.sent}</p>
-                      <p className="text-xs text-muted-foreground">Enviados</p>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div className="flex items-center gap-1 text-green-600">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{broadcastStatus.sent} enviados</span>
                     </div>
-                    <div className="p-2 bg-red-500/10 rounded-lg">
-                      <XCircle className="h-4 w-4 mx-auto text-red-500 mb-1" />
-                      <p className="font-bold">{broadcastStatus.failed}</p>
-                      <p className="text-xs text-muted-foreground">Falhas</p>
+                    <div className="flex items-center gap-1 text-red-600">
+                      <XCircle className="h-4 w-4" />
+                      <span>{broadcastStatus.failed} falhas</span>
                     </div>
-                    <div className="p-2 bg-yellow-500/10 rounded-lg">
-                      <Clock className="h-4 w-4 mx-auto text-yellow-500 mb-1" />
-                      <p className="font-bold">{broadcastStatus.pending}</p>
-                      <p className="text-xs text-muted-foreground">Pendentes</p>
+                    <div className="flex items-center gap-1 text-yellow-600">
+                      <Clock className="h-4 w-4" />
+                      <span>{broadcastStatus.pending} pendentes</span>
                     </div>
                   </div>
                 </CardContent>
