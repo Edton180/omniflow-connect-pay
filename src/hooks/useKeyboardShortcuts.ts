@@ -1,11 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface ShortcutConfig {
-  key: string;
-  ctrlKey?: boolean;
-  metaKey?: boolean;
-  shiftKey?: boolean;
+  keys: string[];
   action: () => void;
   description: string;
 }
@@ -19,70 +16,108 @@ interface UseKeyboardShortcutsReturn {
 export const useKeyboardShortcuts = (): UseKeyboardShortcutsReturn => {
   const navigate = useNavigate();
   const [showHelp, setShowHelp] = useState(false);
+  const [lastKey, setLastKey] = useState<string | null>(null);
+  const [lastKeyTime, setLastKeyTime] = useState(0);
 
   const shortcuts: ShortcutConfig[] = [
     {
-      key: "d",
+      keys: ["g", "d"],
       description: "Ir para Dashboard",
       action: () => navigate("/dashboard"),
     },
     {
-      key: "t",
+      keys: ["g", "t"],
       description: "Ir para Tickets",
-      action: () => navigate("/tickets"),
+      action: () => navigate("/view-tickets"),
     },
     {
-      key: "c",
+      keys: ["g", "c"],
       description: "Ir para Contatos",
       action: () => navigate("/contacts"),
     },
     {
-      key: "s",
+      keys: ["g", "s"],
       description: "Ir para Configurações",
-      action: () => navigate("/settings"),
+      action: () => navigate("/tenant/settings"),
     },
     {
-      key: "/",
+      keys: ["/"],
       description: "Focar na busca",
       action: () => {
-        const searchInput = document.querySelector('input[type="search"]') as HTMLInputElement;
+        const searchInput = document.querySelector('input[type="search"], input[placeholder*="Pesquisar"], input[placeholder*="Buscar"]') as HTMLInputElement;
         searchInput?.focus();
       },
     },
     {
-      key: "?",
+      keys: ["?"],
       description: "Mostrar atalhos de teclado",
       action: () => setShowHelp(true),
     },
   ];
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Ignorar se estiver digitando em um input
+    if (
+      e.target instanceof HTMLInputElement ||
+      e.target instanceof HTMLTextAreaElement
+    ) {
+      return;
+    }
+
+    const key = e.key.toLowerCase();
+    const now = Date.now();
+
+    // Atalhos de tecla única
+    if (key === "/" && !e.shiftKey) {
+      e.preventDefault();
+      const searchInput = document.querySelector('input[type="search"], input[placeholder*="Pesquisar"], input[placeholder*="Buscar"]') as HTMLInputElement;
+      searchInput?.focus();
+      return;
+    }
+
+    if (key === "?" || (key === "/" && e.shiftKey)) {
+      e.preventDefault();
+      setShowHelp(true);
+      return;
+    }
+
+    // Atalhos combinados (G + tecla) - dentro de 500ms
+    if (key === "g") {
+      setLastKey("g");
+      setLastKeyTime(now);
+      return;
+    }
+
+    // Verificar se é uma combinação G + tecla
+    if (lastKey === "g" && now - lastKeyTime < 500) {
+      e.preventDefault();
+      
+      switch (key) {
+        case "d":
+          navigate("/dashboard");
+          break;
+        case "t":
+          navigate("/view-tickets");
+          break;
+        case "c":
+          navigate("/contacts");
+          break;
+        case "s":
+          navigate("/tenant/settings");
+          break;
+      }
+      
+      setLastKey(null);
+      return;
+    }
+
+    setLastKey(null);
+  }, [navigate, lastKey, lastKeyTime]);
+
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Ignorar se estiver digitando em um input
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      const shortcut = shortcuts.find((s) => {
-        const keyMatch = s.key.toLowerCase() === e.key.toLowerCase();
-        const ctrlMatch = s.ctrlKey === undefined || s.ctrlKey === e.ctrlKey;
-        const metaMatch = s.metaKey === undefined || s.metaKey === e.metaKey;
-        const shiftMatch = s.shiftKey === undefined || s.shiftKey === e.shiftKey;
-        return keyMatch && ctrlMatch && metaMatch && shiftMatch;
-      });
-
-      if (shortcut) {
-        e.preventDefault();
-        shortcut.action();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyPress);
-    return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [navigate, showHelp]);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   return { shortcuts, showHelp, setShowHelp };
 };

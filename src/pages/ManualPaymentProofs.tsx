@@ -69,10 +69,11 @@ export default function ManualPaymentProofs() {
     try {
       setProcessing(invoice.id);
       
-      // Process payment
+      // Process payment - usar invoiceId (sem underscore) conforme edge function espera
       const { data, error } = await supabase.functions.invoke("process-invoice-payment", {
         body: {
-          invoice_id: invoice.id,
+          invoiceId: invoice.id,
+          gateway: "manual",
         },
       });
 

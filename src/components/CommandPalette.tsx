@@ -22,14 +22,17 @@ import {
   FolderKanban,
   Zap,
   FileText,
+  Shield,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isSuperAdmin, hasRole } = useAuth();
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -68,9 +71,9 @@ export function CommandPalette() {
             <Home className="mr-2 h-4 w-4" />
             <span>Dashboard</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate("/tickets"))}>
+          <CommandItem onSelect={() => runCommand(() => navigate("/view-tickets"))}>
             <Ticket className="mr-2 h-4 w-4" />
-            <span>Tickets</span>
+            <span>Atendimentos</span>
           </CommandItem>
           <CommandItem onSelect={() => runCommand(() => navigate("/contacts"))}>
             <Users className="mr-2 h-4 w-4" />
@@ -93,10 +96,13 @@ export function CommandPalette() {
             <BarChart3 className="mr-2 h-4 w-4" />
             <span>Relatórios de Agentes</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate("/financial-reports"))}>
-            <FileText className="mr-2 h-4 w-4" />
-            <span>Relatórios Financeiros</span>
-          </CommandItem>
+          {/* Relatórios Financeiros apenas para Super Admin */}
+          {isSuperAdmin && (
+            <CommandItem onSelect={() => runCommand(() => navigate("/financial-reports"))}>
+              <FileText className="mr-2 h-4 w-4" />
+              <span>Relatórios Financeiros</span>
+            </CommandItem>
+          )}
         </CommandGroup>
 
         <CommandSeparator />
@@ -111,7 +117,7 @@ export function CommandPalette() {
         <CommandSeparator />
 
         <CommandGroup heading="Ações Rápidas">
-          <CommandItem onSelect={() => runCommand(() => navigate("/tickets?new=true"))}>
+          <CommandItem onSelect={() => runCommand(() => navigate("/view-tickets?new=true"))}>
             <Plus className="mr-2 h-4 w-4" />
             <span>Novo Ticket</span>
           </CommandItem>
@@ -124,14 +130,17 @@ export function CommandPalette() {
         <CommandSeparator />
 
         <CommandGroup heading="Sistema">
-          <CommandItem onSelect={() => runCommand(() => navigate("/settings"))}>
+          <CommandItem onSelect={() => runCommand(() => navigate("/tenant/settings"))}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Configurações</span>
           </CommandItem>
-          <CommandItem onSelect={() => runCommand(() => navigate("/audit-logs"))}>
-            <FileText className="mr-2 h-4 w-4" />
-            <span>Logs de Auditoria</span>
-          </CommandItem>
+          {/* Logs de Auditoria apenas para Super Admin */}
+          {isSuperAdmin && (
+            <CommandItem onSelect={() => runCommand(() => navigate("/audit-logs"))}>
+              <Shield className="mr-2 h-4 w-4" />
+              <span>Logs de Auditoria</span>
+            </CommandItem>
+          )}
           <CommandItem onSelect={() => runCommand(handleLogout)}>
             <LogOut className="mr-2 h-4 w-4" />
             <span>Sair</span>

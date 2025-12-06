@@ -203,14 +203,15 @@ export default function BroadcastMessages() {
       const fileName = `${Date.now()}.${fileExt}`;
       const filePath = `broadcast/${tenantId}/${fileName}`;
 
+      // Usar bucket ticket-media que já existe
       const { error: uploadError } = await supabase.storage
-        .from("media")
-        .upload(filePath, file);
+        .from("ticket-media")
+        .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       const { data: { publicUrl } } = supabase.storage
-        .from("media")
+        .from("ticket-media")
         .getPublicUrl(filePath);
 
       setMediaUrl(publicUrl);
@@ -230,6 +231,7 @@ export default function BroadcastMessages() {
         description: "O arquivo foi carregado com sucesso.",
       });
     } catch (error: any) {
+      console.error("Upload error:", error);
       toast({
         title: "Erro ao enviar arquivo",
         description: error.message,
@@ -325,6 +327,9 @@ export default function BroadcastMessages() {
             
             if (error) throw error;
 
+            // Criar ticket para rastrear a campanha
+            await createBroadcastTicket(contact, channel, personalizedMessage);
+
             setBroadcastStatus(prev => prev ? {
               ...prev,
               sent: prev.sent + 1,
@@ -358,6 +363,46 @@ export default function BroadcastMessages() {
       });
     } finally {
       setSending(false);
+    }
+  };
+
+  const createBroadcastTicket = async (contact: Contact, channel: Channel | undefined, messageContent: string) => {
+    if (!tenantId || !channel) return;
+    
+    try {
+      // Criar ticket para acompanhamento da campanha
+      const { data: ticket, error: ticketError } = await supabase
+        .from("tickets")
+        .insert({
+          tenant_id: tenantId,
+          contact_id: contact.id,
+          channel: channel.type,
+          status: "open",
+          priority: "low",
+          last_message: messageContent || "[Campanha em massa]",
+          bot_state: { step: "broadcast_sent", skip_bot: true }, // Skip bot/menus
+        })
+        .select()
+        .single();
+
+      if (ticketError) {
+        console.error("Error creating broadcast ticket:", ticketError);
+        return;
+      }
+
+      // Criar mensagem inicial no ticket
+      if (ticket) {
+        await supabase.from("messages").insert({
+          ticket_id: ticket.id,
+          content: messageContent || "[Mídia enviada]",
+          is_from_contact: false,
+          sender_id: user?.id,
+          media_url: mediaUrl,
+          media_type: mediaType,
+        });
+      }
+    } catch (error) {
+      console.error("Error creating broadcast ticket:", error);
     }
   };
 

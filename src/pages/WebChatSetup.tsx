@@ -78,16 +78,19 @@ export default function WebChatSetup() {
   };
 
   const generateEmbedCode = () => {
-    if (!domain || !channelCode) return "";
+    if (!tenantId) return "";
+
+    // Usar a URL do Supabase para a API
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yfseeexwafzmezufwdxq.supabase.co";
+    const projectUrl = window.location.origin;
 
     return `<!-- OmniFlow Web Chat -->
 <script>
   (function() {
     window.omniflowConfig = {
-      apiUrl: 'https://${domain}',
-      channelCode: '${channelCode}',
+      apiUrl: '${supabaseUrl}/functions/v1/webchat-webhook',
       tenantId: '${tenantId}',
-      welcomeMessage: '${settings.welcome_message}',
+      welcomeMessage: '${settings.welcome_message.replace(/'/g, "\\'")}',
       themeColor: '${settings.theme_color}',
       position: '${settings.position}',
       showAgentName: ${settings.show_agent_name},
@@ -95,7 +98,7 @@ export default function WebChatSetup() {
     };
     
     var script = document.createElement('script');
-    script.src = 'https://${domain}/webchat.js';
+    script.src = '${projectUrl}/webchat.js';
     script.async = true;
     document.head.appendChild(script);
   })();
