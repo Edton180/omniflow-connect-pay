@@ -143,8 +143,8 @@ export function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto p-2 space-y-1">
-        {/* Mostrar itens de empresa apenas se NÃO for super admin */}
-        {!isSuperAdmin && navItems.map((item) => (
+        {/* Mostrar itens de navegação comum para TODOS os usuários incluindo Super Admin */}
+        {navItems.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
@@ -162,8 +162,8 @@ export function AppSidebar() {
           </NavLink>
         ))}
 
-        {/* Administração da Empresa - apenas para tenant_admin que não é super admin */}
-        {(hasRole("tenant_admin") && !isSuperAdmin) && (
+        {/* Administração da Empresa - para tenant_admin (não super admin) */}
+        {hasRole("tenant_admin") && !isSuperAdmin && (
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
               <span className="text-xs font-semibold text-primary-foreground/60 uppercase">

@@ -1,5 +1,5 @@
 /**
- * OmniFlow WebChat Widget v1.0
+ * OmniFlow WebChat Widget v2.0
  * Embed this script on your website to enable live chat support
  */
 (function() {
@@ -9,12 +9,17 @@
   var config = window.omniflowConfig || {};
   var apiUrl = config.apiUrl || '';
   var tenantId = config.tenantId || '';
-  var channelCode = config.channelCode || '';
   var welcomeMessage = config.welcomeMessage || 'Olá! Como podemos ajudar?';
   var themeColor = config.themeColor || '#8B5CF6';
   var position = config.position || 'bottom-right';
   var showAgentName = config.showAgentName !== false;
   var autoOpen = config.autoOpen === true;
+
+  // Validate required config
+  if (!apiUrl || !tenantId) {
+    console.error('OmniFlow WebChat: apiUrl and tenantId are required');
+    return;
+  }
 
   // Session management
   var sessionId = localStorage.getItem('omniflow_session_id');
@@ -29,8 +34,8 @@
   // Messages storage
   var messages = [];
   var isOpen = autoOpen;
-  var isMinimized = false;
   var unreadCount = 0;
+  var ticketId = null;
 
   // Create styles
   var styles = document.createElement('style');
@@ -474,7 +479,8 @@
       type: 'contact',
       name: name,
       email: email,
-      sessionId: sessionId
+      sessionId: sessionId,
+      tenantId: tenantId
     });
 
     addSystemMessage(welcomeMessage);
@@ -509,37 +515,23 @@
     chatWindow.classList.remove('open');
   }
 
-  function updateBadge() {
-    if (unreadCount > 0) {
-      badge.style.display = 'flex';
-      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
-    } else {
-      badge.style.display = 'none';
-    }
-  }
-
   function addMessage(content, isVisitor, agentName) {
-    var messageDiv = document.createElement('div');
-    messageDiv.className = 'omniflow-message ' + (isVisitor ? 'visitor' : 'agent');
+    var messageEl = document.createElement('div');
+    messageEl.className = 'omniflow-message ' + (isVisitor ? 'visitor' : 'agent');
 
     var time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    var meta = isVisitor ? time : (showAgentName && agentName ? agentName + ' · ' + time : time);
+    var meta = isVisitor ? time : (showAgentName && agentName ? agentName + ' • ' : '') + time;
 
-    messageDiv.innerHTML = `
+    messageEl.innerHTML = `
       <div class="omniflow-message-content">${escapeHtml(content)}</div>
       <div class="omniflow-message-meta">${meta}</div>
     `;
 
-    // Insert before typing indicator
-    messagesContainer.insertBefore(messageDiv, typingIndicator);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    messagesContainer.insertBefore(messageEl, typingIndicator);
+    scrollToBottom();
 
-    messages.push({
-      content: content,
-      isVisitor: isVisitor,
-      agentName: agentName,
-      time: new Date().toISOString()
-    });
+    messages.push({ content: content, isVisitor: isVisitor, timestamp: Date.now() });
+    saveMessages();
   }
 
   function addSystemMessage(content) {
@@ -559,16 +551,15 @@
       type: 'message',
       content: content,
       sessionId: sessionId,
+      tenantId: tenantId,
+      ticketId: ticketId,
       visitorName: visitorName,
       visitorEmail: visitorEmail
     });
   }
 
   function sendToServer(data) {
-    data.tenantId = tenantId;
-    data.channelCode = channelCode;
-
-    fetch(apiUrl + '/functions/v1/webchat-webhook', {
+    fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -577,10 +568,12 @@
     })
     .then(function(response) { return response.json(); })
     .then(function(result) {
-      if (result.reply) {
-        setTimeout(function() {
-          addMessage(result.reply, false, result.agentName || 'Atendente');
-        }, 500);
+      if (result.ticketId) {
+        ticketId = result.ticketId;
+        localStorage.setItem('omniflow_ticket_id', ticketId);
+      }
+      if (result.message) {
+        addMessage(result.message, false, result.agentName);
       }
     })
     .catch(function(error) {
@@ -589,15 +582,35 @@
   }
 
   function loadMessages() {
-    // Load messages from local storage or server
-    var savedMessages = localStorage.getItem('omniflow_messages_' + sessionId);
-    if (savedMessages) {
+    var saved = localStorage.getItem('omniflow_messages_' + tenantId);
+    if (saved) {
       try {
-        var parsed = JSON.parse(savedMessages);
+        var parsed = JSON.parse(saved);
         parsed.forEach(function(msg) {
-          addMessage(msg.content, msg.isVisitor, msg.agentName);
+          addMessage(msg.content, msg.isVisitor);
         });
-      } catch (e) {}
+      } catch (e) {
+        console.error('Error loading messages:', e);
+      }
+    }
+    
+    ticketId = localStorage.getItem('omniflow_ticket_id');
+  }
+
+  function saveMessages() {
+    localStorage.setItem('omniflow_messages_' + tenantId, JSON.stringify(messages.slice(-50)));
+  }
+
+  function scrollToBottom() {
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  function updateBadge() {
+    if (unreadCount > 0) {
+      badge.textContent = unreadCount > 9 ? '9+' : unreadCount;
+      badge.style.display = 'flex';
+    } else {
+      badge.style.display = 'none';
     }
   }
 
@@ -607,34 +620,6 @@
     return div.innerHTML;
   }
 
-  // Polling for new messages
-  function pollMessages() {
-    if (!visitorName || !sessionId) return;
-
-    fetch(apiUrl + '/functions/v1/webchat-webhook?sessionId=' + sessionId + '&tenantId=' + tenantId)
-      .then(function(response) { return response.json(); })
-      .then(function(result) {
-        if (result.messages && result.messages.length > messages.length) {
-          var newMessages = result.messages.slice(messages.length);
-          newMessages.forEach(function(msg) {
-            if (!msg.isVisitor) {
-              addMessage(msg.content, false, msg.agentName);
-              if (!isOpen) {
-                unreadCount++;
-                updateBadge();
-              }
-            }
-          });
-        }
-      })
-      .catch(function(error) {
-        console.error('Polling error:', error);
-      });
-  }
-
-  // Start polling every 5 seconds
-  setInterval(pollMessages, 5000);
-
-  // Initialize widget
+  // Initialize on load
   init();
 })();
