@@ -60,7 +60,6 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
-  { title: "Automações", href: "/automations", icon: Bot, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
 ];
 
@@ -68,8 +67,6 @@ const adminItems: NavItem[] = [
 const superAdminItems: NavItem[] = [
   { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
   { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
-  { title: "Chat Interno", href: "/internal-chat", icon: MessageCircle, roles: ["super_admin"] },
-  { title: "Disparo em Massa", href: "/broadcast", icon: Send, roles: ["super_admin"] },
   { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
   { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
   { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
@@ -83,7 +80,6 @@ const superAdminItems: NavItem[] = [
   { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
   { title: "Temas Globais", href: "/admin/themes", icon: Palette, roles: ["super_admin"] },
   { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
-  { title: "Automações", href: "/automations", icon: Bot, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
 ];

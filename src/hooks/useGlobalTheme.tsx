@@ -23,6 +23,8 @@ export function useGlobalTheme() {
     queryKey: ["active-theme"],
     queryFn: async () => {
       try {
+        // Buscar tema ativo - esta query funciona para todos os usuários
+        // devido à RLS policy "Public can view active themes"
         const { data, error } = await supabase
           .from("global_themes")
           .select("*")
@@ -40,8 +42,9 @@ export function useGlobalTheme() {
         return null;
       }
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // Cache por 5 minutos
     refetchOnWindowFocus: false,
+    retry: 1, // Tentar apenas uma vez em caso de erro
   });
 
   // Listen for toggle events from ThemeToggle
@@ -61,6 +64,8 @@ export function useGlobalTheme() {
 
     // Converter hex para HSL
     const hexToHSL = (hex: string) => {
+      if (!hex || !hex.startsWith('#')) return null;
+      
       hex = hex.replace(/^#/, "");
 
       const r = parseInt(hex.substring(0, 2), 16) / 255;
@@ -95,11 +100,22 @@ export function useGlobalTheme() {
 
     const root = document.documentElement;
     
-    root.style.setProperty("--primary", hexToHSL(activeTheme.primary_color));
-    root.style.setProperty("--secondary", hexToHSL(activeTheme.secondary_color));
+    const primaryHSL = hexToHSL(activeTheme.primary_color);
+    const secondaryHSL = hexToHSL(activeTheme.secondary_color);
+    
+    if (primaryHSL) {
+      root.style.setProperty("--primary", primaryHSL);
+    }
+    
+    if (secondaryHSL) {
+      root.style.setProperty("--secondary", secondaryHSL);
+    }
     
     if (activeTheme.accent_color) {
-      root.style.setProperty("--accent", hexToHSL(activeTheme.accent_color));
+      const accentHSL = hexToHSL(activeTheme.accent_color);
+      if (accentHSL) {
+        root.style.setProperty("--accent", accentHSL);
+      }
     }
 
     if (activeTheme.background_gradient) {
@@ -107,6 +123,9 @@ export function useGlobalTheme() {
     }
 
     document.body.classList.add(`theme-${activeTheme.slug}`);
+
+    // Salvar tema aplicado no localStorage para persistência
+    localStorage.setItem("applied-theme-id", activeTheme.id);
 
     return () => {
       document.body.classList.remove(`theme-${activeTheme.slug}`);

@@ -107,15 +107,6 @@ export function CommandPalette() {
 
         <CommandSeparator />
 
-        <CommandGroup heading="Automação">
-          <CommandItem onSelect={() => runCommand(() => navigate("/automations"))}>
-            <Zap className="mr-2 h-4 w-4" />
-            <span>Automações</span>
-          </CommandItem>
-        </CommandGroup>
-
-        <CommandSeparator />
-
         <CommandGroup heading="Ações Rápidas">
           <CommandItem onSelect={() => runCommand(() => navigate("/view-tickets?new=true"))}>
             <Plus className="mr-2 h-4 w-4" />
