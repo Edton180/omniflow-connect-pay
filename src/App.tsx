@@ -48,7 +48,7 @@ import TransactionHistory from "./pages/TransactionHistory";
 import WebhookDashboard from "./pages/WebhookDashboard";
 import FinancialReports from "./pages/FinancialReports";
 import WebhookConfig from "./pages/WebhookConfig";
-import Automations from "./pages/Automations";
+// Automations removido - funcionalidade não utilizada
 import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
 import ThemeManagement from "./pages/ThemeManagement";
@@ -107,7 +107,7 @@ const App = () => (
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/broadcast" element={<AuthGuard requireAuth><BroadcastMessages /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
-          <Route path="/automations" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><Automations /></AuthGuard>} />
+          {/* Rota de Automações removida */}
           <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
           <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
           <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
