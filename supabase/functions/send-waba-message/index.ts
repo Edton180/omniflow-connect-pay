@@ -6,15 +6,68 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+interface WABAButton {
+  type: "reply";
+  reply: {
+    id: string;
+    title: string;
+  };
+}
+
+interface WABASection {
+  title: string;
+  rows: Array<{
+    id: string;
+    title: string;
+    description?: string;
+  }>;
+}
+
+interface WABATemplate {
+  name: string;
+  language: { code: string };
+  components?: Array<{
+    type: string;
+    parameters?: Array<{
+      type: string;
+      text?: string;
+      image?: { link: string };
+      document?: { link: string; filename?: string };
+      video?: { link: string };
+    }>;
+  }>;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { to, message, phoneNumberId, accessToken, mediaUrl, mediaType, messageId } = await req.json();
+    const { 
+      to, 
+      message, 
+      phoneNumberId, 
+      accessToken, 
+      mediaUrl, 
+      mediaType, 
+      messageId,
+      // New advanced features
+      type = "text", // text, template, interactive, location, reaction, contacts, sticker
+      template, // Template object for HSM
+      buttons, // Quick reply buttons (max 3)
+      listSections, // List sections for interactive list
+      listButtonText, // Button text for list
+      headerText, // Header for interactive messages
+      footerText, // Footer for interactive messages
+      location, // { latitude, longitude, name, address }
+      reaction, // { message_id, emoji }
+      contacts, // Array of contact objects
+      contextMessageId, // For replying to specific message
+      previewUrl = false, // Enable link preview
+    } = await req.json();
 
-    console.log("📤 WABA send request:", { to, message, mediaUrl, mediaType, messageId });
+    console.log("📤 WABA send request:", { to, type, message, mediaUrl, mediaType, messageId });
 
     if (!to) {
       return new Response(
@@ -73,7 +126,7 @@ serve(async (req) => {
         
         const { data: signedData, error: signError } = await supabaseAdmin.storage
           .from(bucket)
-          .createSignedUrl(path, 3600); // 1 hour
+          .createSignedUrl(path, 3600);
         
         if (!signError && signedData?.signedUrl) {
           finalMediaUrl = signedData.signedUrl;
@@ -90,30 +143,155 @@ serve(async (req) => {
       to: to,
     };
 
-    // Determine message type
-    if (!finalMediaUrl || !mediaType) {
-      payload.type = "text";
-      payload.text = { body: message || "Mensagem sem conteúdo" };
-      console.log("💬 Sending text message");
-    } else if (mediaType === "image" || mediaType === "img") {
-      payload.type = "image";
-      payload.image = { link: finalMediaUrl };
-      if (message) payload.image.caption = message;
-      console.log("🖼️ Sending image");
-    } else if (mediaType === "audio" || mediaType === "voice") {
-      payload.type = "audio";
-      payload.audio = { link: finalMediaUrl };
-      console.log("🎵 Sending audio");
-    } else if (mediaType === "video") {
-      payload.type = "video";
-      payload.video = { link: finalMediaUrl };
-      if (message) payload.video.caption = message;
-      console.log("🎥 Sending video");
-    } else {
-      payload.type = "document";
-      payload.document = { link: finalMediaUrl };
-      if (message) payload.document.caption = message;
-      console.log("📄 Sending document");
+    // Add context for reply
+    if (contextMessageId) {
+      payload.context = { message_id: contextMessageId };
+    }
+
+    // Handle different message types
+    switch (type) {
+      case "template":
+        // Template message (HSM)
+        payload.type = "template";
+        payload.template = {
+          name: template?.name,
+          language: template?.language || { code: "pt_BR" },
+          components: template?.components || [],
+        };
+        console.log("📋 Sending template message:", template?.name);
+        break;
+
+      case "interactive":
+        // Interactive message with buttons or list
+        if (buttons && buttons.length > 0) {
+          // Button message (max 3 buttons)
+          payload.type = "interactive";
+          payload.interactive = {
+            type: "button",
+            body: { text: message },
+            action: {
+              buttons: buttons.slice(0, 3).map((btn: any, i: number) => ({
+                type: "reply",
+                reply: {
+                  id: btn.id || `btn_${i}`,
+                  title: btn.title.substring(0, 20), // Max 20 chars
+                }
+              }))
+            }
+          };
+          if (headerText) {
+            payload.interactive.header = { type: "text", text: headerText };
+          }
+          if (footerText) {
+            payload.interactive.footer = { text: footerText };
+          }
+          console.log("🔘 Sending interactive button message");
+        } else if (listSections && listSections.length > 0) {
+          // List message
+          payload.type = "interactive";
+          payload.interactive = {
+            type: "list",
+            body: { text: message },
+            action: {
+              button: listButtonText || "Ver opções",
+              sections: listSections.map((section: WABASection) => ({
+                title: section.title,
+                rows: section.rows.map(row => ({
+                  id: row.id,
+                  title: row.title.substring(0, 24),
+                  description: row.description?.substring(0, 72),
+                }))
+              }))
+            }
+          };
+          if (headerText) {
+            payload.interactive.header = { type: "text", text: headerText };
+          }
+          if (footerText) {
+            payload.interactive.footer = { text: footerText };
+          }
+          console.log("📝 Sending interactive list message");
+        }
+        break;
+
+      case "location":
+        // Location message
+        payload.type = "location";
+        payload.location = {
+          latitude: location?.latitude,
+          longitude: location?.longitude,
+          name: location?.name || "",
+          address: location?.address || "",
+        };
+        console.log("📍 Sending location");
+        break;
+
+      case "reaction":
+        // Reaction to message
+        payload.type = "reaction";
+        payload.reaction = {
+          message_id: reaction?.message_id,
+          emoji: reaction?.emoji || "👍",
+        };
+        console.log("😀 Sending reaction:", reaction?.emoji);
+        break;
+
+      case "contacts":
+        // Contact card(s)
+        payload.type = "contacts";
+        payload.contacts = contacts || [];
+        console.log("👤 Sending contacts");
+        break;
+
+      case "sticker":
+        // Sticker message
+        payload.type = "sticker";
+        payload.sticker = { link: finalMediaUrl };
+        console.log("😊 Sending sticker");
+        break;
+
+      case "read":
+        // Mark message as read
+        payload = {
+          messaging_product: "whatsapp",
+          status: "read",
+          message_id: contextMessageId,
+        };
+        console.log("✓ Marking message as read");
+        break;
+
+      default:
+        // Regular text or media message
+        if (finalMediaUrl && mediaType) {
+          if (mediaType === "image" || mediaType === "img") {
+            payload.type = "image";
+            payload.image = { link: finalMediaUrl };
+            if (message) payload.image.caption = message;
+            console.log("🖼️ Sending image");
+          } else if (mediaType === "audio" || mediaType === "voice") {
+            payload.type = "audio";
+            payload.audio = { link: finalMediaUrl };
+            console.log("🎵 Sending audio");
+          } else if (mediaType === "video") {
+            payload.type = "video";
+            payload.video = { link: finalMediaUrl };
+            if (message) payload.video.caption = message;
+            console.log("🎥 Sending video");
+          } else {
+            payload.type = "document";
+            payload.document = { link: finalMediaUrl };
+            if (message) payload.document.caption = message;
+            console.log("📄 Sending document");
+          }
+        } else {
+          // Text message
+          payload.type = "text";
+          payload.text = { 
+            body: message || "Empty message",
+            preview_url: previewUrl,
+          };
+          console.log("💬 Sending text message");
+        }
     }
 
     console.log("🚀 Sending to WABA:", JSON.stringify(payload, null, 2));
@@ -152,7 +330,7 @@ serve(async (req) => {
         .from("messages")
         .update({ 
           status: "sent",
-          telegram_message_id: data.messages[0].id // Store WhatsApp message ID
+          telegram_message_id: data.messages[0].id // Reusing field for WhatsApp message ID
         })
         .eq("id", messageId);
     }
