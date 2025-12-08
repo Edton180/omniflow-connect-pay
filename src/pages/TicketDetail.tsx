@@ -32,6 +32,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { TicketStatusBadge } from "@/components/tickets/TicketStatusBadge";
 import { AISuggestions } from "@/components/tickets/AISuggestions";
 import { Switch } from "@/components/ui/switch";
+import { ChannelActions } from "@/components/tickets/ChannelActions";
 
 export default function TicketDetail() {
   const { id } = useParams();

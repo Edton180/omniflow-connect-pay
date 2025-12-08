@@ -19,14 +19,40 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
-    // Handle GET request - polling for new messages
+    // Handle GET request - polling for new messages and typing status
     if (req.method === "GET") {
       const url = new URL(req.url);
       const sessionId = url.searchParams.get("sessionId");
       const tenantId = url.searchParams.get("tenantId");
+      const action = url.searchParams.get("action");
 
       if (!sessionId || !tenantId) {
         return new Response(JSON.stringify({ messages: [] }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Handle typing status check
+      if (action === "typing") {
+        const { data: typingIndicators } = await supabaseAdmin
+          .from("typing_indicators")
+          .select("user_id, updated_at")
+          .eq("tenant_id", tenantId)
+          .gte("updated_at", new Date(Date.now() - 5000).toISOString());
+
+        const isTyping = typingIndicators && typingIndicators.length > 0;
+        let agentName = "Atendente";
+
+        if (isTyping && typingIndicators[0]?.user_id) {
+          const { data: profile } = await supabaseAdmin
+            .from("profiles")
+            .select("full_name")
+            .eq("id", typingIndicators[0].user_id)
+            .maybeSingle();
+          agentName = profile?.full_name || "Atendente";
+        }
+
+        return new Response(JSON.stringify({ typing: isTyping, agentName }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -62,11 +88,12 @@ serve(async (req) => {
       // Get messages
       const { data: messages } = await supabaseAdmin
         .from("messages")
-        .select("content, is_from_contact, created_at, sender_id")
+        .select("content, is_from_contact, created_at, sender_id, media_url, media_type, is_private")
         .eq("ticket_id", ticket.id)
+        .eq("is_private", false) // Don't show private notes
         .order("created_at", { ascending: true });
 
-      // Get agent names
+      // Get agent names and format messages
       const formattedMessages = await Promise.all(
         (messages || []).map(async (msg) => {
           let agentName = "Atendente";
@@ -83,6 +110,8 @@ serve(async (req) => {
             isVisitor: msg.is_from_contact,
             agentName: agentName,
             time: msg.created_at,
+            mediaUrl: msg.media_url,
+            mediaType: msg.media_type,
           };
         })
       );
@@ -92,11 +121,22 @@ serve(async (req) => {
       });
     }
 
-    // Handle POST request - new message or contact
+    // Handle POST request - new message, contact, typing, or file upload
     const body = await req.json();
-    console.log("📨 WebChat webhook recebido:", JSON.stringify(body, null, 2));
+    console.log("📨 WebChat webhook received:", JSON.stringify(body, null, 2));
 
-    const { type, tenantId, sessionId, content, visitorName, visitorEmail, channelCode } = body;
+    const { 
+      type, 
+      tenantId, 
+      sessionId, 
+      content, 
+      visitorName, 
+      visitorEmail,
+      visitorPhone,
+      customFields,
+      mediaUrl,
+      mediaType,
+    } = body;
 
     if (!tenantId || !sessionId) {
       return new Response(JSON.stringify({ error: "Missing tenantId or sessionId" }), {
@@ -123,7 +163,10 @@ serve(async (req) => {
           name: "Web Chat",
           type: "webchat",
           status: "active",
-          config: {},
+          config: {
+            welcome_message: "Olá! Como podemos ajudar?",
+            offline_message: "No momento não temos atendentes disponíveis. Deixe sua mensagem!",
+          },
         })
         .select()
         .single();
@@ -152,11 +195,13 @@ serve(async (req) => {
           tenant_id: tenantId,
           name: contactName,
           email: visitorEmail || null,
+          phone: visitorPhone || null,
           metadata: {
             webchat_session_id: sessionId,
             source: "webchat",
             online: true,
             last_seen: new Date().toISOString(),
+            custom_fields: customFields || {},
           },
         })
         .select()
@@ -167,21 +212,36 @@ serve(async (req) => {
         throw contactError;
       }
       contact = newContact;
-      console.log("✅ Novo contato WebChat criado:", contact.id);
+      console.log("✅ New WebChat contact created:", contact.id);
     } else {
       // Update contact info
+      const updatedMetadata = {
+        ...contact.metadata,
+        online: true,
+        last_seen: new Date().toISOString(),
+      };
+      if (customFields) {
+        updatedMetadata.custom_fields = { ...updatedMetadata.custom_fields, ...customFields };
+      }
+
       await supabaseAdmin
         .from("contacts")
         .update({
           name: visitorName || contact.name,
           email: visitorEmail || contact.email,
-          metadata: {
-            ...contact.metadata,
-            online: true,
-            last_seen: new Date().toISOString(),
-          },
+          phone: visitorPhone || contact.phone,
+          metadata: updatedMetadata,
         })
         .eq("id", contact.id);
+    }
+
+    // Handle typing indicator
+    if (type === "typing") {
+      // Visitor is typing - could be used for analytics
+      console.log(`⌨️ Visitor ${contactName} is typing`);
+      return new Response(JSON.stringify({ success: true, typing: true }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // Handle contact registration only
@@ -189,14 +249,18 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         success: true, 
         contactId: contact.id,
-        message: "Contato registrado com sucesso"
+        message: "Contact registered successfully",
+        channelConfig: {
+          welcomeMessage: channel.config?.welcome_message,
+          offlineMessage: channel.config?.offline_message,
+        },
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Handle message
-    if (type === "message" && content) {
+    if (type === "message" && (content || mediaUrl)) {
       // Find or create ticket
       let { data: ticket } = await supabaseAdmin
         .from("tickets")
@@ -217,7 +281,7 @@ serve(async (req) => {
             channel: "webchat",
             status: "open",
             priority: "medium",
-            last_message: content,
+            last_message: content || "[Mídia]",
             bot_state: { step: "initial", timestamp: new Date().toISOString() },
           })
           .select()
@@ -228,13 +292,13 @@ serve(async (req) => {
           throw ticketError;
         }
         ticket = newTicket;
-        console.log("✅ Novo ticket WebChat criado:", ticket.id);
+        console.log("✅ New WebChat ticket created:", ticket.id);
       } else {
         // Update ticket
         await supabaseAdmin
           .from("tickets")
           .update({
-            last_message: content,
+            last_message: content || "[Mídia]",
             updated_at: new Date().toISOString(),
           })
           .eq("id", ticket.id);
@@ -246,9 +310,11 @@ serve(async (req) => {
         .insert({
           ticket_id: ticket.id,
           contact_id: contact.id,
-          content: content,
+          content: content || "[Mídia enviada]",
           is_from_contact: true,
           status: "delivered",
+          media_url: mediaUrl || null,
+          media_type: mediaType || null,
         });
 
       if (messageError) {
@@ -256,7 +322,7 @@ serve(async (req) => {
         throw messageError;
       }
 
-      console.log(`✅ Mensagem WebChat processada para ticket ${ticket.id}`);
+      console.log(`✅ WebChat message processed for ticket ${ticket.id}`);
 
       // Check for auto-reply or greeting
       let reply = null;
@@ -267,6 +333,16 @@ serve(async (req) => {
         const channelConfig = channel.config as any;
         if (channelConfig?.welcome_message) {
           reply = channelConfig.welcome_message;
+          
+          // Save auto-reply as message
+          await supabaseAdmin
+            .from("messages")
+            .insert({
+              ticket_id: ticket.id,
+              content: reply,
+              is_from_contact: false,
+              status: "delivered",
+            });
         }
 
         // Try to invoke auto-message function
@@ -289,7 +365,26 @@ serve(async (req) => {
         ticketId: ticket.id,
         reply: reply,
         agentName: agentName,
+        isNewTicket: isNewTicket,
       }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Handle offline status
+    if (type === "offline") {
+      await supabaseAdmin
+        .from("contacts")
+        .update({
+          metadata: {
+            ...contact.metadata,
+            online: false,
+            last_seen: new Date().toISOString(),
+          },
+        })
+        .eq("id", contact.id);
+
+      return new Response(JSON.stringify({ success: true, status: "offline" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -299,7 +394,7 @@ serve(async (req) => {
     });
 
   } catch (error: any) {
-    console.error("❌ Erro no webhook WebChat:", error);
+    console.error("❌ Error in WebChat webhook:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
