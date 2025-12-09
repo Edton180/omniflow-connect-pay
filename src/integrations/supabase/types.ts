@@ -1208,17 +1208,27 @@ export type Database = {
           hero_subtitle: string
           hero_title: string
           id: string
+          legal_cookies_url: string | null
+          legal_privacy_url: string | null
+          legal_terms_url: string | null
           logo_url: string | null
           pricing_subtitle: string
           pricing_title: string
           primary_color: string
           secondary_color: string
+          social_github_url: string | null
+          social_linkedin_url: string | null
+          social_twitter_url: string | null
           stats_1_label: string | null
           stats_1_value: string | null
           stats_2_label: string | null
           stats_2_value: string | null
           stats_3_label: string | null
           stats_3_value: string | null
+          support_contact_url: string | null
+          support_docs_url: string | null
+          support_help_url: string | null
+          support_status_url: string | null
           testimonial_1_author: string | null
           testimonial_1_avatar: string | null
           testimonial_1_role: string | null
@@ -1271,17 +1281,27 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: string
+          legal_cookies_url?: string | null
+          legal_privacy_url?: string | null
+          legal_terms_url?: string | null
           logo_url?: string | null
           pricing_subtitle?: string
           pricing_title?: string
           primary_color?: string
           secondary_color?: string
+          social_github_url?: string | null
+          social_linkedin_url?: string | null
+          social_twitter_url?: string | null
           stats_1_label?: string | null
           stats_1_value?: string | null
           stats_2_label?: string | null
           stats_2_value?: string | null
           stats_3_label?: string | null
           stats_3_value?: string | null
+          support_contact_url?: string | null
+          support_docs_url?: string | null
+          support_help_url?: string | null
+          support_status_url?: string | null
           testimonial_1_author?: string | null
           testimonial_1_avatar?: string | null
           testimonial_1_role?: string | null
@@ -1334,17 +1354,27 @@ export type Database = {
           hero_subtitle?: string
           hero_title?: string
           id?: string
+          legal_cookies_url?: string | null
+          legal_privacy_url?: string | null
+          legal_terms_url?: string | null
           logo_url?: string | null
           pricing_subtitle?: string
           pricing_title?: string
           primary_color?: string
           secondary_color?: string
+          social_github_url?: string | null
+          social_linkedin_url?: string | null
+          social_twitter_url?: string | null
           stats_1_label?: string | null
           stats_1_value?: string | null
           stats_2_label?: string | null
           stats_2_value?: string | null
           stats_3_label?: string | null
           stats_3_value?: string | null
+          support_contact_url?: string | null
+          support_docs_url?: string | null
+          support_help_url?: string | null
+          support_status_url?: string | null
           testimonial_1_author?: string | null
           testimonial_1_avatar?: string | null
           testimonial_1_role?: string | null

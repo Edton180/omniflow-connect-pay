@@ -82,6 +82,19 @@ export default function LandingPageEditor() {
     primary_color: "#8B5CF6",
     secondary_color: "#3B82F6",
     accent_color: "#10B981",
+    // Social Media
+    social_twitter_url: "#",
+    social_github_url: "#",
+    social_linkedin_url: "#",
+    // Support Links
+    support_help_url: "#",
+    support_docs_url: "#",
+    support_status_url: "#",
+    support_contact_url: "#",
+    // Legal Links
+    legal_terms_url: "#",
+    legal_privacy_url: "#",
+    legal_cookies_url: "#",
   });
 
   useEffect(() => {
@@ -155,6 +168,19 @@ export default function LandingPageEditor() {
           primary_color: data.primary_color,
           secondary_color: data.secondary_color,
           accent_color: data.accent_color || "#10B981",
+          // Social Media
+          social_twitter_url: data.social_twitter_url || "#",
+          social_github_url: data.social_github_url || "#",
+          social_linkedin_url: data.social_linkedin_url || "#",
+          // Support Links
+          support_help_url: data.support_help_url || "#",
+          support_docs_url: data.support_docs_url || "#",
+          support_status_url: data.support_status_url || "#",
+          support_contact_url: data.support_contact_url || "#",
+          // Legal Links
+          legal_terms_url: data.legal_terms_url || "#",
+          legal_privacy_url: data.legal_privacy_url || "#",
+          legal_cookies_url: data.legal_cookies_url || "#",
         });
       }
     } catch (error: any) {
@@ -242,7 +268,7 @@ export default function LandingPageEditor() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="hero" className="max-w-4xl mx-auto">
-          <TabsList className="grid w-full grid-cols-8 h-auto flex-wrap">
+          <TabsList className="grid w-full grid-cols-9 h-auto flex-wrap">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="stats">Stats</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
@@ -250,6 +276,7 @@ export default function LandingPageEditor() {
             <TabsTrigger value="testimonials">Depoimentos</TabsTrigger>
             <TabsTrigger value="cta">CTA</TabsTrigger>
             <TabsTrigger value="footer">Footer</TabsTrigger>
+            <TabsTrigger value="links">Links</TabsTrigger>
             <TabsTrigger value="style">Cores</TabsTrigger>
           </TabsList>
 
@@ -587,6 +614,112 @@ export default function LandingPageEditor() {
                   <Input
                     value={formData.footer_text}
                     onChange={(e) => setFormData({ ...formData, footer_text: e.target.value })}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="links" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Redes Sociais</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Twitter/X URL</Label>
+                  <Input
+                    value={formData.social_twitter_url}
+                    onChange={(e) => setFormData({ ...formData, social_twitter_url: e.target.value })}
+                    placeholder="https://twitter.com/..."
+                  />
+                </div>
+                <div>
+                  <Label>GitHub URL</Label>
+                  <Input
+                    value={formData.social_github_url}
+                    onChange={(e) => setFormData({ ...formData, social_github_url: e.target.value })}
+                    placeholder="https://github.com/..."
+                  />
+                </div>
+                <div>
+                  <Label>LinkedIn URL</Label>
+                  <Input
+                    value={formData.social_linkedin_url}
+                    onChange={(e) => setFormData({ ...formData, social_linkedin_url: e.target.value })}
+                    placeholder="https://linkedin.com/company/..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Links de Suporte</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Central de Ajuda URL</Label>
+                  <Input
+                    value={formData.support_help_url}
+                    onChange={(e) => setFormData({ ...formData, support_help_url: e.target.value })}
+                    placeholder="https://help.seusite.com"
+                  />
+                </div>
+                <div>
+                  <Label>Documentação URL</Label>
+                  <Input
+                    value={formData.support_docs_url}
+                    onChange={(e) => setFormData({ ...formData, support_docs_url: e.target.value })}
+                    placeholder="https://docs.seusite.com"
+                  />
+                </div>
+                <div>
+                  <Label>Status do Sistema URL</Label>
+                  <Input
+                    value={formData.support_status_url}
+                    onChange={(e) => setFormData({ ...formData, support_status_url: e.target.value })}
+                    placeholder="https://status.seusite.com"
+                  />
+                </div>
+                <div>
+                  <Label>Contato URL</Label>
+                  <Input
+                    value={formData.support_contact_url}
+                    onChange={(e) => setFormData({ ...formData, support_contact_url: e.target.value })}
+                    placeholder="https://seusite.com/contato"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Links Legais</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>Termos de Uso URL</Label>
+                  <Input
+                    value={formData.legal_terms_url}
+                    onChange={(e) => setFormData({ ...formData, legal_terms_url: e.target.value })}
+                    placeholder="https://seusite.com/termos"
+                  />
+                </div>
+                <div>
+                  <Label>Política de Privacidade URL</Label>
+                  <Input
+                    value={formData.legal_privacy_url}
+                    onChange={(e) => setFormData({ ...formData, legal_privacy_url: e.target.value })}
+                    placeholder="https://seusite.com/privacidade"
+                  />
+                </div>
+                <div>
+                  <Label>Política de Cookies URL</Label>
+                  <Input
+                    value={formData.legal_cookies_url}
+                    onChange={(e) => setFormData({ ...formData, legal_cookies_url: e.target.value })}
+                    placeholder="https://seusite.com/cookies"
                   />
                 </div>
               </CardContent>
