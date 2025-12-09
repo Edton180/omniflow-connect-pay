@@ -23,6 +23,10 @@ export function useGlobalTheme() {
     queryKey: ["active-theme"],
     queryFn: async () => {
       try {
+        // Tentar buscar do localStorage primeiro (fallback para não autenticados)
+        const cachedThemeId = localStorage.getItem("applied-theme-id");
+        const cachedTheme = localStorage.getItem("cached-active-theme");
+        
         // Buscar tema ativo - esta query funciona para todos os usuários
         // devido à RLS policy "Public can view active themes"
         const { data, error } = await supabase
@@ -33,18 +37,40 @@ export function useGlobalTheme() {
 
         if (error) {
           console.error("Error fetching active theme:", error);
+          // Se falhar, tentar usar cache do localStorage
+          if (cachedTheme) {
+            try {
+              return JSON.parse(cachedTheme) as GlobalTheme;
+            } catch {
+              return null;
+            }
+          }
           return null;
+        }
+        
+        // Cachear o tema no localStorage para fallback
+        if (data) {
+          localStorage.setItem("cached-active-theme", JSON.stringify(data));
         }
         
         return data as GlobalTheme | null;
       } catch (err) {
         console.error("Failed to fetch theme:", err);
+        // Tentar usar cache do localStorage
+        const cachedTheme = localStorage.getItem("cached-active-theme");
+        if (cachedTheme) {
+          try {
+            return JSON.parse(cachedTheme) as GlobalTheme;
+          } catch {
+            return null;
+          }
+        }
         return null;
       }
     },
     staleTime: 1000 * 60 * 5, // Cache por 5 minutos
     refetchOnWindowFocus: false,
-    retry: 1, // Tentar apenas uma vez em caso de erro
+    retry: 2, // Tentar duas vezes em caso de erro
   });
 
   // Listen for toggle events from ThemeToggle

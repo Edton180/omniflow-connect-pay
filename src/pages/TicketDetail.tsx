@@ -790,6 +790,13 @@ export default function TicketDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <ChannelActions
+                channel={ticket.channel}
+                chatId={ticket.contact?.metadata?.telegram_chat_id || ticket.contact?.phone || ""}
+                phoneNumber={ticket.contact?.phone}
+                ticketId={ticket.id}
+                onMessageSent={fetchMessages}
+              />
               <Button
                 variant="outline"
                 size="sm"
