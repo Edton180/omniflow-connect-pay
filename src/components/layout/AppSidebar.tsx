@@ -25,7 +25,9 @@ import {
   Keyboard,
   Link2,
   Bot,
-  Send
+  Send,
+  FileCode,
+  Webhook
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -53,6 +55,7 @@ const navItems: NavItem[] = [
   { title: "CRM / Kanban", href: "/crm", icon: Users2 },
   { title: "Chat Interno", href: "/internal-chat", icon: MessageCircle },
   { title: "Disparo em Massa", href: "/broadcast", icon: Send },
+  { title: "Templates WhatsApp", href: "/whatsapp-templates", icon: FileCode },
   { title: "Avaliações", href: "/evaluation-ranking", icon: TrendingUp },
 ];
 
@@ -60,6 +63,7 @@ const navItems: NavItem[] = [
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
+  { title: "Integração N8N", href: "/n8n-integration", icon: Webhook, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
 ];
 

@@ -106,8 +106,9 @@ const App = () => (
           <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
           <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
           <Route path="/broadcast" element={<AuthGuard requireAuth><BroadcastMessages /></AuthGuard>} />
+          <Route path="/whatsapp-templates" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WhatsAppTemplates /></AuthGuard>} />
+          <Route path="/n8n-integration" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><N8NIntegration /></AuthGuard>} />
           <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
-          {/* Rota de Automações removida */}
           <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
           <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
           <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />

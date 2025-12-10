@@ -199,6 +199,164 @@ export type Database = {
           },
         ]
       }
+      broadcast_campaigns: {
+        Row: {
+          channel_id: string
+          completed_at: string | null
+          contact_filter: Json | null
+          created_at: string | null
+          created_by: string | null
+          delivered_count: number | null
+          failed_count: number | null
+          id: string
+          media_type: string | null
+          media_url: string | null
+          message: string | null
+          name: string
+          read_count: number | null
+          scheduled_at: string | null
+          sent_count: number | null
+          started_at: string | null
+          status: string
+          template_name: string | null
+          template_params: Json | null
+          tenant_id: string
+          total_contacts: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          completed_at?: string | null
+          contact_filter?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          delivered_count?: number | null
+          failed_count?: number | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message?: string | null
+          name: string
+          read_count?: number | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string
+          template_name?: string | null
+          template_params?: Json | null
+          tenant_id: string
+          total_contacts?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          completed_at?: string | null
+          contact_filter?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          delivered_count?: number | null
+          failed_count?: number | null
+          id?: string
+          media_type?: string | null
+          media_url?: string | null
+          message?: string | null
+          name?: string
+          read_count?: number | null
+          scheduled_at?: string | null
+          sent_count?: number | null
+          started_at?: string | null
+          status?: string
+          template_name?: string | null
+          template_params?: Json | null
+          tenant_id?: string
+          total_contacts?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_campaigns_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "broadcast_campaigns_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcast_recipients: {
+        Row: {
+          campaign_id: string
+          contact_id: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          read_at: string | null
+          sent_at: string | null
+          status: string | null
+          waba_message_id: string | null
+        }
+        Insert: {
+          campaign_id: string
+          contact_id: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          waba_message_id?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          contact_id?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          read_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          waba_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_recipients_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "broadcast_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_recipients_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       channel_configs: {
         Row: {
           api_key_encrypted: string | null
@@ -341,6 +499,72 @@ export type Database = {
             columns: ["queue_id"]
             isOneToOne: false
             referencedRelation: "queues"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      channel_sync_status: {
+        Row: {
+          channel_id: string
+          completed_at: string | null
+          created_at: string | null
+          error_message: string | null
+          id: string
+          is_syncing: boolean | null
+          last_synced_at: string | null
+          progress: number | null
+          started_at: string | null
+          sync_type: string
+          synced_items: number | null
+          tenant_id: string
+          total_items: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          channel_id: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_syncing?: boolean | null
+          last_synced_at?: string | null
+          progress?: number | null
+          started_at?: string | null
+          sync_type?: string
+          synced_items?: number | null
+          tenant_id: string
+          total_items?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          channel_id?: string
+          completed_at?: string | null
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          is_syncing?: boolean | null
+          last_synced_at?: string | null
+          progress?: number | null
+          started_at?: string | null
+          sync_type?: string
+          synced_items?: number | null
+          tenant_id?: string
+          total_items?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "channel_sync_status_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "channel_sync_status_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
             referencedColumns: ["id"]
           },
         ]
@@ -1507,6 +1731,47 @@ export type Database = {
           },
         ]
       }
+      n8n_configs: {
+        Row: {
+          api_key: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          tenant_id: string
+          triggers: Json | null
+          updated_at: string | null
+          webhook_url: string
+        }
+        Insert: {
+          api_key?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id: string
+          triggers?: Json | null
+          updated_at?: string | null
+          webhook_url: string
+        }
+        Update: {
+          api_key?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          triggers?: Json | null
+          updated_at?: string | null
+          webhook_url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "n8n_configs_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_gateways: {
         Row: {
           api_key_encrypted: string | null
@@ -2408,6 +2673,69 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "user_roles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      waba_templates: {
+        Row: {
+          category: string
+          channel_id: string
+          components: Json | null
+          created_at: string | null
+          id: string
+          language: string
+          last_synced_at: string | null
+          rejected_reason: string | null
+          status: string
+          template_id: string
+          template_name: string
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string
+          channel_id: string
+          components?: Json | null
+          created_at?: string | null
+          id?: string
+          language?: string
+          last_synced_at?: string | null
+          rejected_reason?: string | null
+          status?: string
+          template_id: string
+          template_name: string
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          channel_id?: string
+          components?: Json | null
+          created_at?: string | null
+          id?: string
+          language?: string
+          last_synced_at?: string | null
+          rejected_reason?: string | null
+          status?: string
+          template_id?: string
+          template_name?: string
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "waba_templates_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "waba_templates_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
