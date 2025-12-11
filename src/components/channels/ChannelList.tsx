@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ChannelCard } from "./ChannelCard";
-import { QrCode, Trash2, MessageSquare, Info, Globe } from "lucide-react";
+import { QrCode, Trash2, MessageSquare, Info, Globe, HelpCircle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,6 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ChannelDocsDialog } from "./ChannelDocsDialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const ChannelList = () => {
   const { toast } = useToast();
@@ -31,11 +33,18 @@ export const ChannelList = () => {
   const [tenants, setTenants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [docsDialogOpen, setDocsDialogOpen] = useState(false);
+  const [selectedDocsChannel, setSelectedDocsChannel] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     type: "",
     config: {} as any,
   });
+
+  const openDocsDialog = (channelType: string) => {
+    setSelectedDocsChannel(channelType);
+    setDocsDialogOpen(true);
+  };
 
   useEffect(() => {
     if (session?.user) {
@@ -310,26 +319,68 @@ export const ChannelList = () => {
                   <SelectItem value="email">Email</SelectItem>
                 </SelectContent>
               </Select>
+              {formData.type && (
+                <Button 
+                  type="button" 
+                  variant="link" 
+                  size="sm" 
+                  className="mt-1 p-0 h-auto text-xs"
+                  onClick={() => openDocsDialog(formData.type)}
+                >
+                  <HelpCircle className="h-3 w-3 mr-1" />
+                  Como obter as credenciais?
+                </Button>
+              )}
             </div>
 
             {formData.type === "telegram" && (
-              <div>
-                <Label>Token do Bot</Label>
-                <Input
-                  value={formData.config.bot_token || ""}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      config: { ...formData.config, bot_token: e.target.value },
-                    })
-                  }
-                  placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
-                />
-              </div>
+              <>
+                <Alert className="bg-blue-50 dark:bg-blue-950/30 border-blue-200">
+                  <Info className="h-4 w-4 text-blue-600" />
+                  <AlertDescription className="text-xs">
+                    Abra @BotFather no Telegram, envie /newbot e copie o token.{" "}
+                    <a 
+                      href="https://t.me/BotFather" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline font-medium"
+                    >
+                      Abrir BotFather
+                    </a>
+                  </AlertDescription>
+                </Alert>
+                <div>
+                  <Label>Token do Bot</Label>
+                  <Input
+                    value={formData.config.bot_token || ""}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        config: { ...formData.config, bot_token: e.target.value },
+                      })
+                    }
+                    placeholder="123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
+                  />
+                </div>
+              </>
             )}
 
             {formData.type === "whatsapp" && (
               <>
+                <Alert className="bg-green-50 dark:bg-green-950/30 border-green-200">
+                  <Info className="h-4 w-4 text-green-600" />
+                  <AlertDescription className="text-xs">
+                    Configure sua conta no Meta Business Suite.{" "}
+                    <a 
+                      href="https://developers.facebook.com/docs/whatsapp/cloud-api/get-started" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="underline font-medium"
+                    >
+                      Ver documentação
+                    </a>
+                  </AlertDescription>
+                </Alert>
                 <div>
                   <Label>Phone Number ID</Label>
                   <Input
@@ -342,9 +393,12 @@ export const ChannelList = () => {
                     }
                     placeholder="ID do número de telefone"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encontrado em Meta Business Suite → WhatsApp → Configurações da API
+                  </p>
                 </div>
                 <div>
-                  <Label>Access Token</Label>
+                  <Label>Access Token (Permanente)</Label>
                   <Input
                     value={formData.config.access_token || ""}
                     onChange={(e) =>
@@ -366,8 +420,11 @@ export const ChannelList = () => {
                         config: { ...formData.config, verify_token: e.target.value },
                       })
                     }
-                    placeholder="Token de verificação do webhook"
+                    placeholder="Crie um token seguro (ex: meutoken123)"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Você define este valor. Use o mesmo ao configurar o webhook na Meta
+                  </p>
                 </div>
                 <div>
                   <Label>App Secret</Label>
@@ -633,6 +690,13 @@ export const ChannelList = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog de Documentação */}
+      <ChannelDocsDialog 
+        open={docsDialogOpen} 
+        onOpenChange={setDocsDialogOpen} 
+        channelType={selectedDocsChannel} 
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Webhook, Copy, Check, ExternalLink, Zap, MessageSquare, Ticket, RefreshCw } from "lucide-react";
+import { Webhook, Copy, Check, ExternalLink, Zap, MessageSquare, Ticket, RefreshCw, User, CheckCircle, Star, Users } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface N8NConfig {
   id: string;
@@ -24,8 +25,20 @@ interface N8NConfig {
     new_ticket: boolean;
     new_message: boolean;
     status_change: boolean;
+    ticket_closed: boolean;
+    ticket_assigned: boolean;
+    evaluation_received: boolean;
   };
 }
+
+const defaultTriggers = {
+  new_ticket: true,
+  new_message: true,
+  status_change: true,
+  ticket_closed: false,
+  ticket_assigned: false,
+  evaluation_received: false,
+};
 
 export default function N8NIntegration() {
   const { profile } = useAuth();
@@ -35,11 +48,7 @@ export default function N8NIntegration() {
     webhook_url: "",
     api_key: "",
     is_active: false,
-    triggers: {
-      new_ticket: true,
-      new_message: true,
-      status_change: true,
-    },
+    triggers: defaultTriggers,
   });
 
   const webhookUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/n8n-webhook`;
@@ -58,14 +67,14 @@ export default function N8NIntegration() {
       if (!data) return null;
       return {
         ...data,
-        triggers: (data.triggers as N8NConfig["triggers"]) || { new_ticket: true, new_message: true, status_change: true }
+        triggers: { ...defaultTriggers, ...(data.triggers as N8NConfig["triggers"]) }
       } as N8NConfig;
     },
     enabled: !!profile?.tenant_id,
   });
 
-  // Atualizar estado quando carregar config
-  useState(() => {
+  // Atualizar estado quando carregar config - CORRIGIDO: usar useEffect
+  useEffect(() => {
     if (existingConfig) {
       setConfig({
         webhook_url: existingConfig.webhook_url,
@@ -74,13 +83,20 @@ export default function N8NIntegration() {
         triggers: existingConfig.triggers,
       });
     }
-  });
+  }, [existingConfig]);
 
   // Salvar configuração
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!config.webhook_url) {
         throw new Error("URL do Webhook é obrigatória");
+      }
+
+      // Validar URL
+      try {
+        new URL(config.webhook_url);
+      } catch {
+        throw new Error("URL do Webhook inválida");
       }
 
       const payload = {
@@ -160,6 +176,13 @@ export default function N8NIntegration() {
     toast.success("URL copiada!");
   };
 
+  const updateTrigger = (key: keyof N8NConfig["triggers"], value: boolean) => {
+    setConfig({
+      ...config,
+      triggers: { ...config.triggers!, [key]: value },
+    });
+  };
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -200,7 +223,7 @@ export default function N8NIntegration() {
               <CardHeader>
                 <CardTitle>Webhook para N8N</CardTitle>
                 <CardDescription>
-                  Use esta URL no seu workflow N8N para receber eventos do OmniFlow
+                  Use esta URL no seu workflow N8N para enviar ações ao OmniFlow
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -217,7 +240,7 @@ export default function N8NIntegration() {
               <CardHeader>
                 <CardTitle>Webhook do N8N</CardTitle>
                 <CardDescription>
-                  Configure a URL do webhook do seu workflow N8N para enviar ações ao OmniFlow
+                  Configure a URL do seu workflow N8N para receber eventos do OmniFlow
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -228,6 +251,9 @@ export default function N8NIntegration() {
                     onChange={(e) => setConfig({ ...config, webhook_url: e.target.value })}
                     placeholder="https://seu-n8n.com/webhook/..."
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Crie um node "Webhook" no N8N e cole a URL aqui
+                  </p>
                 </div>
 
                 <div>
@@ -239,7 +265,7 @@ export default function N8NIntegration() {
                     placeholder="Chave de autenticação"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Será enviada no header X-N8N-Api-Key
+                    Será verificada no header X-N8N-Api-Key ao receber chamadas
                   </p>
                 </div>
 
@@ -278,12 +304,7 @@ export default function N8NIntegration() {
                   </div>
                   <Switch
                     checked={config.triggers?.new_ticket}
-                    onCheckedChange={(checked) =>
-                      setConfig({
-                        ...config,
-                        triggers: { ...config.triggers!, new_ticket: checked },
-                      })
-                    }
+                    onCheckedChange={(checked) => updateTrigger("new_ticket", checked)}
                   />
                 </div>
 
@@ -299,12 +320,7 @@ export default function N8NIntegration() {
                   </div>
                   <Switch
                     checked={config.triggers?.new_message}
-                    onCheckedChange={(checked) =>
-                      setConfig({
-                        ...config,
-                        triggers: { ...config.triggers!, new_message: checked },
-                      })
-                    }
+                    onCheckedChange={(checked) => updateTrigger("new_message", checked)}
                   />
                 </div>
 
@@ -320,12 +336,55 @@ export default function N8NIntegration() {
                   </div>
                   <Switch
                     checked={config.triggers?.status_change}
-                    onCheckedChange={(checked) =>
-                      setConfig({
-                        ...config,
-                        triggers: { ...config.triggers!, status_change: checked },
-                      })
-                    }
+                    onCheckedChange={(checked) => updateTrigger("status_change", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label>Ticket Fechado</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Quando um ticket é encerrado
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={config.triggers?.ticket_closed}
+                    onCheckedChange={(checked) => updateTrigger("ticket_closed", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label>Ticket Atribuído</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Quando um agente é atribuído ao ticket
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={config.triggers?.ticket_assigned}
+                    onCheckedChange={(checked) => updateTrigger("ticket_assigned", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <Label>Avaliação Recebida</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Quando o cliente avalia o atendimento
+                      </p>
+                    </div>
+                  </div>
+                  <Switch
+                    checked={config.triggers?.evaluation_received}
+                    onCheckedChange={(checked) => updateTrigger("evaluation_received", checked)}
                   />
                 </div>
               </CardContent>
@@ -350,49 +409,107 @@ export default function N8NIntegration() {
             <Card>
               <CardHeader>
                 <CardTitle>Como Integrar com N8N</CardTitle>
+                <CardDescription>
+                  Guia completo de integração com workflows do N8N
+                </CardDescription>
               </CardHeader>
-              <CardContent className="prose prose-sm dark:prose-invert max-w-none">
-                <h4>1. Receber Eventos do OmniFlow</h4>
-                <p>
-                  Configure um node "Webhook" no N8N e cole a URL do webhook do N8N acima. O
-                  OmniFlow enviará eventos no formato:
-                </p>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+              <CardContent className="space-y-6">
+                <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="receive">
+                    <AccordionTrigger>1. Receber Eventos do OmniFlow</AccordionTrigger>
+                    <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
+                      <p>
+                        Configure um node "Webhook" no N8N e cole a URL na configuração acima.
+                        O OmniFlow enviará eventos no formato:
+                      </p>
+                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-xs">
 {`{
   "event": "ticket.created",
   "tenant_id": "uuid",
   "timestamp": "2025-01-01T00:00:00Z",
   "data": {
-    "ticket": { ... },
-    "contact": { ... }
+    "ticket": {
+      "id": "uuid",
+      "contact_id": "uuid",
+      "channel": "whatsapp",
+      "status": "open",
+      "priority": "medium"
+    },
+    "contact": {
+      "name": "João Silva",
+      "phone": "+5511999999999"
+    }
   }
 }`}
-                </pre>
+                      </pre>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <h4>2. Enviar Ações para o OmniFlow</h4>
-                <p>
-                  Use o node "HTTP Request" do N8N para chamar nosso webhook. Eventos suportados:
-                </p>
-                <ul>
-                  <li>
-                    <strong>create_ticket</strong> - Criar novo ticket
-                  </li>
-                  <li>
-                    <strong>send_message</strong> - Enviar mensagem em ticket
-                  </li>
-                  <li>
-                    <strong>update_ticket</strong> - Atualizar status/prioridade
-                  </li>
-                  <li>
-                    <strong>create_contact</strong> - Criar contato
-                  </li>
-                  <li>
-                    <strong>get_ticket</strong> - Buscar dados do ticket
-                  </li>
-                </ul>
+                  <AccordionItem value="send">
+                    <AccordionTrigger>2. Enviar Ações para o OmniFlow</AccordionTrigger>
+                    <AccordionContent className="prose prose-sm dark:prose-invert max-w-none">
+                      <p>
+                        Use o node "HTTP Request" do N8N para chamar nosso webhook.
+                      </p>
+                      <p className="font-semibold">URL do Webhook:</p>
+                      <pre className="bg-muted p-2 rounded text-xs">{webhookUrl}</pre>
+                      
+                      <p className="font-semibold mt-4">Headers (se usando API Key):</p>
+                      <pre className="bg-muted p-2 rounded text-xs">
+{`X-N8N-Api-Key: sua-api-key
+Content-Type: application/json`}
+                      </pre>
+                    </AccordionContent>
+                  </AccordionItem>
 
-                <h4>Exemplo de Payload</h4>
-                <pre className="bg-muted p-4 rounded-lg overflow-x-auto">
+                  <AccordionItem value="events">
+                    <AccordionTrigger>3. Eventos Suportados</AccordionTrigger>
+                    <AccordionContent>
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="font-semibold text-sm">Tickets</h4>
+                          <ul className="text-sm space-y-1 mt-2">
+                            <li><code className="bg-muted px-1 rounded">create_ticket</code> - Criar novo ticket</li>
+                            <li><code className="bg-muted px-1 rounded">update_ticket</code> - Atualizar status/prioridade</li>
+                            <li><code className="bg-muted px-1 rounded">close_ticket</code> - Fechar ticket</li>
+                            <li><code className="bg-muted px-1 rounded">assign_ticket</code> - Atribuir agente</li>
+                            <li><code className="bg-muted px-1 rounded">get_ticket</code> - Buscar ticket por ID</li>
+                            <li><code className="bg-muted px-1 rounded">get_tickets</code> - Listar tickets</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm">Mensagens</h4>
+                          <ul className="text-sm space-y-1 mt-2">
+                            <li><code className="bg-muted px-1 rounded">send_message</code> - Enviar mensagem</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm">Contatos</h4>
+                          <ul className="text-sm space-y-1 mt-2">
+                            <li><code className="bg-muted px-1 rounded">create_contact</code> - Criar contato</li>
+                            <li><code className="bg-muted px-1 rounded">update_contact</code> - Atualizar contato</li>
+                            <li><code className="bg-muted px-1 rounded">get_contact</code> - Buscar contato</li>
+                            <li><code className="bg-muted px-1 rounded">get_contacts</code> - Listar contatos</li>
+                          </ul>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm">Outros</h4>
+                          <ul className="text-sm space-y-1 mt-2">
+                            <li><code className="bg-muted px-1 rounded">get_agents</code> - Listar agentes</li>
+                            <li><code className="bg-muted px-1 rounded">get_queues</code> - Listar filas</li>
+                            <li><code className="bg-muted px-1 rounded">webhook_test</code> - Testar conexão</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem value="examples">
+                    <AccordionTrigger>4. Exemplos de Payload</AccordionTrigger>
+                    <AccordionContent className="space-y-4">
+                      <div>
+                        <p className="font-semibold text-sm">Criar Ticket:</p>
+                        <pre className="bg-muted p-3 rounded-lg overflow-x-auto text-xs">
 {`{
   "event": "create_ticket",
   "tenant_id": "seu-tenant-id",
@@ -403,9 +520,43 @@ export default function N8NIntegration() {
     "priority": "high"
   }
 }`}
-                </pre>
+                        </pre>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">Enviar Mensagem:</p>
+                        <pre className="bg-muted p-3 rounded-lg overflow-x-auto text-xs">
+{`{
+  "event": "send_message",
+  "tenant_id": "seu-tenant-id",
+  "data": {
+    "ticket_id": "uuid-do-ticket",
+    "content": "Sua mensagem aqui",
+    "media_url": "https://exemplo.com/imagem.jpg",
+    "media_type": "image"
+  }
+}`}
+                        </pre>
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">Criar Contato:</p>
+                        <pre className="bg-muted p-3 rounded-lg overflow-x-auto text-xs">
+{`{
+  "event": "create_contact",
+  "tenant_id": "seu-tenant-id",
+  "data": {
+    "name": "João Silva",
+    "phone": "+5511999999999",
+    "email": "joao@email.com",
+    "tags": ["lead", "site"]
+  }
+}`}
+                        </pre>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
-                <div className="mt-4">
+                <div className="flex gap-2 pt-4">
                   <Button variant="outline" asChild>
                     <a
                       href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.webhook/"
@@ -413,7 +564,17 @@ export default function N8NIntegration() {
                       rel="noopener noreferrer"
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
-                      Documentação do N8N
+                      Docs N8N Webhook
+                    </a>
+                  </Button>
+                  <Button variant="outline" asChild>
+                    <a
+                      href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.httprequest/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Docs N8N HTTP Request
                     </a>
                   </Button>
                 </div>
