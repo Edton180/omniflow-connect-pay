@@ -48,6 +48,8 @@ import TransactionHistory from "./pages/TransactionHistory";
 import WebhookDashboard from "./pages/WebhookDashboard";
 import FinancialReports from "./pages/FinancialReports";
 import WebhookConfig from "./pages/WebhookConfig";
+import WhatsAppTemplates from "./pages/WhatsAppTemplates";
+import N8NIntegration from "./pages/N8NIntegration";
 // Automations removido - funcionalidade não utilizada
 import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
