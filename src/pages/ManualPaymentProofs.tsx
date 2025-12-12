@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { FileText, Check, X, ExternalLink, Loader2 } from "lucide-react";
+import { FileText, Check, X, ExternalLink, Loader2, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppLayout } from "@/components/layout/AppLayout";
 import {
   Dialog,
   DialogContent,
@@ -131,24 +132,38 @@ export default function ManualPaymentProofs() {
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Comprovantes de Pagamento</h1>
-        <p className="text-muted-foreground">
-          Analise e aprove os comprovantes de pagamento manual enviados pelos clientes
-        </p>
-      </div>
+    <AppLayout>
+      <div className="p-8 space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
+              <FileText className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">Comprovantes de Pagamento</h1>
+              <p className="text-sm text-muted-foreground">
+                Analise e aprove os comprovantes de pagamento manual
+              </p>
+            </div>
+          </div>
+          {invoices.length > 0 && (
+            <Badge variant="destructive" className="text-sm px-3 py-1">
+              <AlertCircle className="h-4 w-4 mr-1" />
+              {invoices.length} pendente{invoices.length > 1 ? 's' : ''}
+            </Badge>
+          )}
+        </div>
 
-      {invoices.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              Nenhum comprovante pendente de aprovação
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
+        {invoices.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">
+                Nenhum comprovante pendente de aprovação
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
         <div className="grid gap-4">
           {invoices.map((invoice) => (
             <Card key={invoice.id}>
@@ -303,8 +318,9 @@ export default function ManualPaymentProofs() {
               )}
             </Button>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AppLayout>
   );
 }

@@ -2,12 +2,15 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Building2, Plus, Pencil, Trash2, ArrowLeft, Loader2 } from "lucide-react";
+import { Building2, Plus, Pencil, Trash2, Loader2, Search, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { TenantDialogWithUser } from "./TenantDialogWithUser";
 import { TenantUsersList } from './TenantUsersList';
+import { AppLayout } from "@/components/layout/AppLayout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +26,8 @@ export const TenantManagement = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [tenants, setTenants] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<any>(null);
@@ -134,36 +139,85 @@ export const TenantManagement = () => {
     );
   };
 
+  const filteredTenants = tenants.filter(tenant => {
+    const matchesSearch = tenant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          tenant.slug.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || tenant.subscription_status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleExportCSV = () => {
+    const headers = ["Nome", "Slug", "Status", "Ativo", "Usuários", "Max Usuários", "Max Tickets"];
+    const rows = filteredTenants.map(t => [
+      t.name, t.slug, t.subscription_status, t.is_active ? "Sim" : "Não",
+      t.current_user_count || 0, t.max_users, t.max_tickets
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `tenants_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    toast({ title: "CSV exportado com sucesso" });
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <AppLayout>
+      <div className="p-8">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => viewingTenant ? setViewingTenant(null) : navigate("/dashboard")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
               <Building2 className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">
+              <h1 className="text-2xl font-bold">
                 {viewingTenant ? `Usuários de ${viewingTenant.name}` : 'Gerenciar Tenants'}
               </h1>
-              <p className="text-xs text-muted-foreground">
-                {viewingTenant ? 'Veja todos os usuários desta empresa' : 'Administre todas as empresas do sistema'}
+              <p className="text-sm text-muted-foreground">
+                {viewingTenant ? 'Veja todos os usuários desta empresa' : `${tenants.length} empresas cadastradas`}
               </p>
             </div>
           </div>
           {!viewingTenant && (
-            <Button onClick={handleCreate}>
-              <Plus className="mr-2 h-4 w-4" />
-              Novo Tenant
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={handleExportCSV}>
+                <Download className="mr-2 h-4 w-4" />
+                Exportar
+              </Button>
+              <Button onClick={handleCreate}>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Tenant
+              </Button>
+            </div>
           )}
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8">
+        {!viewingTenant && (
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Buscar por nome ou slug..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-[180px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="trial">Trial</SelectItem>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="suspended">Suspenso</SelectItem>
+                <SelectItem value="cancelled">Cancelado</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         {viewingTenant ? (
           <TenantUsersList 
             tenantId={viewingTenant.id} 
@@ -187,9 +241,19 @@ export const TenantManagement = () => {
               </Button>
             </CardContent>
           </Card>
+        ) : filteredTenants.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center h-64">
+              <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium mb-2">Nenhum tenant encontrado</p>
+              <p className="text-sm text-muted-foreground">
+                Tente ajustar os filtros de busca
+              </p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {tenants.map((tenant) => (
+            {filteredTenants.map((tenant) => (
               <Card key={tenant.id} className="gradient-card hover-scale">
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -285,6 +349,6 @@ export const TenantManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </AppLayout>
   );
 };

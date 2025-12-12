@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ArrowLeft, FileText, Loader2, DollarSign, Calendar, Building2, Search, Plus, CreditCard } from "lucide-react";
+import { FileText, Loader2, DollarSign, Calendar, Building2, Search, Plus, CreditCard, Download } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { CreateInvoiceDialog } from "@/components/invoices/CreateInvoiceDialog";
 
 export default function SuperAdminInvoices() {
@@ -17,6 +18,7 @@ export default function SuperAdminInvoices() {
   const [invoices, setInvoices] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [generatingCheckout, setGeneratingCheckout] = useState<string | null>(null);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -119,8 +121,39 @@ export default function SuperAdminInvoices() {
   const filteredInvoices = invoices.filter(invoice => {
     const tenantName = invoice.tenant?.name?.toLowerCase() || "";
     const searchLower = search.toLowerCase();
-    return tenantName.includes(searchLower);
+    const matchesSearch = tenantName.includes(searchLower);
+    
+    let matchesStatus = true;
+    if (statusFilter !== "all") {
+      const isOverdue = new Date(invoice.due_date) < new Date() && invoice.status === "pending";
+      if (statusFilter === "overdue") {
+        matchesStatus = isOverdue;
+      } else {
+        matchesStatus = invoice.status === statusFilter && !isOverdue;
+      }
+    }
+    
+    return matchesSearch && matchesStatus;
   });
+
+  const handleExportCSV = () => {
+    const headers = ["Empresa", "Valor", "Status", "Vencimento", "Criado em"];
+    const rows = filteredInvoices.map(inv => [
+      inv.tenant?.name || "N/A",
+      inv.amount,
+      inv.status,
+      format(new Date(inv.due_date), "dd/MM/yyyy"),
+      format(new Date(inv.created_at), "dd/MM/yyyy")
+    ]);
+    const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `faturas_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    toast.success("CSV exportado com sucesso");
+  };
 
   if (loading) {
     return (
@@ -131,33 +164,31 @@ export default function SuperAdminInvoices() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+    <AppLayout>
+      <div className="p-8 space-y-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")}>
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <div className="h-10 w-10 rounded-lg bg-gradient-primary flex items-center justify-center text-white shadow-glow">
               <FileText className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">Faturas - Super Admin</h1>
-              <p className="text-xs text-muted-foreground">Gerencie todas as faturas do sistema</p>
+              <h1 className="text-2xl font-bold">Faturas - Super Admin</h1>
+              <p className="text-sm text-muted-foreground">{filteredInvoices.length} faturas encontradas</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={handleExportCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              Exportar
+            </Button>
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Nova Fatura
             </Button>
-            <ThemeToggle />
           </div>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-8 space-y-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -167,6 +198,18 @@ export default function SuperAdminInvoices() {
               className="pl-10"
             />
           </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-[180px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="pending">Pendentes</SelectItem>
+              <SelectItem value="paid">Pagas</SelectItem>
+              <SelectItem value="overdue">Vencidas</SelectItem>
+              <SelectItem value="cancelled">Canceladas</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {filteredInvoices.length === 0 ? (
@@ -277,13 +320,13 @@ export default function SuperAdminInvoices() {
             })}
           </div>
         )}
-      </div>
 
-      <CreateInvoiceDialog
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-        onSuccess={loadData}
-      />
-    </div>
+        <CreateInvoiceDialog
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+          onSuccess={loadData}
+        />
+      </div>
+    </AppLayout>
   );
 }
