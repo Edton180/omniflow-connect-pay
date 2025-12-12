@@ -12,6 +12,69 @@ interface AIConfig {
   is_active: boolean;
 }
 
+interface KnowledgeItem {
+  type: string;
+  title: string | null;
+  question: string | null;
+  answer: string | null;
+  content: string | null;
+  category: string | null;
+}
+
+async function getKnowledgeBase(supabaseAdmin: any, tenantId: string): Promise<string> {
+  try {
+    const { data: items } = await supabaseAdmin
+      .from("ai_knowledge_base")
+      .select("type, title, question, answer, content, category")
+      .eq("tenant_id", tenantId)
+      .eq("is_active", true)
+      .order("priority", { ascending: false })
+      .limit(50);
+
+    if (!items || items.length === 0) return "";
+
+    let knowledgeContext = "\n\n### BASE DE CONHECIMENTO DA EMPRESA ###\n";
+    
+    const faqs = items.filter((i: KnowledgeItem) => i.type === 'faq');
+    const docs = items.filter((i: KnowledgeItem) => i.type === 'document');
+    const examples = items.filter((i: KnowledgeItem) => i.type === 'example');
+    const instructions = items.filter((i: KnowledgeItem) => i.type === 'instruction');
+
+    if (instructions.length > 0) {
+      knowledgeContext += "\n## INSTRUÇÕES PARA O ASSISTENTE:\n";
+      instructions.forEach((item: KnowledgeItem) => {
+        knowledgeContext += `- ${item.title}: ${item.content}\n`;
+      });
+    }
+
+    if (faqs.length > 0) {
+      knowledgeContext += "\n## PERGUNTAS FREQUENTES:\n";
+      faqs.forEach((item: KnowledgeItem) => {
+        knowledgeContext += `P: ${item.question}\nR: ${item.answer}\n\n`;
+      });
+    }
+
+    if (docs.length > 0) {
+      knowledgeContext += "\n## DOCUMENTOS E POLÍTICAS:\n";
+      docs.forEach((item: KnowledgeItem) => {
+        knowledgeContext += `### ${item.title}\n${item.content}\n\n`;
+      });
+    }
+
+    if (examples.length > 0) {
+      knowledgeContext += "\n## EXEMPLOS DE BOAS RESPOSTAS:\n";
+      examples.forEach((item: KnowledgeItem) => {
+        knowledgeContext += `### ${item.title}\n${item.content}\n\n`;
+      });
+    }
+
+    return knowledgeContext;
+  } catch (error) {
+    console.error("Error fetching knowledge base:", error);
+    return "";
+  }
+}
+
 async function callOpenAI(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -125,20 +188,36 @@ serve(async (req) => {
   try {
     const { messages, action = "suggest", tenantId } = await req.json();
 
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+    );
+
+    // Fetch knowledge base for enhanced context
+    let knowledgeContext = "";
+    if (tenantId) {
+      knowledgeContext = await getKnowledgeBase(supabaseAdmin, tenantId);
+      console.log(`📚 Knowledge base loaded: ${knowledgeContext.length} chars`);
+    }
+
     let systemPrompt = "";
     let userPrompt = "";
 
+    const baseContext = knowledgeContext 
+      ? `Use as informações da base de conhecimento abaixo para responder de forma mais precisa e alinhada com a empresa:\n${knowledgeContext}\n\n` 
+      : "";
+
     switch (action) {
       case "suggest":
-        systemPrompt = "Você é um assistente de atendimento ao cliente. Analise a conversa e sugira 3 respostas profissionais e úteis.";
+        systemPrompt = `${baseContext}Você é um assistente de atendimento ao cliente. Analise a conversa e sugira 3 respostas profissionais e úteis baseadas no contexto da empresa.`;
         userPrompt = `Baseado nesta conversa:\n\n${JSON.stringify(messages)}\n\nSugira 3 respostas profissionais e diretas.`;
         break;
       case "improve":
-        systemPrompt = "Você é um assistente de redação. Melhore o texto mantendo o significado original, mas tornando-o mais profissional e claro.";
+        systemPrompt = `${baseContext}Você é um assistente de redação. Melhore o texto mantendo o significado original, mas tornando-o mais profissional e claro.`;
         userPrompt = `Melhore este texto: "${messages[messages.length - 1]?.content || ""}"`;
         break;
       case "summarize":
-        systemPrompt = "Você é um assistente de resumo. Crie um resumo conciso e claro da conversa.";
+        systemPrompt = `${baseContext}Você é um assistente de resumo. Crie um resumo conciso e claro da conversa.`;
         userPrompt = `Resuma esta conversa:\n\n${JSON.stringify(messages)}`;
         break;
       case "translate":
@@ -146,7 +225,7 @@ serve(async (req) => {
         userPrompt = `Traduza este texto para o português: "${messages[messages.length - 1]?.content || ""}"`;
         break;
       default:
-        systemPrompt = "Você é um assistente útil.";
+        systemPrompt = `${baseContext}Você é um assistente útil.`;
         userPrompt = messages[messages.length - 1]?.content || "";
     }
 
@@ -154,11 +233,6 @@ serve(async (req) => {
     let activeConfig: AIConfig | null = null;
     
     if (tenantId) {
-      const supabaseAdmin = createClient(
-        Deno.env.get("SUPABASE_URL") ?? "",
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      );
-
       const { data: aiConfigs } = await supabaseAdmin
         .from("ai_configs")
         .select("*")

@@ -15,7 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, ArrowRightLeft, Brain, Save, Key, CheckCircle2, XCircle, Loader2, Wifi } from "lucide-react";
+import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, Brain, Save, Key, CheckCircle2, XCircle, Loader2, Wifi, BookOpen, Wand2 } from "lucide-react";
+import { KnowledgeBaseTab } from "@/components/chatbot/KnowledgeBaseTab";
+import { MessageAssistantTab } from "@/components/chatbot/MessageAssistantTab";
 
 interface ChatbotIntent {
   id: string;
@@ -386,7 +388,7 @@ export default function ChatbotSettings() {
         </div>
 
         <Tabs defaultValue="settings" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
               Configurações
@@ -394,6 +396,14 @@ export default function ChatbotSettings() {
             <TabsTrigger value="intents" className="flex items-center gap-2">
               <Zap className="h-4 w-4" />
               Intenções
+            </TabsTrigger>
+            <TabsTrigger value="message-assistant" className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4" />
+              Assistente de Mensagens
+            </TabsTrigger>
+            <TabsTrigger value="knowledge-base" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Base de Conhecimento
             </TabsTrigger>
             <TabsTrigger value="ai-providers" className="flex items-center gap-2">
               <Key className="h-4 w-4" />
@@ -628,6 +638,16 @@ export default function ChatbotSettings() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Tab Assistente de Mensagens */}
+          <TabsContent value="message-assistant" className="space-y-6">
+            <MessageAssistantTab />
+          </TabsContent>
+
+          {/* Tab Base de Conhecimento */}
+          <TabsContent value="knowledge-base" className="space-y-6">
+            {tenantId && <KnowledgeBaseTab tenantId={tenantId} />}
           </TabsContent>
 
           {/* Tab Provedores de IA */}

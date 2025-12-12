@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Bot, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -11,9 +11,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { InvoicesContent } from '@/components/invoices/InvoicesContent';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
-import { AIConfigSection } from '@/components/settings/AIConfigSection';
 import { EvaluationSettingsTab } from '@/components/settings/EvaluationSettingsTab';
 import { Switch } from '@/components/ui/switch';
+import { Link } from 'react-router-dom';
 
 export default function TenantSettings() {
   const { user, roles } = useAuth();
@@ -152,7 +152,6 @@ export default function TenantSettings() {
           <TabsList>
             <TabsTrigger value="company">Empresa</TabsTrigger>
             <TabsTrigger value="users">Usuários</TabsTrigger>
-            <TabsTrigger value="ai">Assistentes IA</TabsTrigger>
             <TabsTrigger value="evaluations">Avaliações</TabsTrigger>
             <TabsTrigger value="invoices">Faturas</TabsTrigger>
           </TabsList>
@@ -355,10 +354,6 @@ export default function TenantSettings() {
 
           <TabsContent value="users">
             <UserManagement />
-          </TabsContent>
-
-          <TabsContent value="ai">
-            <AIConfigSection />
           </TabsContent>
 
           <TabsContent value="evaluations">
