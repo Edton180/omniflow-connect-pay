@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3, Key, Globe, Palette, Settings, Layers } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3, Key, Globe, Palette, Layers, Bot } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { ServerInfoPanel } from "./ServerInfoPanel";
 
 export const SuperAdminDashboard = () => {
   const navigate = useNavigate();
@@ -164,6 +165,11 @@ export const SuperAdminDashboard = () => {
           </Card>
         </div>
 
+        {/* Server Info Panel */}
+        <div className="mb-8">
+          <ServerInfoPanel />
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
@@ -241,6 +247,14 @@ export const SuperAdminDashboard = () => {
               >
                 <Key className="mr-3 h-5 w-5" />
                 Secrets de Pagamento
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/chatbot-settings')}
+              >
+                <Bot className="mr-3 h-5 w-5" />
+                Configurar Chatbot IA
               </Button>
             </CardContent>
           </Card>
