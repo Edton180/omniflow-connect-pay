@@ -58,6 +58,7 @@ import BroadcastMessages from "./pages/BroadcastMessages";
 import AdvancedAnalytics from "./pages/AdvancedAnalytics";
 import ChatbotSettings from "./pages/ChatbotSettings";
 import ExportReports from "./pages/ExportReports";
+import WebChatSetup from "./pages/WebChatSetup";
 
 const queryClient = new QueryClient();
 
@@ -120,6 +121,7 @@ const App = () => (
           <Route path="/advanced-analytics" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AdvancedAnalytics /></AuthGuard>} />
           <Route path="/chatbot-settings" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ChatbotSettings /></AuthGuard>} />
           <Route path="/export-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ExportReports /></AuthGuard>} />
+          <Route path="/webchat-setup" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WebChatSetup /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
