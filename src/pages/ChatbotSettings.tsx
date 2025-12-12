@@ -35,6 +35,12 @@ interface ChatbotSettingsData {
   transfer_message: string;
   welcome_message: string;
   enabled_channels: string[];
+  ai_provider: string;
+}
+
+interface AIConfigData {
+  provider: string;
+  is_active: boolean;
 }
 
 export default function ChatbotSettings() {
@@ -48,8 +54,10 @@ export default function ChatbotSettings() {
     fallback_message: "Não entendi sua mensagem. Vou transferir você para um atendente.",
     transfer_message: "Aguarde um momento, estou transferindo você para um atendente.",
     welcome_message: "Olá! Sou o assistente virtual. Como posso ajudar?",
-    enabled_channels: ["telegram", "whatsapp", "webchat"]
+    enabled_channels: ["telegram", "whatsapp", "webchat"],
+    ai_provider: "lovable"
   });
+  const [aiConfigs, setAiConfigs] = useState<AIConfigData[]>([]);
   
   const [intentDialogOpen, setIntentDialogOpen] = useState(false);
   const [editingIntent, setEditingIntent] = useState<ChatbotIntent | null>(null);
@@ -73,7 +81,7 @@ export default function ChatbotSettings() {
     if (!tenantId) return;
     setLoading(true);
 
-    const [settingsRes, intentsRes] = await Promise.all([
+    const [settingsRes, intentsRes, aiConfigsRes] = await Promise.all([
       supabase
         .from("chatbot_settings")
         .select("*")
@@ -83,7 +91,11 @@ export default function ChatbotSettings() {
         .from("chatbot_intents")
         .select("*")
         .eq("tenant_id", tenantId)
-        .order("name")
+        .order("name"),
+      supabase
+        .from("ai_configs")
+        .select("provider, is_active")
+        .eq("tenant_id", tenantId)
     ]);
 
     if (settingsRes.data) {
@@ -94,7 +106,8 @@ export default function ChatbotSettings() {
         fallback_message: settingsRes.data.fallback_message || "",
         transfer_message: settingsRes.data.transfer_message || "",
         welcome_message: settingsRes.data.welcome_message || "",
-        enabled_channels: settingsRes.data.enabled_channels as string[] || []
+        enabled_channels: settingsRes.data.enabled_channels as string[] || [],
+        ai_provider: settingsRes.data.ai_provider || "lovable"
       });
     }
 
@@ -104,6 +117,10 @@ export default function ChatbotSettings() {
         examples: i.examples as string[] || [],
         confidence_threshold: Number(i.confidence_threshold)
       })));
+    }
+
+    if (aiConfigsRes.data) {
+      setAiConfigs(aiConfigsRes.data);
     }
 
     setLoading(false);
@@ -123,7 +140,8 @@ export default function ChatbotSettings() {
             fallback_message: settings.fallback_message,
             transfer_message: settings.transfer_message,
             welcome_message: settings.welcome_message,
-            enabled_channels: settings.enabled_channels
+            enabled_channels: settings.enabled_channels,
+            ai_provider: settings.ai_provider
           })
           .eq("id", settings.id);
       } else {
@@ -136,7 +154,8 @@ export default function ChatbotSettings() {
             fallback_message: settings.fallback_message,
             transfer_message: settings.transfer_message,
             welcome_message: settings.welcome_message,
-            enabled_channels: settings.enabled_channels
+            enabled_channels: settings.enabled_channels,
+            ai_provider: settings.ai_provider
           })
           .select()
           .single();
@@ -319,6 +338,61 @@ export default function ChatbotSettings() {
                     </Badge>
                   ))}
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Provedor de IA</Label>
+                <Select 
+                  value={settings.ai_provider} 
+                  onValueChange={(value) => setSettings(prev => ({ ...prev, ai_provider: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lovable">
+                      <span className="flex items-center gap-2">
+                        Lovable AI (Padrão)
+                      </span>
+                    </SelectItem>
+                    <SelectItem 
+                      value="openai" 
+                      disabled={!aiConfigs.some(c => c.provider === "openai" && c.is_active)}
+                    >
+                      <span className="flex items-center gap-2">
+                        OpenAI ChatGPT
+                        {!aiConfigs.some(c => c.provider === "openai" && c.is_active) && (
+                          <Badge variant="outline" className="text-xs">Não configurado</Badge>
+                        )}
+                      </span>
+                    </SelectItem>
+                    <SelectItem 
+                      value="google" 
+                      disabled={!aiConfigs.some(c => c.provider === "google" && c.is_active)}
+                    >
+                      <span className="flex items-center gap-2">
+                        Google Gemini
+                        {!aiConfigs.some(c => c.provider === "google" && c.is_active) && (
+                          <Badge variant="outline" className="text-xs">Não configurado</Badge>
+                        )}
+                      </span>
+                    </SelectItem>
+                    <SelectItem 
+                      value="xai" 
+                      disabled={!aiConfigs.some(c => c.provider === "xai" && c.is_active)}
+                    >
+                      <span className="flex items-center gap-2">
+                        xAI Grok
+                        {!aiConfigs.some(c => c.provider === "xai" && c.is_active) && (
+                          <Badge variant="outline" className="text-xs">Não configurado</Badge>
+                        )}
+                      </span>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Configure as IAs em Configurações → IA para desbloquear mais opções
+                </p>
               </div>
             </CardContent>
           </Card>

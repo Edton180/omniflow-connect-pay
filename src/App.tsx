@@ -57,6 +57,7 @@ import ThemeManagement from "./pages/ThemeManagement";
 import BroadcastMessages from "./pages/BroadcastMessages";
 import AdvancedAnalytics from "./pages/AdvancedAnalytics";
 import ChatbotSettings from "./pages/ChatbotSettings";
+import ExportReports from "./pages/ExportReports";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +119,7 @@ const App = () => (
           <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
           <Route path="/advanced-analytics" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AdvancedAnalytics /></AuthGuard>} />
           <Route path="/chatbot-settings" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ChatbotSettings /></AuthGuard>} />
+          <Route path="/export-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ExportReports /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

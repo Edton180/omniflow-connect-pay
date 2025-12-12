@@ -684,6 +684,7 @@ export type Database = {
       }
       chatbot_settings: {
         Row: {
+          ai_provider: string | null
           created_at: string | null
           default_confidence_threshold: number | null
           enabled_channels: Json | null
@@ -696,6 +697,7 @@ export type Database = {
           welcome_message: string | null
         }
         Insert: {
+          ai_provider?: string | null
           created_at?: string | null
           default_confidence_threshold?: number | null
           enabled_channels?: Json | null
@@ -708,6 +710,7 @@ export type Database = {
           welcome_message?: string | null
         }
         Update: {
+          ai_provider?: string | null
           created_at?: string | null
           default_confidence_threshold?: number | null
           enabled_channels?: Json | null
@@ -2512,6 +2515,74 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_ai_sessions: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_ai_active: boolean | null
+          reason: string | null
+          returned_to_ai_at: string | null
+          taken_over_at: string | null
+          taken_over_by: string | null
+          tenant_id: string
+          ticket_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_ai_active?: boolean | null
+          reason?: string | null
+          returned_to_ai_at?: string | null
+          taken_over_at?: string | null
+          taken_over_by?: string | null
+          tenant_id: string
+          ticket_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_ai_active?: boolean | null
+          reason?: string | null
+          returned_to_ai_at?: string | null
+          taken_over_at?: string | null
+          taken_over_by?: string | null
+          tenant_id?: string
+          ticket_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_ai_sessions_taken_over_by_fkey"
+            columns: ["taken_over_by"]
+            isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "ticket_ai_sessions_taken_over_by_fkey"
+            columns: ["taken_over_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_ai_sessions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_ai_sessions_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]

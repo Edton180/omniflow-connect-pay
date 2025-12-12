@@ -11,7 +11,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck, FileText, Lock } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Phone, Mail, User, Clock, Loader2, X, Trash2, ArrowRight, UserCheck, FileText, Lock, Bot } from "lucide-react";
+import { AITakeoverButton } from "@/components/tickets/AITakeoverButton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -790,6 +791,14 @@ export default function TicketDetail() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* AI Takeover Button */}
+              {profile?.tenant_id && user && (
+                <AITakeoverButton
+                  ticketId={ticket.id}
+                  tenantId={profile.tenant_id}
+                  userId={user.id}
+                />
+              )}
               <ChannelActions
                 channel={ticket.channel}
                 chatId={ticket.contact?.metadata?.telegram_chat_id || ticket.contact?.phone || ""}
