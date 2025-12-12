@@ -747,12 +747,18 @@ export type Database = {
       chatbot_settings: {
         Row: {
           ai_provider: string | null
+          auto_improve_enabled: boolean | null
+          auto_summary_enabled: boolean | null
+          auto_translate_enabled: boolean | null
           created_at: string | null
           default_confidence_threshold: number | null
           enabled_channels: Json | null
           fallback_message: string | null
           id: string
           is_active: boolean | null
+          suggestions_count: number | null
+          suggestions_enabled: boolean | null
+          suggestions_tone: string | null
           tenant_id: string
           transfer_message: string | null
           updated_at: string | null
@@ -760,12 +766,18 @@ export type Database = {
         }
         Insert: {
           ai_provider?: string | null
+          auto_improve_enabled?: boolean | null
+          auto_summary_enabled?: boolean | null
+          auto_translate_enabled?: boolean | null
           created_at?: string | null
           default_confidence_threshold?: number | null
           enabled_channels?: Json | null
           fallback_message?: string | null
           id?: string
           is_active?: boolean | null
+          suggestions_count?: number | null
+          suggestions_enabled?: boolean | null
+          suggestions_tone?: string | null
           tenant_id: string
           transfer_message?: string | null
           updated_at?: string | null
@@ -773,12 +785,18 @@ export type Database = {
         }
         Update: {
           ai_provider?: string | null
+          auto_improve_enabled?: boolean | null
+          auto_summary_enabled?: boolean | null
+          auto_translate_enabled?: boolean | null
           created_at?: string | null
           default_confidence_threshold?: number | null
           enabled_channels?: Json | null
           fallback_message?: string | null
           id?: string
           is_active?: boolean | null
+          suggestions_count?: number | null
+          suggestions_enabled?: boolean | null
+          suggestions_tone?: string | null
           tenant_id?: string
           transfer_message?: string | null
           updated_at?: string | null
