@@ -6,7 +6,7 @@ Script de instalação automatizada para múltiplas plataformas.
 
 ```bash
 # Execute o instalador automático
-curl -sSL https://raw.githubusercontent.com/seu-usuario/omniflow/main/scripts/auto-install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/auto-install.sh | sudo bash
 ```
 
 ## 🎯 Opções de Instalação
@@ -22,7 +22,6 @@ Ideal para produção com domínio próprio.
 - ✅ Node.js 18 LTS
 - ✅ Nginx (proxy reverso)
 - ✅ SSL (Let's Encrypt)
-- ✅ Evolution API (WhatsApp)
 - ✅ Firewall configurado
 - ✅ Backups automáticos
 
@@ -84,16 +83,20 @@ https://seu-dominio.com
    - ✅ Perfil de Super Admin
    - ✅ Permissões completas
 
-### 2️⃣ Configurar Evolution API
+### 2️⃣ Configurar Canais de Atendimento
 
 No menu Super Admin:
 
 1. Acesse **Canais**
 2. Clique em **Novo Canal**
-3. Selecione **WhatsApp via Evolution API**
-4. Configure:
-   - URL da API: `http://localhost:8080` (ou IP do servidor)
-   - API Key: A que você definiu na instalação
+3. Selecione o tipo de canal desejado:
+   - WhatsApp Business API
+   - Telegram
+   - Instagram
+   - Facebook Messenger
+   - WebChat
+   - Email
+4. Configure as credenciais necessárias
 
 ### 3️⃣ Criar Primeira Empresa (Tenant)
 
@@ -147,7 +150,6 @@ Aponte seu domínio (registro A) para o IP exibido no painel.
 - 22 (SSH)
 - 80 (HTTP)
 - 443 (HTTPS)
-- 8080 (Evolution API)
 ```
 
 ### SSL Automático
@@ -161,7 +163,6 @@ Let's Encrypt é configurado automaticamente para:
 
 Script roda diariamente às 3h da manhã:
 - Backup de arquivos da aplicação
-- Backup de dados do Evolution API
 - Retenção de 7 dias
 
 Local dos backups: `/backups/omniflow/`
@@ -204,16 +205,7 @@ sudo systemctl status docker
 sudo systemctl start docker
 ```
 
-### Erro: "Evolution API não responde"
-
-```bash
-cd /opt/evolution-api
-docker-compose ps
-docker-compose logs -f
-docker-compose restart
-```
-
-### Erro: "Supabase connection failed"
+### Erro: "Connection failed"
 
 Verifique no arquivo `.env`:
 - `VITE_SUPABASE_URL` está correto
@@ -231,10 +223,6 @@ Verifique no arquivo `.env`:
 sudo tail -f /var/log/nginx/access.log
 sudo tail -f /var/log/nginx/error.log
 
-# Logs do Evolution API
-cd /opt/evolution-api
-docker-compose logs -f
-
 # Logs do sistema
 journalctl -u nginx -f
 ```
@@ -247,10 +235,6 @@ sudo systemctl status nginx
 
 # Docker
 sudo systemctl status docker
-
-# Evolution API
-cd /opt/evolution-api
-docker-compose ps
 ```
 
 ---
@@ -275,7 +259,6 @@ sudo tar xzf /backups/omniflow/omniflow_YYYYMMDD_HHMMSS.tar.gz
 
 # Reiniciar serviços
 sudo systemctl restart nginx
-cd /opt/evolution-api && docker-compose restart
 ```
 
 ---
@@ -309,32 +292,6 @@ TTL: 3600
 ```
 
 **Tempo de Propagação:** 4-48 horas
-
----
-
-## 📱 Evolution API - Configuração Avançada
-
-### Conectar Múltiplas Instâncias
-
-Cada tenant pode ter múltiplas conexões WhatsApp:
-
-```bash
-# Configurar no painel:
-1. Acesse Canais
-2. Novo Canal → Evolution API
-3. Nome: "WhatsApp Suporte"
-4. API URL: http://localhost:8080
-5. Gerar QR Code e escanear
-```
-
-### Webhook Configuration
-
-Evolution API envia eventos para:
-```
-https://seu-dominio.com/api/webhooks/evolution
-```
-
-Configure no painel Super Admin → Configurações → Webhook URL
 
 ---
 
@@ -372,8 +329,7 @@ Configure no painel Super Admin → Configurações → Webhook URL
 - [Sistema de Billing](./BILLING_SYSTEM.md)
 
 **Comunidade:**
-- GitHub Issues: https://github.com/seu-usuario/omniflow/issues
-- Email: support@omniflow.com.br
+- GitHub Issues: https://github.com/omniflow-app/omniflow/issues
 
 ---
 
@@ -382,9 +338,8 @@ Configure no painel Super Admin → Configurações → Webhook URL
 - [ ] Sistema acessível via navegador
 - [ ] SSL/HTTPS funcionando
 - [ ] Primeiro Super Admin criado
-- [ ] Evolution API conectada
+- [ ] Canais de atendimento configurados
 - [ ] Primeiro Tenant criado
-- [ ] Canais configurados
 - [ ] Gateway de pagamento ativo
 - [ ] Marca branca personalizada
 - [ ] Backup automático funcionando

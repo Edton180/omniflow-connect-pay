@@ -38,7 +38,6 @@ curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/a
 
 1. **VPS** - Instalação completa em servidor dedicado/VPS
    - Instala Docker, Node.js, Nginx, SSL
-   - Configura Evolution API automaticamente
    - Configura backups automáticos
    - Instala firewall
 
@@ -61,7 +60,6 @@ curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/a
 - ✅ Instala todas as dependências necessárias
 - ✅ Configura Docker e Docker Compose
 - ✅ Instala e configura Nginx com SSL
-- ✅ Configura Evolution API para WhatsApp
 - ✅ Configura firewall (UFW/Firewalld)
 - ✅ Cria scripts de backup automático
 - ✅ Configura domínio e certificado SSL
@@ -82,7 +80,7 @@ bun install
 
 # Configure variáveis de ambiente
 cp .env.example .env
-# Edite .env com suas credenciais do Supabase
+# Edite .env com suas credenciais
 
 # Inicie o servidor de desenvolvimento
 npm run dev
@@ -237,7 +235,7 @@ sudo -u postgres createdb omniflow
 sudo -u postgres createuser omniflow_user -P
 
 # 3. Execute as migrations manualmente
-# Você precisará extrair o SQL das migrations do Supabase
+# Você precisará extrair o SQL das migrations
 ```
 
 ---
@@ -418,16 +416,16 @@ ls -la dist/
 
 ### Problema: "Cannot connect to database"
 
-**Causa**: Credenciais do Supabase incorretas.
+**Causa**: Credenciais incorretas.
 
 **Solução**: Verifique se as variáveis `VITE_SUPABASE_URL` e `VITE_SUPABASE_PUBLISHABLE_KEY` estão corretas.
 
 ### Problema: Erro de CORS
 
-**Causa**: Domínio não autorizado no Supabase.
+**Causa**: Domínio não autorizado.
 
 **Solução**: 
-1. Acesse o dashboard do Supabase
+1. Acesse o dashboard do backend
 2. Vá em Settings → API
 3. Adicione seu domínio em "Allowed Origins"
 
