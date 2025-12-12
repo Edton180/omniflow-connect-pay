@@ -30,7 +30,8 @@ import {
   Webhook,
   Download,
   Receipt,
-  BarChart2
+  BarChart2,
+  Database
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ const superAdminItems: NavItem[] = [
   { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
+  { title: "Backup/Restore", href: "/admin/backup", icon: Database, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {
