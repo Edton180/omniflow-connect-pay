@@ -52,6 +52,68 @@ export type Database = {
           },
         ]
       }
+      ai_knowledge_base: {
+        Row: {
+          answer: string | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          priority: number | null
+          question: string | null
+          tags: string[] | null
+          tenant_id: string
+          title: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          answer?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          priority?: number | null
+          question?: string | null
+          tags?: string[] | null
+          tenant_id: string
+          title?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          answer?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          priority?: number | null
+          question?: string | null
+          tags?: string[] | null
+          tenant_id?: string
+          title?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_knowledge_base_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_logs: {
         Row: {
           action: string
