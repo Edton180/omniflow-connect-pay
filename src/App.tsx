@@ -55,6 +55,8 @@ import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
 import ThemeManagement from "./pages/ThemeManagement";
 import BroadcastMessages from "./pages/BroadcastMessages";
+import AdvancedAnalytics from "./pages/AdvancedAnalytics";
+import ChatbotSettings from "./pages/ChatbotSettings";
 
 const queryClient = new QueryClient();
 
@@ -114,6 +116,8 @@ const App = () => (
           <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
           <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
           <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
+          <Route path="/advanced-analytics" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AdvancedAnalytics /></AuthGuard>} />
+          <Route path="/chatbot-settings" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ChatbotSettings /></AuthGuard>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
