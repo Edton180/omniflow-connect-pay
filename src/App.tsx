@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthGuard } from "./components/AuthGuard";
 import { AppLayout } from "./components/layout/AppLayout";
 import { CommandPalette } from "./components/CommandPalette";
+import { LanguageProvider } from "./hooks/useLanguage";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Signup from "./pages/Signup";
@@ -50,7 +51,6 @@ import FinancialReports from "./pages/FinancialReports";
 import WebhookConfig from "./pages/WebhookConfig";
 import WhatsAppTemplates from "./pages/WhatsAppTemplates";
 import N8NIntegration from "./pages/N8NIntegration";
-// Automations removido - funcionalidade não utilizada
 import AgentReports from "./pages/AgentReports";
 import AuditLogs from "./pages/AuditLogs";
 import ThemeManagement from "./pages/ThemeManagement";
@@ -66,70 +66,72 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <CommandPalette />
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/setup" element={<SetupWizard />} />
-          <Route path="/force-logout" element={<ForceLogout />} />
-          <Route path="/system-reset" element={<SystemReset />} />
-          <Route path="/payment-required" element={<PaymentRequired />} />
-          <Route path="/manual-payment-proof" element={<ManualPaymentProof />} />
-          <Route path="/admin/payment-proofs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ManualPaymentProofs /></AuthGuard>} />
-          <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
-          <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
-          <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
-          <Route path="/tickets-improved" element={<AuthGuard requireAuth><TicketsImproved /></AuthGuard>} />
-          <Route path="/ticket-kanban" element={<AuthGuard requireAuth><TicketKanban /></AuthGuard>} />
-          <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
-          <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
-          <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
-          <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
-          <Route path="/channels/:id/config" element={<AuthGuard requireAuth><ChannelConfig /></AuthGuard>} />
-          <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
-          <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
-          <Route path="/invoices" element={<AuthGuard requireAuth><Invoices /></AuthGuard>} />
-          <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
-          <Route path="/webhooks" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookDashboard /></AuthGuard>} />
-          <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><FinancialReports /></AuthGuard>} />
-          <Route path="/webhook-config" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookConfig /></AuthGuard>} />
-          <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
-          <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
-          <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
-          <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
-          <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
-          <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
-          <Route path="/admin/all-tickets" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminTickets /></AuthGuard>} />
-          <Route path="/admin/all-channels" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminChannels /></AuthGuard>} />
-          <Route path="/admin/all-crm" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminCRM /></AuthGuard>} />
-          <Route path="/admin/invoices" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminInvoices /></AuthGuard>} />
-          <Route path="/admin/ai-config" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminAIConfig /></AuthGuard>} />
-          <Route path="/admin/backup" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminBackup /></AuthGuard>} />
-          <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
-          <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
-          <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
-          <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
-          <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
-          <Route path="/broadcast" element={<AuthGuard requireAuth><BroadcastMessages /></AuthGuard>} />
-          <Route path="/whatsapp-templates" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WhatsAppTemplates /></AuthGuard>} />
-          <Route path="/n8n-integration" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><N8NIntegration /></AuthGuard>} />
-          <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
-          <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
-          <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
-          <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
-          <Route path="/advanced-analytics" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AdvancedAnalytics /></AuthGuard>} />
-          <Route path="/chatbot-settings" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ChatbotSettings /></AuthGuard>} />
-          <Route path="/export-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ExportReports /></AuthGuard>} />
-          <Route path="/webchat-setup" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WebChatSetup /></AuthGuard>} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <LanguageProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <CommandPalette />
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/setup" element={<SetupWizard />} />
+            <Route path="/force-logout" element={<ForceLogout />} />
+            <Route path="/system-reset" element={<SystemReset />} />
+            <Route path="/payment-required" element={<PaymentRequired />} />
+            <Route path="/manual-payment-proof" element={<ManualPaymentProof />} />
+            <Route path="/admin/payment-proofs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ManualPaymentProofs /></AuthGuard>} />
+            <Route path="/dashboard" element={<AuthGuard requireAuth><Dashboard /></AuthGuard>} />
+            <Route path="/view-tickets" element={<AuthGuard requireAuth><ViewTickets /></AuthGuard>} />
+            <Route path="/tickets" element={<AuthGuard requireAuth><Tickets /></AuthGuard>} />
+            <Route path="/tickets-improved" element={<AuthGuard requireAuth><TicketsImproved /></AuthGuard>} />
+            <Route path="/ticket-kanban" element={<AuthGuard requireAuth><TicketKanban /></AuthGuard>} />
+            <Route path="/tickets/:id" element={<AuthGuard requireAuth><TicketDetail /></AuthGuard>} />
+            <Route path="/contacts" element={<AuthGuard requireAuth><Contacts /></AuthGuard>} />
+            <Route path="/queues" element={<AuthGuard requireAuth><Queues /></AuthGuard>} />
+            <Route path="/channels" element={<AuthGuard requireAuth><Channels /></AuthGuard>} />
+            <Route path="/channels/:id/config" element={<AuthGuard requireAuth><ChannelConfig /></AuthGuard>} />
+            <Route path="/evaluation-ranking" element={<AuthGuard requireAuth><EvaluationRanking /></AuthGuard>} />
+            <Route path="/payments" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Payments /></AuthGuard>} />
+            <Route path="/invoices" element={<AuthGuard requireAuth><Invoices /></AuthGuard>} />
+            <Route path="/transactions" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><TransactionHistory /></AuthGuard>} />
+            <Route path="/webhooks" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookDashboard /></AuthGuard>} />
+            <Route path="/financial-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><FinancialReports /></AuthGuard>} />
+            <Route path="/webhook-config" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><WebhookConfig /></AuthGuard>} />
+            <Route path="/branding" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Branding /></AuthGuard>} />
+            <Route path="/landing-page-editor" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><LandingPageEditor /></AuthGuard>} />
+            <Route path="/admin/tenants" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><TenantManagement /></AuthGuard>} />
+            <Route path="/admin/users" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Users /></AuthGuard>} />
+            <Route path="/admin/settings" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Settings /></AuthGuard>} />
+            <Route path="/admin/revenue" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><Revenue /></AuthGuard>} />
+            <Route path="/admin/all-tickets" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminTickets /></AuthGuard>} />
+            <Route path="/admin/all-channels" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminChannels /></AuthGuard>} />
+            <Route path="/admin/all-crm" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminCRM /></AuthGuard>} />
+            <Route path="/admin/invoices" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminInvoices /></AuthGuard>} />
+            <Route path="/admin/ai-config" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminAIConfig /></AuthGuard>} />
+            <Route path="/admin/backup" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminBackup /></AuthGuard>} />
+            <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
+            <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
+            <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
+            <Route path="/evaluation-dashboard" element={<AuthGuard requireAuth><EvaluationDashboard /></AuthGuard>} />
+            <Route path="/internal-chat" element={<AuthGuard requireAuth><InternalChat /></AuthGuard>} />
+            <Route path="/broadcast" element={<AuthGuard requireAuth><BroadcastMessages /></AuthGuard>} />
+            <Route path="/whatsapp-templates" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WhatsAppTemplates /></AuthGuard>} />
+            <Route path="/n8n-integration" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><N8NIntegration /></AuthGuard>} />
+            <Route path="/profile" element={<AuthGuard requireAuth><Profile /></AuthGuard>} />
+            <Route path="/agent-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AgentReports /></AuthGuard>} />
+            <Route path="/audit-logs" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><AuditLogs /></AuthGuard>} />
+            <Route path="/admin/themes" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><ThemeManagement /></AuthGuard>} />
+            <Route path="/advanced-analytics" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><AdvancedAnalytics /></AuthGuard>} />
+            <Route path="/chatbot-settings" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ChatbotSettings /></AuthGuard>} />
+            <Route path="/export-reports" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><ExportReports /></AuthGuard>} />
+            <Route path="/webchat-setup" element={<AuthGuard requireAuth requiredRoles={['super_admin', 'tenant_admin']}><WebChatSetup /></AuthGuard>} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 );
 

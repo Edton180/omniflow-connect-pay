@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Check, ArrowRight, Star, Zap, Shield, TrendingUp, Quote, MessageSquare } from "lucide-react";
 import * as LucideIcons from "lucide-react";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 const Index = () => {
   const { user, profile, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
@@ -77,6 +80,11 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Language Selector - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector variant="outline" />
+      </div>
+
       {/* Hero Section - Modern Gradient */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/10">
         <div className="absolute inset-0 bg-grid-white/5 bg-[size:40px_40px]" />
@@ -99,7 +107,7 @@ const Index = () => {
             <div className="text-center space-y-8 animate-fade-in">
               <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-primary/20">
                 <Zap className="w-3 h-3 mr-2 inline" />
-                Plataforma Líder de Atendimento
+                {t('landing.badge')}
               </Badge>
               
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight">
@@ -130,23 +138,23 @@ const Index = () => {
                     featuresSection?.scrollIntoView({ behavior: 'smooth' });
                   }}
                 >
-                  Saiba Mais
+                  {t('landing.learnMore')}
                 </Button>
               </div>
 
               {/* Trust Indicators */}
-              <div className="flex items-center justify-center gap-6 pt-8 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-6 pt-8 text-sm text-muted-foreground flex-wrap">
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
-                  <span>Sem cartão de crédito</span>
+                  <span>{t('landing.noCard')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
-                  <span>Setup em 5 minutos</span>
+                  <span>{t('landing.quickSetup')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-4 h-4 text-primary" />
-                  <span>Suporte 24/7</span>
+                  <span>{t('landing.support247')}</span>
                 </div>
               </div>
             </div>
