@@ -34,6 +34,9 @@ export default function LandingPageEditor() {
     feature_3_title: "Relatórios Detalhados",
     feature_3_description: "Acompanhe métricas e performance",
     feature_3_icon: "BarChart",
+    feature_4_title: "Automações Inteligentes",
+    feature_4_description: "Fluxos automatizados com IA para respostas rápidas",
+    feature_4_icon: "Bot",
     // Stats
     stats_1_value: "10K+",
     stats_1_label: "Empresas Ativas",
@@ -95,6 +98,10 @@ export default function LandingPageEditor() {
     legal_terms_url: "#",
     legal_privacy_url: "#",
     legal_cookies_url: "#",
+    // SEO
+    favicon_url: "",
+    meta_description: "",
+    og_image_url: "",
   });
 
   useEffect(() => {
@@ -126,6 +133,9 @@ export default function LandingPageEditor() {
           feature_3_title: data.feature_3_title,
           feature_3_description: data.feature_3_description,
           feature_3_icon: data.feature_3_icon,
+          feature_4_title: (data as any).feature_4_title || "Automações Inteligentes",
+          feature_4_description: (data as any).feature_4_description || "Fluxos automatizados com IA",
+          feature_4_icon: (data as any).feature_4_icon || "Bot",
           stats_1_value: data.stats_1_value || "10K+",
           stats_1_label: data.stats_1_label || "Empresas Ativas",
           stats_2_value: data.stats_2_value || "99%",
@@ -181,6 +191,10 @@ export default function LandingPageEditor() {
           legal_terms_url: data.legal_terms_url || "#",
           legal_privacy_url: data.legal_privacy_url || "#",
           legal_cookies_url: data.legal_cookies_url || "#",
+          // SEO
+          favicon_url: (data as any).favicon_url || "",
+          meta_description: (data as any).meta_description || "",
+          og_image_url: (data as any).og_image_url || "",
         });
       }
     } catch (error: any) {
@@ -268,7 +282,7 @@ export default function LandingPageEditor() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="hero" className="max-w-4xl mx-auto">
-          <TabsList className="grid w-full grid-cols-9 h-auto flex-wrap">
+          <TabsList className="grid w-full grid-cols-10 h-auto flex-wrap">
             <TabsTrigger value="hero">Hero</TabsTrigger>
             <TabsTrigger value="stats">Stats</TabsTrigger>
             <TabsTrigger value="features">Features</TabsTrigger>
@@ -278,6 +292,7 @@ export default function LandingPageEditor() {
             <TabsTrigger value="footer">Footer</TabsTrigger>
             <TabsTrigger value="links">Links</TabsTrigger>
             <TabsTrigger value="style">Cores</TabsTrigger>
+            <TabsTrigger value="seo">SEO</TabsTrigger>
           </TabsList>
 
           <TabsContent value="hero" className="space-y-6 mt-6">
@@ -329,7 +344,7 @@ export default function LandingPageEditor() {
           </TabsContent>
 
           <TabsContent value="features" className="space-y-6 mt-6">
-            {[1, 2, 3].map((num) => (
+            {[1, 2, 3, 4].map((num) => (
               <Card key={num}>
                 <CardHeader>
                   <CardTitle>Feature {num}</CardTitle>
@@ -360,7 +375,7 @@ export default function LandingPageEditor() {
                       onChange={(e) =>
                         setFormData({ ...formData, [`feature_${num}_icon`]: e.target.value })
                       }
-                      placeholder="MessageSquare"
+                      placeholder="MessageSquare, Users, BarChart, Bot"
                     />
                   </div>
                 </CardContent>
@@ -721,6 +736,50 @@ export default function LandingPageEditor() {
                     onChange={(e) => setFormData({ ...formData, legal_cookies_url: e.target.value })}
                     placeholder="https://seusite.com/cookies"
                   />
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="seo" className="space-y-6 mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO e Meta Tags</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label>URL do Favicon</Label>
+                  <Input
+                    value={formData.favicon_url}
+                    onChange={(e) => setFormData({ ...formData, favicon_url: e.target.value })}
+                    placeholder="https://seusite.com/favicon.ico"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    URL do ícone que aparece na aba do navegador
+                  </p>
+                </div>
+                <div>
+                  <Label>Meta Description</Label>
+                  <Textarea
+                    value={formData.meta_description}
+                    onChange={(e) => setFormData({ ...formData, meta_description: e.target.value })}
+                    placeholder="Descrição do seu site para buscadores (até 160 caracteres)"
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formData.meta_description.length}/160 caracteres
+                  </p>
+                </div>
+                <div>
+                  <Label>Open Graph Image URL</Label>
+                  <Input
+                    value={formData.og_image_url}
+                    onChange={(e) => setFormData({ ...formData, og_image_url: e.target.value })}
+                    placeholder="https://seusite.com/og-image.png"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Imagem exibida ao compartilhar em redes sociais (1200x630px recomendado)
+                  </p>
                 </div>
               </CardContent>
             </Card>
