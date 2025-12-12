@@ -39,11 +39,13 @@ import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { useBranding } from "@/hooks/useBranding";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { KeyboardShortcutsHelp } from "@/components/KeyboardShortcutsHelp";
+import { LanguageSelector } from "@/components/LanguageSelector";
 
 interface NavItem {
-  title: string;
+  titleKey: string;
   href: string;
   icon: any;
   roles?: string[];
@@ -51,51 +53,51 @@ interface NavItem {
 
 // Itens de navegação principal - apenas para usuários com tenant (empresas)
 const navItems: NavItem[] = [
-  { title: "Dashboard", href: "/dashboard", icon: Home },
-  { title: "Atendimentos", href: "/view-tickets", icon: MessageSquare },
-  { title: "Contatos", href: "/contacts", icon: Users },
-  { title: "Filas", href: "/queues", icon: Workflow },
-  { title: "Canais", href: "/channels", icon: Globe },
-  { title: "CRM / Kanban", href: "/crm", icon: Users2 },
-  { title: "Chat Interno", href: "/internal-chat", icon: MessageCircle },
-  { title: "Disparo em Massa", href: "/broadcast", icon: Send },
-  { title: "Templates WhatsApp", href: "/whatsapp-templates", icon: FileCode },
-  { title: "Avaliações", href: "/evaluation-ranking", icon: TrendingUp },
+  { titleKey: "navigation.dashboard", href: "/dashboard", icon: Home },
+  { titleKey: "navigation.tickets", href: "/view-tickets", icon: MessageSquare },
+  { titleKey: "navigation.contacts", href: "/contacts", icon: Users },
+  { titleKey: "navigation.queues", href: "/queues", icon: Workflow },
+  { titleKey: "navigation.channels", href: "/channels", icon: Globe },
+  { titleKey: "navigation.crm", href: "/crm", icon: Users2 },
+  { titleKey: "navigation.internalChat", href: "/internal-chat", icon: MessageCircle },
+  { titleKey: "navigation.broadcast", href: "/broadcast", icon: Send },
+  { titleKey: "navigation.templates", href: "/whatsapp-templates", icon: FileCode },
+  { titleKey: "navigation.evaluations", href: "/evaluation-ranking", icon: TrendingUp },
 ];
 
 // Administração da Empresa (apenas tenant_admin, NÃO super admin)
 const adminItems: NavItem[] = [
-  { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
-  { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
-  { title: "Integração N8N", href: "/n8n-integration", icon: Webhook, roles: ["tenant_admin"] },
-  { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
-  { title: "Analytics Avançado", href: "/advanced-analytics", icon: BarChart2, roles: ["tenant_admin"] },
-  { title: "Chatbot com IA", href: "/chatbot-settings", icon: Bot, roles: ["tenant_admin"] },
-  { title: "Exportar Relatórios", href: "/export-reports", icon: Download, roles: ["tenant_admin"] },
-  { title: "Transações", href: "/transactions", icon: Receipt, roles: ["tenant_admin"] },
+  { titleKey: "navigation.settings", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
+  { titleKey: "navigation.invoices", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
+  { titleKey: "navigation.n8nIntegration", href: "/n8n-integration", icon: Webhook, roles: ["tenant_admin"] },
+  { titleKey: "navigation.agentReports", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
+  { titleKey: "navigation.analytics", href: "/advanced-analytics", icon: BarChart2, roles: ["tenant_admin"] },
+  { titleKey: "navigation.chatbot", href: "/chatbot-settings", icon: Bot, roles: ["tenant_admin"] },
+  { titleKey: "navigation.exportReports", href: "/export-reports", icon: Download, roles: ["tenant_admin"] },
+  { titleKey: "navigation.transactions", href: "/transactions", icon: Receipt, roles: ["tenant_admin"] },
 ];
 
 // Painel Super Admin - métricas e gestão global do sistema (EXCLUSIVO super admin)
 const superAdminItems: NavItem[] = [
-  { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
-  { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
-  { title: "Todos Canais", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
-  { title: "Todos Tickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
-  { title: "Todos Leads CRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
-  { title: "Config. IA Global", href: "/admin/ai-config", icon: Bot, roles: ["super_admin"] },
-  { title: "Pagamentos", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
-  { title: "Comprovantes", href: "/admin/payment-proofs", icon: FileText, roles: ["super_admin"] },
-  { title: "Webhooks Dashboard", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
-  { title: "Config. Webhooks Gateways", href: "/webhook-config", icon: Link2, roles: ["super_admin"] },
-  { title: "Relatórios Financeiros", href: "/financial-reports", icon: TrendingUp, roles: ["super_admin"] },
-  { title: "Receita", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
-  { title: "Marca Branca", href: "/branding", icon: Palette, roles: ["super_admin"] },
-  { title: "Landing Page", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
-  { title: "Temas Globais", href: "/admin/themes", icon: Palette, roles: ["super_admin"] },
-  { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
-  { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
-  { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
-  { title: "Backup/Restore", href: "/admin/backup", icon: Database, roles: ["super_admin"] },
+  { titleKey: "navigation.allCompanies", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
+  { titleKey: "navigation.allUsers", href: "/admin/users", icon: Users, roles: ["super_admin"] },
+  { titleKey: "navigation.allChannels", href: "/admin/all-channels", icon: Globe, roles: ["super_admin"] },
+  { titleKey: "navigation.allTickets", href: "/admin/all-tickets", icon: BarChart3, roles: ["super_admin"] },
+  { titleKey: "navigation.allCRM", href: "/admin/all-crm", icon: Kanban, roles: ["super_admin"] },
+  { titleKey: "navigation.globalAI", href: "/admin/ai-config", icon: Bot, roles: ["super_admin"] },
+  { titleKey: "navigation.payments", href: "/payments", icon: CreditCard, roles: ["super_admin"] },
+  { titleKey: "navigation.proofs", href: "/admin/payment-proofs", icon: FileText, roles: ["super_admin"] },
+  { titleKey: "navigation.webhooksDashboard", href: "/webhooks", icon: Zap, roles: ["super_admin"] },
+  { titleKey: "navigation.webhooksConfig", href: "/webhook-config", icon: Link2, roles: ["super_admin"] },
+  { titleKey: "navigation.financialReports", href: "/financial-reports", icon: TrendingUp, roles: ["super_admin"] },
+  { titleKey: "navigation.revenue", href: "/admin/revenue", icon: DollarSign, roles: ["super_admin"] },
+  { titleKey: "navigation.branding", href: "/branding", icon: Palette, roles: ["super_admin"] },
+  { titleKey: "navigation.landingPage", href: "/landing-page-editor", icon: Layout, roles: ["super_admin"] },
+  { titleKey: "navigation.globalThemes", href: "/admin/themes", icon: Palette, roles: ["super_admin"] },
+  { titleKey: "navigation.allInvoices", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
+  { titleKey: "navigation.agentReports", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
+  { titleKey: "navigation.auditLogs", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
+  { titleKey: "navigation.backup", href: "/admin/backup", icon: Database, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {
@@ -103,6 +105,7 @@ export function AppSidebar() {
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const { branding } = useBranding();
   const { hasRole, isSuperAdmin, signOut, roles } = useAuth();
+  const { t } = useLanguage();
   
   // Super Admin pode ter ou não um tenant associado
   const hasTenant = roles?.some(r => r.tenant_id !== null);
@@ -168,7 +171,7 @@ export function AppSidebar() {
             }
           >
             <item.icon className="h-5 w-5 flex-shrink-0" />
-            {!collapsed && <span>{item.title}</span>}
+            {!collapsed && <span>{t(item.titleKey)}</span>}
           </NavLink>
         ))}
 
@@ -177,7 +180,7 @@ export function AppSidebar() {
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
               <span className="text-xs font-semibold text-primary-foreground/60 uppercase">
-                Administração
+                {t('navigation.administration')}
               </span>
             </div>
             {adminItems.filter(hasAccess).map((item) => (
@@ -194,7 +197,7 @@ export function AppSidebar() {
                 }
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.title}</span>}
+                {!collapsed && <span>{t(item.titleKey)}</span>}
               </NavLink>
             ))}
           </>
@@ -205,7 +208,7 @@ export function AppSidebar() {
           <>
             <div className={cn("px-3 py-2 mt-4", collapsed ? "hidden" : "block")}>
               <span className="text-xs font-semibold text-primary-foreground/60 uppercase">
-                Painel Super Admin
+                {t('navigation.superAdminPanel')}
               </span>
             </div>
             {superAdminItems.filter(hasAccess).map((item) => (
@@ -222,7 +225,7 @@ export function AppSidebar() {
                 }
               >
                 <item.icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{item.title}</span>}
+                {!collapsed && <span>{t(item.titleKey)}</span>}
               </NavLink>
             ))}
           </>
@@ -231,9 +234,15 @@ export function AppSidebar() {
 
       {/* Footer */}
       <div className="p-2 border-t border-primary-light/20 space-y-1">
+        {/* Language Selector */}
+        {!collapsed && (
+          <div className="px-2 py-1">
+            <LanguageSelector variant="ghost" size="sm" className="w-full justify-start text-primary-foreground hover:bg-white/10 hover:text-white" />
+          </div>
+        )}
         <div className={cn("flex items-center gap-2", collapsed ? "justify-center" : "px-2")}>
           <ThemeToggle />
-          {!collapsed && <span className="text-sm text-primary-foreground/80">Tema</span>}
+          {!collapsed && <span className="text-sm text-primary-foreground/80">{t('navigation.theme')}</span>}
         </div>
         <Button
           variant="ghost"
@@ -244,7 +253,7 @@ export function AppSidebar() {
           )}
         >
           <Keyboard className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span className="ml-3">Atalhos</span>}
+          {!collapsed && <span className="ml-3">{t('navigation.shortcuts')}</span>}
         </Button>
         <Button
           variant="ghost"
@@ -255,7 +264,7 @@ export function AppSidebar() {
           )}
         >
           <LogOut className="h-5 w-5 flex-shrink-0" />
-          {!collapsed && <span className="ml-3">Sair</span>}
+          {!collapsed && <span className="ml-3">{t('navigation.logout')}</span>}
         </Button>
       </div>
 

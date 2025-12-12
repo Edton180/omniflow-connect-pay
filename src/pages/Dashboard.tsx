@@ -1,18 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/hooks/useLanguage";
 import { SuperAdminDashboard } from "@/components/admin/SuperAdminDashboard";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Zap, 
-  MessageSquare, 
-  Users, 
-  Workflow,
-  BarChart3,
-  Users2,
-  MessageCircle
-} from "lucide-react";
+import { Zap, MessageSquare, BarChart3 } from "lucide-react";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { TicketsChart } from "@/components/dashboard/TicketsChart";
 import { ChannelStats } from "@/components/dashboard/ChannelStats";
@@ -20,6 +13,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 
 const Dashboard = () => {
   const { user, loading, isSuperAdmin } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,7 +27,7 @@ const Dashboard = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <Zap className="w-12 h-12 text-primary animate-pulse mx-auto mb-4" />
-          <p className="text-muted-foreground">Carregando...</p>
+          <p className="text-muted-foreground">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -54,14 +48,14 @@ const Dashboard = () => {
         <div className="mb-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Painel de Controle</h1>
+              <h1 className="text-3xl font-bold mb-2">{t('dashboard.controlPanel')}</h1>
               <p className="text-muted-foreground">
-                Bem-vindo ao seu painel de controle
+                {t('dashboard.welcomeMessage')}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
-                <label className="text-sm text-muted-foreground font-medium">Data Atendimento:</label>
+                <label className="text-sm text-muted-foreground font-medium">{t('dashboard.dateFilter')}:</label>
                 <input 
                   type="date" 
                   className="px-3 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
@@ -79,7 +73,7 @@ const Dashboard = () => {
                 onClick={() => window.location.reload()}
               >
                 <BarChart3 className="w-4 h-4 mr-2" />
-                GERAR
+                {t('dashboard.generate')}
               </Button>
             </div>
           </div>
@@ -96,7 +90,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary" />
-                Métricas Semanais
+                {t('dashboard.weeklyMetrics')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -108,7 +102,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MessageSquare className="h-5 w-5 text-primary" />
-                Canais Conectados
+                {t('dashboard.connectedChannels')}
               </CardTitle>
             </CardHeader>
             <CardContent>

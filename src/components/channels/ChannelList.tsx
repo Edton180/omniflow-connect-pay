@@ -39,6 +39,7 @@ export const ChannelList = () => {
     name: "",
     type: "",
     config: {} as any,
+    selectedTenantId: "" as string,
   });
 
   const openDocsDialog = (channelType: string) => {
@@ -156,7 +157,7 @@ export const ChannelList = () => {
   ];
 
   const handleNewChannel = () => {
-    setFormData({ name: "", type: "", config: {} });
+    setFormData({ name: "", type: "", config: {}, selectedTenantId: "" });
     setDialogOpen(true);
   };
 
@@ -171,24 +172,35 @@ export const ChannelList = () => {
         return;
       }
 
-      // Buscar tenant_id do usuário
-      const { data: userRole } = await supabase
-        .from("user_roles")
-        .select("tenant_id")
-        .eq("user_id", session?.user?.id)
-        .single();
+      let tenantId: string | null = null;
 
-      if (!userRole?.tenant_id) {
+      // Se for Super Admin e selecionou um tenant
+      if (isSuperAdmin && formData.selectedTenantId) {
+        tenantId = formData.selectedTenantId;
+      } else {
+        // Buscar tenant_id do usuário
+        const { data: userRole } = await supabase
+          .from("user_roles")
+          .select("tenant_id")
+          .eq("user_id", session?.user?.id)
+          .maybeSingle();
+
+        tenantId = userRole?.tenant_id || null;
+      }
+
+      if (!tenantId) {
         toast({
           title: "Erro",
-          description: "Usuário não possui tenant associado",
+          description: isSuperAdmin 
+            ? "Selecione uma empresa para criar o canal" 
+            : "Usuário não possui empresa associada. Entre em contato com o administrador.",
           variant: "destructive",
         });
         return;
       }
 
       const { error } = await supabase.from("channels").insert({
-        tenant_id: userRole.tenant_id,
+        tenant_id: tenantId,
         name: formData.name,
         type: formData.type,
         status: "inactive",
@@ -293,6 +305,27 @@ export const ChannelList = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
+            {/* Seletor de Tenant para Super Admin */}
+            {isSuperAdmin && (
+              <div>
+                <Label>Empresa (Tenant)</Label>
+                <Select
+                  value={formData.selectedTenantId}
+                  onValueChange={(value) => setFormData({ ...formData, selectedTenantId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a empresa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.id} value={tenant.id}>
+                        {tenant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div>
               <Label>Nome do Canal</Label>
               <Input

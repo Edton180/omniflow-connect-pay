@@ -6,17 +6,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Edit, Copy, Key, Bot, Sparkles, ExternalLink, Info, Zap } from 'lucide-react';
+import { ArrowLeft, Save, Edit, Copy, Bot, Sparkles, ExternalLink, Info, Zap, Globe, Check } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentSecretsTab } from '@/components/settings/PaymentSecretsTab';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/hooks/useLanguage';
+import { languages } from '@/i18n/languages';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { roles } = useAuth();
+  const { t, language, setLanguage, availableLanguages } = useLanguage();
   const [loading, setLoading] = useState(false);
   const isSuperAdmin = roles.some(r => r.role === 'super_admin');
   const [settings, setSettings] = useState({
@@ -31,10 +37,17 @@ export default function Settings() {
     customDomain: '',
     serverIp: '',
   });
+  
+  const [languageSettings, setLanguageSettings] = useState({
+    defaultLanguage: 'pt-BR',
+    autoDetect: true,
+    availableLanguages: languages.map(l => l.code),
+  });
 
   useEffect(() => {
     if (isSuperAdmin) {
       loadSettings();
+      loadLanguageSettings();
     }
   }, [isSuperAdmin]);
 
@@ -42,7 +55,6 @@ export default function Settings() {
     try {
       const webhookUrl = `${window.location.origin}/api/webhooks`;
       
-      // Buscar IP do servidor
       const response = await fetch('https://api.ipify.org?format=json');
       const data = await response.json();
       const serverIp = data.ip;
@@ -57,14 +69,66 @@ export default function Settings() {
     }
   };
 
+  const loadLanguageSettings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('system_settings')
+        .select('key, value')
+        .in('key', ['default_language', 'auto_detect_language', 'available_languages']);
+
+      if (error) throw error;
+
+      if (data) {
+        const settingsMap: Record<string, any> = {};
+        data.forEach(item => {
+          settingsMap[item.key] = item.value;
+        });
+
+        setLanguageSettings({
+          defaultLanguage: settingsMap['default_language'] || 'pt-BR',
+          autoDetect: settingsMap['auto_detect_language'] ?? true,
+          availableLanguages: settingsMap['available_languages'] || languages.map(l => l.code),
+        });
+      }
+    } catch (error) {
+      console.error('Error loading language settings:', error);
+    }
+  };
+
   const handleSaveSettings = async () => {
     setLoading(true);
     try {
-      // Save settings to database or localStorage
       localStorage.setItem('omniflow_settings', JSON.stringify(settings));
-      toast.success('Configurações salvas com sucesso!');
+      toast.success(t('settings.saved'));
     } catch (error) {
-      toast.error('Erro ao salvar configurações');
+      toast.error(t('settings.saveError'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveLanguageSettings = async () => {
+    setLoading(true);
+    try {
+      const updates = [
+        { key: 'default_language', value: languageSettings.defaultLanguage },
+        { key: 'auto_detect_language', value: languageSettings.autoDetect },
+        { key: 'available_languages', value: languageSettings.availableLanguages },
+      ];
+
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('system_settings')
+          .update({ value: update.value })
+          .eq('key', update.key);
+
+        if (error) throw error;
+      }
+
+      toast.success(t('settings.saved'));
+    } catch (error) {
+      console.error('Error saving language settings:', error);
+      toast.error(t('settings.saveError'));
     } finally {
       setLoading(false);
     }
@@ -72,7 +136,28 @@ export default function Settings() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast.success('Copiado para área de transferência!');
+    toast.success(t('common.copied'));
+  };
+
+  const toggleLanguageAvailability = (langCode: string) => {
+    setLanguageSettings(prev => {
+      const isAvailable = prev.availableLanguages.includes(langCode);
+      if (isAvailable) {
+        // Don't allow removing the last language or default language
+        if (prev.availableLanguages.length === 1 || langCode === prev.defaultLanguage) {
+          return prev;
+        }
+        return {
+          ...prev,
+          availableLanguages: prev.availableLanguages.filter(l => l !== langCode),
+        };
+      } else {
+        return {
+          ...prev,
+          availableLanguages: [...prev.availableLanguages, langCode],
+        };
+      }
+    });
   };
 
   return (
@@ -81,24 +166,28 @@ export default function Settings() {
         <div className="container mx-auto px-4 py-4">
           <Button variant="ghost" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar ao Dashboard
+            {t('settings.backToDashboard')}
           </Button>
         </div>
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Configurações do Sistema</h1>
+          <h1 className="text-3xl font-bold mb-2">{t('settings.title')}</h1>
           <p className="text-muted-foreground">
-            Gerencie as configurações globais da plataforma
+            {t('settings.subtitle')}
           </p>
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="general">Geral</TabsTrigger>
-            <TabsTrigger value="auth">Autenticação</TabsTrigger>
-            {isSuperAdmin && <TabsTrigger value="integrations">Integrações & Chaves</TabsTrigger>}
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="general">{t('settings.general')}</TabsTrigger>
+            <TabsTrigger value="auth">{t('settings.authentication')}</TabsTrigger>
+            <TabsTrigger value="language">
+              <Globe className="h-4 w-4 mr-2" />
+              {t('settings.language')}
+            </TabsTrigger>
+            {isSuperAdmin && <TabsTrigger value="integrations">{t('settings.integrations')}</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="general" className="space-y-6">
@@ -264,12 +353,12 @@ export default function Settings() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Informações Gerais</CardTitle>
-                <CardDescription>Configurações básicas do sistema</CardDescription>
+                <CardTitle>{t('settings.generalInfo')}</CardTitle>
+                <CardDescription>{t('settings.generalInfoDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="siteName">Nome do Sistema</Label>
+                  <Label htmlFor="siteName">{t('settings.siteName')}</Label>
                   <Input
                     id="siteName"
                     value={settings.siteName}
@@ -279,7 +368,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="siteDescription">Descrição</Label>
+                  <Label htmlFor="siteDescription">{t('settings.siteDescription')}</Label>
                   <Input
                     id="siteDescription"
                     value={settings.siteDescription}
@@ -293,15 +382,15 @@ export default function Settings() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Sistema</CardTitle>
-                <CardDescription>Configurações avançadas do sistema</CardDescription>
+                <CardTitle>{t('settings.system')}</CardTitle>
+                <CardDescription>{t('settings.systemDesc')}</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Modo Manutenção</Label>
+                    <Label>{t('settings.maintenanceMode')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Desabilita acesso ao sistema para usuários
+                      {t('settings.maintenanceModeDesc')}
                     </p>
                   </div>
                   <Switch
@@ -312,7 +401,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="maxTenants">Máximo de Tenants por Plano</Label>
+                  <Label htmlFor="maxTenants">{t('settings.maxTenants')}</Label>
                   <Input
                     id="maxTenants"
                     type="number"
@@ -331,22 +420,21 @@ export default function Settings() {
             {isSuperAdmin && (
               <Card className="border-destructive">
                 <CardHeader>
-                  <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-                  <CardDescription>Ações irreversíveis do sistema</CardDescription>
+                  <CardTitle className="text-destructive">{t('settings.dangerZone')}</CardTitle>
+                  <CardDescription>{t('settings.dangerZoneDesc')}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Reset Completo do Sistema</Label>
+                    <Label>{t('settings.systemReset')}</Label>
                     <p className="text-sm text-muted-foreground mb-2">
-                      Remove todos os dados do sistema incluindo usuários, tenants e configurações.
-                      Esta ação não pode ser desfeita!
+                      {t('settings.systemResetDesc')}
                     </p>
                     <Button
                       variant="destructive"
                       onClick={() => navigate('/system-reset')}
                       className="w-full"
                     >
-                      🔧 Reset Completo do Sistema
+                      🔧 {t('settings.systemReset')}
                     </Button>
                   </div>
                 </CardContent>
@@ -355,22 +443,22 @@ export default function Settings() {
 
             <Button onClick={handleSaveSettings} disabled={loading} className="w-full">
               <Save className="mr-2 h-4 w-4" />
-              {loading ? 'Salvando...' : 'Salvar Configurações'}
+              {loading ? t('common.loading') : t('common.save')}
             </Button>
           </TabsContent>
 
           <TabsContent value="auth" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Autenticação</CardTitle>
+                <CardTitle>{t('settings.authentication')}</CardTitle>
                 <CardDescription>Configurações de acesso e segurança</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Permitir Cadastros</Label>
+                    <Label>{t('settings.allowSignups')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Permite que novos usuários se cadastrem
+                      {t('settings.allowSignupsDesc')}
                     </p>
                   </div>
                   <Switch
@@ -382,9 +470,9 @@ export default function Settings() {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Verificação de Email</Label>
+                    <Label>{t('settings.emailVerification')}</Label>
                     <p className="text-sm text-muted-foreground">
-                      Requer verificação de email no cadastro
+                      {t('settings.emailVerificationDesc')}
                     </p>
                   </div>
                   <Switch
@@ -395,7 +483,7 @@ export default function Settings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="sessionTimeout">Timeout de Sessão (minutos)</Label>
+                  <Label htmlFor="sessionTimeout">{t('settings.sessionTimeout')}</Label>
                   <Input
                     id="sessionTimeout"
                     type="number"
@@ -413,8 +501,155 @@ export default function Settings() {
 
             <Button onClick={handleSaveSettings} disabled={loading} className="w-full">
               <Save className="mr-2 h-4 w-4" />
-              {loading ? 'Salvando...' : 'Salvar Configurações'}
+              {loading ? t('common.loading') : t('common.save')}
             </Button>
+          </TabsContent>
+
+          <TabsContent value="language" className="space-y-6">
+            {/* Current User Language */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Globe className="h-5 w-5" />
+                  {t('settings.language')}
+                </CardTitle>
+                <CardDescription>
+                  Seu idioma atual
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Idioma do Sistema</Label>
+                  <Select
+                    value={language.code}
+                    onValueChange={(value) => {
+                      const lang = availableLanguages.find(l => l.code === value);
+                      if (lang) setLanguage(lang);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableLanguages.map((lang) => (
+                        <SelectItem key={lang.code} value={lang.code}>
+                          <div className="flex items-center gap-2">
+                            <span>{lang.flagEmoji}</span>
+                            <span>{lang.nativeName}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Escolha o idioma que deseja usar na interface
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Super Admin Language Settings */}
+            {isSuperAdmin && (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('settings.languageSettings')}</CardTitle>
+                    <CardDescription>{t('settings.languageSubtitle')}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                      <Label>{t('settings.defaultLanguage')}</Label>
+                      <Select
+                        value={languageSettings.defaultLanguage}
+                        onValueChange={(value) => 
+                          setLanguageSettings({ ...languageSettings, defaultLanguage: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {languages.filter(l => languageSettings.availableLanguages.includes(l.code)).map((lang) => (
+                            <SelectItem key={lang.code} value={lang.code}>
+                              <div className="flex items-center gap-2">
+                                <span>{lang.flagEmoji}</span>
+                                <span>{lang.nativeName}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        {t('settings.defaultLanguageDesc')}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>{t('settings.autoDetect')}</Label>
+                        <p className="text-sm text-muted-foreground">
+                          {t('settings.autoDetectDesc')}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={languageSettings.autoDetect}
+                        onCheckedChange={(checked) =>
+                          setLanguageSettings({ ...languageSettings, autoDetect: checked })
+                        }
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('settings.availableLanguages')}</CardTitle>
+                    <CardDescription>{t('settings.availableLanguagesDesc')}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[400px] pr-4">
+                      <div className="grid gap-2">
+                        {languages.map((lang) => {
+                          const isAvailable = languageSettings.availableLanguages.includes(lang.code);
+                          const isDefault = languageSettings.defaultLanguage === lang.code;
+                          return (
+                            <div
+                              key={lang.code}
+                              className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
+                                isAvailable ? 'bg-primary/5 border-primary/30' : 'bg-muted/50'
+                              }`}
+                            >
+                              <Checkbox
+                                id={lang.code}
+                                checked={isAvailable}
+                                onCheckedChange={() => toggleLanguageAvailability(lang.code)}
+                                disabled={isDefault}
+                              />
+                              <span className="text-2xl">{lang.flagEmoji}</span>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium">{lang.nativeName}</p>
+                                <p className="text-xs text-muted-foreground">{lang.name}</p>
+                              </div>
+                              {isDefault && (
+                                <Badge variant="secondary">Padrão</Badge>
+                              )}
+                              {isAvailable && (
+                                <Check className="h-4 w-4 text-primary" />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                <Button onClick={handleSaveLanguageSettings} disabled={loading} className="w-full">
+                  <Save className="mr-2 h-4 w-4" />
+                  {loading ? t('common.loading') : t('common.save')}
+                </Button>
+              </>
+            )}
           </TabsContent>
 
           {isSuperAdmin && (

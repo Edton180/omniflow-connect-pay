@@ -126,9 +126,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
-      {/* Language Selector - Fixed Position */}
+      {/* Language Selector - Fixed Position with high visibility */}
       <div className="fixed top-4 right-4 z-50">
-        <LanguageSelector variant="outline" />
+        <LanguageSelector variant="solid" showLabel />
       </div>
 
       <div className="w-full max-w-md space-y-4">
