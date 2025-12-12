@@ -156,16 +156,20 @@ export default function SuperAdminAIConfig() {
       const { data, error } = await supabase.functions.invoke('test-ai-provider', {
         body: { 
           model: config.defaultModel,
-          message: "Olá, este é um teste de conectividade." 
+          message: "Olá, este é um teste de conectividade. Responda brevemente." 
         }
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Teste Bem-sucedido",
-        description: `IA respondeu em ${data?.responseTime || 'N/A'}ms`,
-      });
+      if (data?.success) {
+        toast({
+          title: "Teste Bem-sucedido ✓",
+          description: `Lovable AI respondeu em ${data?.responseTime || 'N/A'}ms usando ${data?.model || config.defaultModel}`,
+        });
+      } else {
+        throw new Error(data?.message || "Falha no teste");
+      }
     } catch (error: any) {
       toast({
         title: "Erro no Teste",

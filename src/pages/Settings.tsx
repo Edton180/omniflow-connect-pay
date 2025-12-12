@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { ArrowLeft, Save, Edit, Copy, Key } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Save, Edit, Copy, Key, Bot, Sparkles, ExternalLink, Info, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PaymentSecretsTab } from '@/components/settings/PaymentSecretsTab';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -96,11 +98,77 @@ export default function Settings() {
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="general">Geral</TabsTrigger>
             <TabsTrigger value="auth">Autenticação</TabsTrigger>
-            {isSuperAdmin && <TabsTrigger value="payment-secrets">Secrets de Pagamento</TabsTrigger>}
+            {isSuperAdmin && <TabsTrigger value="integrations">Integrações & Chaves</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="general" className="space-y-6">{isSuperAdmin && (
+          <TabsContent value="general" className="space-y-6">
+            {isSuperAdmin && (
               <>
+                {/* Card explicativo sobre IA */}
+                <Card className="border-purple-500/30 bg-gradient-to-br from-purple-500/5 to-pink-500/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <Bot className="h-4 w-4 text-white" />
+                      </div>
+                      Inteligência Artificial (Lovable AI)
+                    </CardTitle>
+                    <CardDescription>
+                      Seu sistema já vem com IA pré-configurada e pronta para uso
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                      <Sparkles className="h-5 w-5 text-green-500" />
+                      <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                        Lovable AI Gateway está ativo e funcionando
+                      </span>
+                      <Badge className="ml-auto bg-green-500">Conectado</Badge>
+                    </div>
+                    
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        <strong>Como funciona:</strong> O Lovable AI é um gateway que dá acesso aos 
+                        modelos Google Gemini e OpenAI GPT sem necessidade de configurar chaves de API. 
+                        A chave <code className="px-1 py-0.5 rounded bg-muted">LOVABLE_API_KEY</code> já 
+                        está pré-configurada automaticamente.
+                      </AlertDescription>
+                    </Alert>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Zap className="h-4 w-4 text-purple-500" />
+                          <span className="font-medium text-sm">Modelos Disponíveis</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Gemini 2.5 Flash, Gemini Pro, GPT-5, GPT-5 Mini e mais
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg border bg-card">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Sparkles className="h-4 w-4 text-pink-500" />
+                          <span className="font-medium text-sm">Uso Incluído</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Créditos mensais gratuitos incluídos no plano
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      className="w-full"
+                      onClick={() => navigate('/admin/ai-config')}
+                    >
+                      <Bot className="mr-2 h-4 w-4" />
+                      Configurar IA Global
+                      <ExternalLink className="ml-auto h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+
                 <Card>
                   <CardHeader>
                     <CardTitle>Webhook URL</CardTitle>
@@ -350,7 +418,7 @@ export default function Settings() {
           </TabsContent>
 
           {isSuperAdmin && (
-            <TabsContent value="payment-secrets">
+            <TabsContent value="integrations">
               <PaymentSecretsTab />
             </TabsContent>
           )}
