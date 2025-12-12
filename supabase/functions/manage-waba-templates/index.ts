@@ -66,6 +66,64 @@ serve(async (req) => {
         });
       }
 
+      case "create": {
+        // Validar dados obrigatórios
+        if (!templateData?.name || !templateData?.category || !templateData?.language || !templateData?.components) {
+          throw new Error("Dados incompletos: name, category, language e components são obrigatórios");
+        }
+
+        // Validar nome do template (apenas letras minúsculas, números e underscores)
+        const nameRegex = /^[a-z0-9_]+$/;
+        if (!nameRegex.test(templateData.name)) {
+          throw new Error("Nome do template deve conter apenas letras minúsculas, números e underscores");
+        }
+
+        // Criar template via Graph API oficial da Meta
+        const createResponse = await fetch(
+          `${graphApiUrl}/${config.business_account_id}/message_templates`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              name: templateData.name,
+              category: templateData.category,
+              language: templateData.language,
+              components: templateData.components,
+            }),
+          }
+        );
+
+        const createData = await createResponse.json();
+        
+        if (!createResponse.ok) {
+          console.error("Erro Meta API:", createData);
+          throw new Error(createData.error?.message || "Erro ao criar template na Meta");
+        }
+
+        // Salvar no banco local com status PENDING (aguardando aprovação da Meta)
+        await supabase.from("waba_templates").insert({
+          tenant_id: channel.tenant_id,
+          channel_id: channelId,
+          template_id: createData.id,
+          template_name: templateData.name,
+          language: templateData.language,
+          category: templateData.category,
+          status: "PENDING",
+          components: templateData.components,
+          last_synced_at: new Date().toISOString(),
+        });
+
+        console.log("Template criado com sucesso:", createData);
+
+        return new Response(JSON.stringify({ 
+          success: true, 
+          template: createData,
+          message: "Template enviado para aprovação da Meta. Pode levar até 24h."
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       case "delete": {
         const response = await fetch(
           `${graphApiUrl}/${config.business_account_id}/message_templates?name=${templateData?.name}`,
