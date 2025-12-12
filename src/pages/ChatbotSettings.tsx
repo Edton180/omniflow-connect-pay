@@ -63,6 +63,7 @@ export default function ChatbotSettings() {
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [testResults, setTestResults] = useState<Record<string, TestResult | null>>({});
   const [intents, setIntents] = useState<ChatbotIntent[]>([]);
+  const [activeTab, setActiveTab] = useState("settings");
   const [settings, setSettings] = useState<ChatbotSettingsData>({
     is_active: false,
     default_confidence_threshold: 0.7,
@@ -387,7 +388,7 @@ export default function ChatbotSettings() {
           </div>
         </div>
 
-        <Tabs defaultValue="settings" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="flex-wrap">
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Sparkles className="h-4 w-4" />
@@ -642,7 +643,10 @@ export default function ChatbotSettings() {
 
           {/* Tab Assistente de Mensagens */}
           <TabsContent value="message-assistant" className="space-y-6">
-            <MessageAssistantTab />
+            <MessageAssistantTab 
+              tenantId={tenantId || null} 
+              onNavigateToProviders={() => setActiveTab("ai-providers")} 
+            />
           </TabsContent>
 
           {/* Tab Base de Conhecimento */}

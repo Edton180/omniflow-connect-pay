@@ -12,6 +12,15 @@ interface AIConfig {
   is_active: boolean;
 }
 
+interface AssistantSettings {
+  suggestions_enabled: boolean;
+  suggestions_tone: string;
+  suggestions_count: number;
+  auto_improve_enabled: boolean;
+  auto_summary_enabled: boolean;
+  auto_translate_enabled: boolean;
+}
+
 interface KnowledgeItem {
   type: string;
   title: string | null;
@@ -21,6 +30,48 @@ interface KnowledgeItem {
   category: string | null;
 }
 
+// Função para obter configurações do assistente
+async function getAssistantSettings(supabaseAdmin: any, tenantId: string): Promise<AssistantSettings> {
+  try {
+    const { data } = await supabaseAdmin
+      .from("chatbot_settings")
+      .select("suggestions_enabled, suggestions_tone, suggestions_count, auto_improve_enabled, auto_summary_enabled, auto_translate_enabled")
+      .eq("tenant_id", tenantId)
+      .maybeSingle();
+
+    if (!data) {
+      return {
+        suggestions_enabled: true,
+        suggestions_tone: "professional",
+        suggestions_count: 3,
+        auto_improve_enabled: true,
+        auto_summary_enabled: true,
+        auto_translate_enabled: false,
+      };
+    }
+
+    return {
+      suggestions_enabled: data.suggestions_enabled ?? true,
+      suggestions_tone: data.suggestions_tone ?? "professional",
+      suggestions_count: data.suggestions_count ?? 3,
+      auto_improve_enabled: data.auto_improve_enabled ?? true,
+      auto_summary_enabled: data.auto_summary_enabled ?? true,
+      auto_translate_enabled: data.auto_translate_enabled ?? false,
+    };
+  } catch (error) {
+    console.error("Error fetching assistant settings:", error);
+    return {
+      suggestions_enabled: true,
+      suggestions_tone: "professional",
+      suggestions_count: 3,
+      auto_improve_enabled: true,
+      auto_summary_enabled: true,
+      auto_translate_enabled: false,
+    };
+  }
+}
+
+// Função para buscar base de conhecimento
 async function getKnowledgeBase(supabaseAdmin: any, tenantId: string): Promise<string> {
   try {
     const { data: items } = await supabaseAdmin
@@ -72,6 +123,22 @@ async function getKnowledgeBase(supabaseAdmin: any, tenantId: string): Promise<s
   } catch (error) {
     console.error("Error fetching knowledge base:", error);
     return "";
+  }
+}
+
+// Função para obter instrução de tom
+function getToneInstruction(tone: string): string {
+  switch (tone) {
+    case "formal":
+      return "Use um tom formal e respeitoso, evitando gírias e expressões informais.";
+    case "professional":
+      return "Use um tom profissional mas acolhedor, equilibrando formalidade com empatia.";
+    case "casual":
+      return "Use um tom casual e amigável, sendo mais descontraído mantendo o profissionalismo.";
+    case "technical":
+      return "Use um tom técnico e preciso, focando em detalhes e termos específicos quando necessário.";
+    default:
+      return "Use um tom profissional e acolhedor.";
   }
 }
 
@@ -193,6 +260,47 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
     );
 
+    // Fetch assistant settings
+    let assistantSettings: AssistantSettings = {
+      suggestions_enabled: true,
+      suggestions_tone: "professional",
+      suggestions_count: 3,
+      auto_improve_enabled: true,
+      auto_summary_enabled: true,
+      auto_translate_enabled: false,
+    };
+
+    if (tenantId) {
+      assistantSettings = await getAssistantSettings(supabaseAdmin, tenantId);
+      console.log(`⚙️ Assistant settings loaded: tone=${assistantSettings.suggestions_tone}, count=${assistantSettings.suggestions_count}`);
+    }
+
+    // Check if action is enabled
+    if (action === "suggest" && !assistantSettings.suggestions_enabled) {
+      return new Response(
+        JSON.stringify({ error: "Sugestões IA desativadas", disabled: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (action === "improve" && !assistantSettings.auto_improve_enabled) {
+      return new Response(
+        JSON.stringify({ error: "Melhoria de texto desativada", disabled: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (action === "summarize" && !assistantSettings.auto_summary_enabled) {
+      return new Response(
+        JSON.stringify({ error: "Resumo automático desativado", disabled: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    if (action === "translate" && !assistantSettings.auto_translate_enabled) {
+      return new Response(
+        JSON.stringify({ error: "Tradução automática desativada", disabled: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Fetch knowledge base for enhanced context
     let knowledgeContext = "";
     if (tenantId) {
@@ -200,6 +308,7 @@ serve(async (req) => {
       console.log(`📚 Knowledge base loaded: ${knowledgeContext.length} chars`);
     }
 
+    const toneInstruction = getToneInstruction(assistantSettings.suggestions_tone);
     let systemPrompt = "";
     let userPrompt = "";
 
@@ -209,11 +318,11 @@ serve(async (req) => {
 
     switch (action) {
       case "suggest":
-        systemPrompt = `${baseContext}Você é um assistente de atendimento ao cliente. Analise a conversa e sugira 3 respostas profissionais e úteis baseadas no contexto da empresa.`;
-        userPrompt = `Baseado nesta conversa:\n\n${JSON.stringify(messages)}\n\nSugira 3 respostas profissionais e diretas.`;
+        systemPrompt = `${baseContext}Você é um assistente de atendimento ao cliente. ${toneInstruction} Analise a conversa e sugira ${assistantSettings.suggestions_count} respostas úteis baseadas no contexto da empresa.`;
+        userPrompt = `Baseado nesta conversa:\n\n${JSON.stringify(messages)}\n\nSugira ${assistantSettings.suggestions_count} respostas diretas e úteis. Retorne apenas as sugestões numeradas.`;
         break;
       case "improve":
-        systemPrompt = `${baseContext}Você é um assistente de redação. Melhore o texto mantendo o significado original, mas tornando-o mais profissional e claro.`;
+        systemPrompt = `${baseContext}Você é um assistente de redação. ${toneInstruction} Melhore o texto mantendo o significado original, mas tornando-o mais claro e adequado.`;
         userPrompt = `Melhore este texto: "${messages[messages.length - 1]?.content || ""}"`;
         break;
       case "summarize":
@@ -225,7 +334,7 @@ serve(async (req) => {
         userPrompt = `Traduza este texto para o português: "${messages[messages.length - 1]?.content || ""}"`;
         break;
       default:
-        systemPrompt = `${baseContext}Você é um assistente útil.`;
+        systemPrompt = `${baseContext}Você é um assistente útil. ${toneInstruction}`;
         userPrompt = messages[messages.length - 1]?.content || "";
     }
 
