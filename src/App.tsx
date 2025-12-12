@@ -59,6 +59,7 @@ import AdvancedAnalytics from "./pages/AdvancedAnalytics";
 import ChatbotSettings from "./pages/ChatbotSettings";
 import ExportReports from "./pages/ExportReports";
 import WebChatSetup from "./pages/WebChatSetup";
+import SuperAdminAIConfig from "./pages/SuperAdminAIConfig";
 
 const queryClient = new QueryClient();
 
@@ -106,6 +107,7 @@ const App = () => (
           <Route path="/admin/all-channels" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminChannels /></AuthGuard>} />
           <Route path="/admin/all-crm" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminCRM /></AuthGuard>} />
           <Route path="/admin/invoices" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminInvoices /></AuthGuard>} />
+          <Route path="/admin/ai-config" element={<AuthGuard requireAuth requiredRoles={['super_admin']}><SuperAdminAIConfig /></AuthGuard>} />
           <Route path="/tenant/settings" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><TenantSettings /></AuthGuard>} />
           <Route path="/tenant/invoices" element={<AuthGuard requireAuth requiredRoles={['tenant_admin']}><Invoices /></AuthGuard>} />
           <Route path="/crm" element={<AuthGuard requireAuth><CRM /></AuthGuard>} />
