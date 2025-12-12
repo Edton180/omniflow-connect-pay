@@ -1408,6 +1408,7 @@ export type Database = {
           cta_button_text: string | null
           cta_subtitle: string | null
           cta_title: string | null
+          favicon_url: string | null
           feature_1_description: string
           feature_1_icon: string
           feature_1_title: string
@@ -1417,6 +1418,9 @@ export type Database = {
           feature_3_description: string
           feature_3_icon: string
           feature_3_title: string
+          feature_4_description: string | null
+          feature_4_icon: string | null
+          feature_4_title: string | null
           footer_company_description: string | null
           footer_link_1_text: string | null
           footer_link_1_url: string | null
@@ -1436,6 +1440,8 @@ export type Database = {
           legal_privacy_url: string | null
           legal_terms_url: string | null
           logo_url: string | null
+          meta_description: string | null
+          og_image_url: string | null
           pricing_subtitle: string
           pricing_title: string
           primary_color: string
@@ -1481,6 +1487,7 @@ export type Database = {
           cta_button_text?: string | null
           cta_subtitle?: string | null
           cta_title?: string | null
+          favicon_url?: string | null
           feature_1_description?: string
           feature_1_icon?: string
           feature_1_title?: string
@@ -1490,6 +1497,9 @@ export type Database = {
           feature_3_description?: string
           feature_3_icon?: string
           feature_3_title?: string
+          feature_4_description?: string | null
+          feature_4_icon?: string | null
+          feature_4_title?: string | null
           footer_company_description?: string | null
           footer_link_1_text?: string | null
           footer_link_1_url?: string | null
@@ -1509,6 +1519,8 @@ export type Database = {
           legal_privacy_url?: string | null
           legal_terms_url?: string | null
           logo_url?: string | null
+          meta_description?: string | null
+          og_image_url?: string | null
           pricing_subtitle?: string
           pricing_title?: string
           primary_color?: string
@@ -1554,6 +1566,7 @@ export type Database = {
           cta_button_text?: string | null
           cta_subtitle?: string | null
           cta_title?: string | null
+          favicon_url?: string | null
           feature_1_description?: string
           feature_1_icon?: string
           feature_1_title?: string
@@ -1563,6 +1576,9 @@ export type Database = {
           feature_3_description?: string
           feature_3_icon?: string
           feature_3_title?: string
+          feature_4_description?: string | null
+          feature_4_icon?: string | null
+          feature_4_title?: string | null
           footer_company_description?: string | null
           footer_link_1_text?: string | null
           footer_link_1_url?: string | null
@@ -1582,6 +1598,8 @@ export type Database = {
           legal_privacy_url?: string | null
           legal_terms_url?: string | null
           logo_url?: string | null
+          meta_description?: string | null
+          og_image_url?: string | null
           pricing_subtitle?: string
           pricing_title?: string
           primary_color?: string

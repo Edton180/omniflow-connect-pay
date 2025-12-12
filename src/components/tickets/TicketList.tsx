@@ -411,6 +411,74 @@ export const TicketList = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Dialog de Encaminhamento */}
+      <Dialog open={forwardDialogOpen} onOpenChange={setForwardDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Encaminhar Ticket</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Encaminhar para:</Label>
+              <Select value={forwardTarget} onValueChange={(v: "agent" | "queue" | "bot") => setForwardTarget(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="agent">Agente</SelectItem>
+                  <SelectItem value="queue">Fila</SelectItem>
+                  <SelectItem value="bot">Bot (Reiniciar Atendimento)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {forwardTarget === "agent" && (
+              <div>
+                <Label>Selecione um agente:</Label>
+                <Select value={selectedAgent} onValueChange={setSelectedAgent}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um agente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {agents.map((agent) => (
+                      <SelectItem key={agent.id} value={agent.id}>{agent.full_name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {forwardTarget === "queue" && (
+              <div>
+                <Label>Selecione uma fila:</Label>
+                <Select value={selectedQueue} onValueChange={setSelectedQueue}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione uma fila" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {queues.map((queue) => (
+                      <SelectItem key={queue.id} value={queue.id}>{queue.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {forwardTarget === "bot" && (
+              <p className="text-sm text-muted-foreground">
+                O ticket será desatribuído e retornará ao início do fluxo do bot.
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setForwardDialogOpen(false)}>Cancelar</Button>
+            <Button onClick={handleForward} disabled={
+              (forwardTarget === "agent" && !selectedAgent) ||
+              (forwardTarget === "queue" && !selectedQueue)
+            }>
+              Encaminhar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

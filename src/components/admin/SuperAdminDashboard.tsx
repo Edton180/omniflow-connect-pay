@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3, Key } from "lucide-react";
+import { Building2, Users, Ticket, MessageSquare, CreditCard, TrendingUp, DollarSign, FileText, BarChart3, Key, Globe, Palette, Settings, Layers } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -241,6 +241,38 @@ export const SuperAdminDashboard = () => {
               >
                 <Key className="mr-3 h-5 w-5" />
                 Secrets de Pagamento
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Personalização</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/landing-page-editor')}
+              >
+                <Globe className="mr-3 h-5 w-5" />
+                Editar Landing Page
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/branding')}
+              >
+                <Palette className="mr-3 h-5 w-5" />
+                Personalizar Marca
+              </Button>
+              <Button 
+                className="h-16 text-base justify-start" 
+                variant="outline"
+                onClick={() => navigate('/admin/themes')}
+              >
+                <Layers className="mr-3 h-5 w-5" />
+                Gerenciar Temas
               </Button>
             </CardContent>
           </Card>

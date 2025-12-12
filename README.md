@@ -3,6 +3,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
+[![Lovable](https://img.shields.io/badge/Built%20with-Lovable-ff69b4.svg)](https://lovable.dev)
 
 Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (WhatsApp, Email, Telegram, Instagram, Facebook) e gestão de tickets.
 
@@ -29,6 +30,7 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Histórico de mensagens
 - ✅ Status e prioridades
 - ✅ Atribuição de agentes
+- ✅ Encaminhamento para filas/agentes/bot
 
 ### Filas & Distribuição
 - ✅ Filas customizáveis por tenant
@@ -50,7 +52,8 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Upload de logo personalizado
 - ✅ Cores primárias e secundárias customizáveis
 - ✅ Domínio personalizado
-- ✅ Aplicação automática em toda plataforma
+- ✅ Favicon e meta tags configuráveis
+- ✅ Landing page totalmente editável
 
 ### Dashboard & Analytics
 - ✅ Métricas em tempo real
@@ -90,15 +93,21 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 
 - **[INSTALLATION.md](INSTALLATION.md)** - Guia completo passo a passo
 - **[DEPLOY.md](DEPLOY.md)** - Deploy em produção (VPS, Docker, Portainer)
-- **[EVOLUTION_API_SETUP.md](EVOLUTION_API_SETUP.md)** - Configuração Evolution API
+- **[MANUAL_INSTALL_CPANEL.md](MANUAL_INSTALL_CPANEL.md)** - Instalação em cPanel
+- **[MANUAL_INSTALL_VIRTUALBOX.md](MANUAL_INSTALL_VIRTUALBOX.md)** - Instalação em VirtualBox
 
-### Opção 1: Script Automático (Recomendado para Produção)
+### Opção 1: Lovable (Recomendado para Desenvolvimento)
+
+Acesse o projeto diretamente no Lovable:
+```
+https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56
+```
+
+### Opção 2: Script Automático (Produção VPS)
 
 ```bash
 # Download e execute o script de instalação
-curl -o install.sh https://raw.githubusercontent.com/seu-usuario/omniflow/main/scripts/install.sh
-chmod +x install.sh
-sudo ./install.sh
+curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/auto-install.sh | sudo bash
 ```
 
 O script irá:
@@ -107,11 +116,11 @@ O script irá:
 - Configurar variáveis de ambiente
 - Build e iniciar a aplicação
 
-### Opção 2: Docker Compose Manual
+### Opção 3: Docker Compose Manual
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/seu-usuario/omniflow.git
+git clone https://github.com/omniflow-app/omniflow.git
 cd omniflow
 
 # 2. Configure as variáveis de ambiente
@@ -125,19 +134,12 @@ docker-compose up -d --build
 docker-compose ps
 ```
 
-### Opção 3: Desenvolvimento Local (Lovable)
-
-**Use Lovable IDE**
-
-Acesse o projeto diretamente no Lovable:
-[https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56](https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56)
-
-**Use seu IDE preferido**
+### Opção 4: Desenvolvimento Local
 
 ```bash
 # 1. Clone o repositório
-git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
+git clone https://github.com/omniflow-app/omniflow.git
+cd omniflow
 
 # 2. Instale as dependências
 npm install
@@ -154,7 +156,7 @@ npm run dev
 ### Variáveis de Ambiente
 
 ```env
-# Supabase (Lovable Cloud)
+# Supabase (Lovable Cloud) - Estas são configuradas automaticamente pelo Lovable
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publica
 VITE_SUPABASE_PROJECT_ID=seu-project-id
@@ -188,7 +190,7 @@ NODE_ENV=production
 
 ### Deploy em VPS/Cloud
 
-Consulte o [Guia Completo de Deploy](DEPLOYMENT.md) para instruções detalhadas sobre:
+Consulte o [Guia Completo de Deploy](DEPLOY.md) para instruções detalhadas sobre:
 - AWS EC2
 - Google Cloud Platform
 - DigitalOcean
@@ -213,15 +215,15 @@ docker-compose down
 ### Guias de Setup e Deploy
 - **[INSTALLATION.md](INSTALLATION.md)** - Instalação completa passo a passo
 - **[DEPLOY.md](DEPLOY.md)** - Deploy para produção em VPS/Cloud
-- **[EVOLUTION_API_SETUP.md](EVOLUTION_API_SETUP.md)** - Setup WhatsApp Evolution API
-- **[BAILEYS_INTEGRATION.md](BAILEYS_INTEGRATION.md)** - Integração Baileys
+- **[MANUAL_INSTALL_CPANEL.md](MANUAL_INSTALL_CPANEL.md)** - Instalação em cPanel
 - **[SUPER_ADMIN_SETUP.md](SUPER_ADMIN_SETUP.md)** - Configuração Super Admin
 - **[BILLING_SYSTEM.md](BILLING_SYSTEM.md)** - Sistema de Faturamento
 
 ### Guias Técnicos
 - **[BRANDING_GUIDE.md](BRANDING_GUIDE.md)** - Customização de marca
+- **[WEBHOOK_SETUP_GUIDE.md](WEBHOOK_SETUP_GUIDE.md)** - Configuração de Webhooks
+- **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Guia de Integrações
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Como contribuir
-- **[PROJECT_STATUS.md](PROJECT_STATUS.md)** - Status do projeto
 
 ---
 
@@ -245,11 +247,11 @@ omniflow/
 │   └── lib/                # Utilitários
 ├── scripts/                # Scripts de deploy/manutenção
 ├── supabase/               # Configuração Supabase
-│   └── migrations/         # Migrações SQL
+│   └── functions/          # Edge Functions
 ├── Dockerfile              # Docker image
 ├── docker-compose.yml      # Orquestração
 ├── nginx.conf              # Nginx config
-└── DEPLOYMENT.md           # Documentação de deploy
+└── INSTALLATION.md         # Documentação de instalação
 ```
 
 ## 🔐 Segurança
@@ -312,10 +314,9 @@ Contribuições são bem-vindas! Por favor, leia nosso [Guia de Contribuição](
 
 ## 🆘 Suporte
 
-- 📚 [Documentação Completa](DEPLOYMENT.md)
-- 🐛 [Reportar Bug](https://github.com/seu-usuario/omniflow/issues)
-- 💡 [Solicitar Feature](https://github.com/seu-usuario/omniflow/issues)
-- 💬 Discord: [Em breve]
+- 📚 [Documentação Completa](INSTALLATION.md)
+- 🐛 [Reportar Bug](https://github.com/omniflow-app/omniflow/issues)
+- 💡 [Solicitar Feature](https://github.com/omniflow-app/omniflow/issues)
 
 ## 📄 Licença
 
@@ -327,10 +328,6 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 - [Supabase](https://supabase.com) - Backend as a Service
 - [shadcn/ui](https://ui.shadcn.com) - Component library
 - [Tailwind CSS](https://tailwindcss.com) - CSS framework
-
-## 📞 Contato
-
-Para questões comerciais e parcerias, entre em contato através de [seu-email@empresa.com]
 
 ---
 

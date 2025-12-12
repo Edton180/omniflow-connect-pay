@@ -58,6 +58,22 @@ const Index = () => {
   const Feature1Icon = getIcon(settings.feature_1_icon);
   const Feature2Icon = getIcon(settings.feature_2_icon);
   const Feature3Icon = getIcon(settings.feature_3_icon);
+  const Feature4Icon = getIcon(settings.feature_4_icon || 'Bot');
+
+  // Aplicar favicon e meta tags dinamicamente
+  useEffect(() => {
+    if (settings?.favicon_url) {
+      const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      if (link) link.href = settings.favicon_url;
+    }
+    if (settings?.meta_description) {
+      const meta = document.querySelector("meta[name='description']") as HTMLMetaElement;
+      if (meta) meta.content = settings.meta_description;
+    }
+    if (settings?.hero_title) {
+      document.title = settings.hero_title;
+    }
+  }, [settings]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -239,6 +255,25 @@ const Index = () => {
               <h3 className="text-2xl font-bold mb-3">{settings.feature_3_title}</h3>
               <p className="text-muted-foreground leading-relaxed">
                 {settings.feature_3_description}
+              </p>
+            </Card>
+
+            {/* Feature 4 */}
+            <Card className="group p-8 hover-scale border-2 hover:border-primary/50 transition-all duration-300 bg-gradient-to-br from-card to-primary/5">
+              <div 
+                className="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"
+                style={{ 
+                  background: `linear-gradient(135deg, ${settings.secondary_color}30, ${settings.secondary_color}10)`
+                }}
+              >
+                <Feature4Icon 
+                  className="w-7 h-7"
+                  style={{ color: settings.secondary_color }}
+                />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">{settings.feature_4_title || 'Automações Inteligentes'}</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                {settings.feature_4_description || 'Fluxos automatizados com IA para respostas rápidas'}
               </p>
             </Card>
           </div>
