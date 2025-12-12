@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,11 +20,14 @@ import {
   ArrowLeft, Send, Users, Search, MessageSquare, 
   Phone, Mail, Loader2, CheckCircle2, XCircle, Clock, 
   Filter, Image, Paperclip, X, Calendar, History, 
-  BarChart3, Play, Pause, RefreshCw
+  BarChart3, Play, Pause, RefreshCw, FileText, RotateCcw,
+  Info, Eye, AlertCircle
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { TemplateSelector } from "@/components/broadcast/TemplateSelector";
+import { InteractiveMessageBuilder, InteractiveButton } from "@/components/broadcast/InteractiveMessageBuilder";
 
 interface Contact {
   id: string;

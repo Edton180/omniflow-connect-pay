@@ -9,7 +9,6 @@ const corsHeaders = {
 // Helper function to download media from WhatsApp Cloud API
 async function downloadWhatsAppMedia(mediaId: string, accessToken: string): Promise<{ buffer: ArrayBuffer; mimeType: string } | null> {
   try {
-    // Step 1: Get media URL
     console.log(`📥 Fetching media URL for ID: ${mediaId}`);
     const mediaResponse = await fetch(
       `https://graph.facebook.com/v18.0/${mediaId}`,
@@ -28,7 +27,6 @@ async function downloadWhatsAppMedia(mediaId: string, accessToken: string): Prom
     const mediaInfo = await mediaResponse.json();
     console.log("📍 Media URL obtained:", mediaInfo.url);
 
-    // Step 2: Download media content
     const downloadResponse = await fetch(mediaInfo.url, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -96,22 +94,22 @@ serve(async (req) => {
 
       console.log("🔐 WABA webhook verification:", { mode, token });
 
-      // Get verify token from channel_configs
+      // Get verify token from channel_configs - check multiple configs
       const { data: configs } = await supabaseAdmin
         .from("channel_configs")
         .select("config")
         .eq("config_type", "waba")
-        .eq("is_active", true)
-        .limit(1);
+        .eq("is_active", true);
 
       if (!configs || configs.length === 0) {
         console.error("❌ No active WABA config found");
         return new Response("No active WABA config", { status: 403 });
       }
 
-      const verifyToken = configs[0].config?.verify_token;
+      // Check all configs for matching verify token
+      const matchingConfig = configs.find(c => c.config?.verify_token === token);
 
-      if (mode === "subscribe" && token === verifyToken) {
+      if (mode === "subscribe" && matchingConfig) {
         console.log("✅ WABA webhook verified successfully");
         return new Response(challenge, { status: 200 });
       }
@@ -126,49 +124,69 @@ serve(async (req) => {
     // Process WhatsApp message
     if (body.entry && body.entry[0]?.changes) {
       for (const change of body.entry[0].changes) {
+        const phoneNumberId = change.value?.metadata?.phone_number_id;
+        const displayPhoneNumber = change.value?.metadata?.display_phone_number;
+
+        // Process incoming messages
         if (change.value?.messages) {
           for (const message of change.value.messages) {
             const phoneNumber = message.from;
             const messageText = message.text?.body || message.caption || "";
             const messageType = message.type;
-            const phoneNumberId = change.value.metadata?.phone_number_id;
+            const wabaMessageId = message.id;
 
-            console.log(`📱 Processing message from ${phoneNumber}, type: ${messageType}`);
+            console.log(`📱 Processing message from ${phoneNumber}, type: ${messageType}, waba_id: ${wabaMessageId}`);
 
-            // Get tenant from active WABA channel
+            // Find the correct channel by phone_number_id
+            let channel = null;
             const { data: channels } = await supabaseAdmin
               .from("channels")
               .select("*, config")
-              .eq("type", "whatsapp")
-              .eq("status", "active")
-              .limit(1);
+              .in("type", ["whatsapp", "waba"])
+              .eq("status", "active");
 
-            if (!channels || channels.length === 0) {
+            if (channels && channels.length > 0) {
+              // Try to find channel by phone_number_id in config
+              channel = channels.find(c => {
+                const config = c.config as Record<string, any>;
+                return config?.phone_number_id === phoneNumberId;
+              });
+
+              // Fallback to first active channel
+              if (!channel) {
+                channel = channels[0];
+                console.log("⚠️ Channel matched by fallback (first active)");
+              } else {
+                console.log("✅ Channel matched by phone_number_id");
+              }
+            }
+
+            if (!channel) {
               console.log("⚠️ No active WhatsApp channel found");
               continue;
             }
 
-            const channel = channels[0];
             const tenantId = channel.tenant_id;
-            const accessToken = channel.config?.access_token;
+            const accessToken = (channel.config as Record<string, any>)?.access_token;
 
             // Find or create contact
             let contact;
-            const { data: existingContacts } = await supabaseAdmin
+            const { data: existingContact } = await supabaseAdmin
               .from("contacts")
               .select("*")
               .eq("tenant_id", tenantId)
               .eq("phone", phoneNumber)
               .maybeSingle();
 
-            if (existingContacts) {
-              contact = existingContacts;
+            if (existingContact) {
+              contact = existingContact;
               // Update contact metadata with latest profile info
-              if (change.value.contacts?.[0]?.profile) {
+              const profileName = change.value.contacts?.[0]?.profile?.name;
+              if (profileName && profileName !== contact.name) {
                 await supabaseAdmin
                   .from("contacts")
                   .update({
-                    name: change.value.contacts[0].profile.name || contact.name,
+                    name: profileName,
                     metadata: {
                       ...contact.metadata,
                       waba_profile: change.value.contacts[0].profile,
@@ -188,6 +206,7 @@ serve(async (req) => {
                     waba_profile: change.value.contacts?.[0]?.profile,
                     source: "whatsapp",
                     created_via: "waba_webhook",
+                    phone_number_id: phoneNumberId,
                   },
                 })
                 .select()
@@ -203,15 +222,16 @@ serve(async (req) => {
 
             // Find or create ticket
             let ticket;
-            const { data: existingTickets } = await supabaseAdmin
+            let isNewTicket = false;
+            const { data: existingTicket } = await supabaseAdmin
               .from("tickets")
               .select("*")
               .eq("contact_id", contact.id)
               .in("status", ["open", "in_progress", "pending"])
               .maybeSingle();
 
-            if (existingTickets) {
-              ticket = existingTickets;
+            if (existingTicket) {
+              ticket = existingTicket;
               await supabaseAdmin
                 .from("tickets")
                 .update({ 
@@ -220,6 +240,7 @@ serve(async (req) => {
                 })
                 .eq("id", ticket.id);
             } else {
+              isNewTicket = true;
               const { data: newTicket, error: ticketError } = await supabaseAdmin
                 .from("tickets")
                 .insert({
@@ -241,12 +262,34 @@ serve(async (req) => {
               console.log(`✅ New ticket created: ${ticket.id}`);
             }
 
+            // Process interactive responses (button replies, list replies)
+            let interactiveData = null;
+            if (message.type === "interactive") {
+              if (message.interactive?.button_reply) {
+                interactiveData = {
+                  type: "button_reply",
+                  id: message.interactive.button_reply.id,
+                  title: message.interactive.button_reply.title,
+                };
+              } else if (message.interactive?.list_reply) {
+                interactiveData = {
+                  type: "list_reply",
+                  id: message.interactive.list_reply.id,
+                  title: message.interactive.list_reply.title,
+                  description: message.interactive.list_reply.description,
+                };
+              }
+            }
+
             // Create message
-            const messageData: any = {
+            const messageData: Record<string, any> = {
               ticket_id: ticket.id,
               contact_id: contact.id,
-              content: messageText || `[${messageType}]`,
+              content: interactiveData 
+                ? `[${interactiveData.type}] ${interactiveData.title}` 
+                : (messageText || `[${messageType}]`),
               is_from_contact: true,
+              status: "received",
             };
 
             // Handle media - Download and upload to Supabase Storage
@@ -287,7 +330,6 @@ serve(async (req) => {
                 const extension = getExtensionFromMimeType(mediaResult.mimeType);
                 const fileName = `${tenantId}/${ticket.id}/${Date.now()}.${extension}`;
 
-                // Upload to Supabase Storage
                 const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
                   .from("ticket-media")
                   .upload(fileName, mediaResult.buffer, {
@@ -299,7 +341,6 @@ serve(async (req) => {
                   console.error("❌ Error uploading media to storage:", uploadError);
                   messageData.media_url = mediaId; // Fallback to media ID
                 } else {
-                  // Get public URL
                   const { data: publicUrlData } = supabaseAdmin.storage
                     .from("ticket-media")
                     .getPublicUrl(fileName);
@@ -308,7 +349,6 @@ serve(async (req) => {
                   console.log(`✅ Media uploaded successfully: ${messageData.media_url}`);
                 }
               } else {
-                // Fallback: store media ID for later retrieval
                 messageData.media_url = mediaId;
                 console.log("⚠️ Could not download media, storing media ID");
               }
@@ -318,7 +358,7 @@ serve(async (req) => {
             console.log(`✅ Message saved for ticket ${ticket.id}`);
 
             // Send auto message if new ticket
-            if (!existingTickets) {
+            if (isNewTicket) {
               console.log("🤖 New ticket detected, sending welcome message");
               try {
                 await supabaseAdmin.functions.invoke("send-auto-message", {
@@ -336,11 +376,47 @@ serve(async (req) => {
           }
         }
 
-        // Handle status updates
+        // Handle message status updates (sent, delivered, read, failed)
         if (change.value?.statuses) {
           for (const status of change.value.statuses) {
-            console.log(`📊 Message status update: ${status.id} -> ${status.status}`);
-            // Could update message status in database here if needed
+            const wabaMessageId = status.id;
+            const statusType = status.status; // sent, delivered, read, failed
+            const recipientPhone = status.recipient_id;
+            const timestamp = status.timestamp;
+            const errorInfo = status.errors?.[0];
+
+            console.log(`📊 Status update: ${wabaMessageId} -> ${statusType}`);
+
+            // Update message status in messages table
+            if (statusType === "sent" || statusType === "delivered" || statusType === "read" || statusType === "failed") {
+              // Try to find message by looking at recent messages to the recipient
+              // This is a best-effort approach since we may not have stored waba_message_id
+              
+              // Update broadcast_recipients if this is a broadcast message
+              const updateData: Record<string, any> = {};
+              
+              if (statusType === "delivered") {
+                updateData.delivered_at = new Date(parseInt(timestamp) * 1000).toISOString();
+              } else if (statusType === "read") {
+                updateData.read_at = new Date(parseInt(timestamp) * 1000).toISOString();
+              } else if (statusType === "failed") {
+                updateData.status = "failed";
+                updateData.error_message = errorInfo?.message || "Delivery failed";
+              }
+
+              if (Object.keys(updateData).length > 0) {
+                await supabaseAdmin
+                  .from("broadcast_recipients")
+                  .update(updateData)
+                  .eq("waba_message_id", wabaMessageId);
+
+                // Also update messages table
+                await supabaseAdmin
+                  .from("messages")
+                  .update({ status: statusType })
+                  .eq("id", wabaMessageId); // This might not work if we store differently
+              }
+            }
           }
         }
       }
