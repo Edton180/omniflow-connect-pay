@@ -30,9 +30,7 @@ import {
   Webhook,
   Download,
   Receipt,
-  User,
-  BarChart2,
-  MessageSquarePlus
+  BarChart2
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -64,7 +62,7 @@ const navItems: NavItem[] = [
   { title: "Avaliações", href: "/evaluation-ranking", icon: TrendingUp },
 ];
 
-// Administração da Empresa
+// Administração da Empresa (apenas tenant_admin, NÃO super admin)
 const adminItems: NavItem[] = [
   { title: "Configurações", href: "/tenant/settings", icon: Settings, roles: ["tenant_admin"] },
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
@@ -74,10 +72,9 @@ const adminItems: NavItem[] = [
   { title: "Chatbot com IA", href: "/chatbot-settings", icon: Bot, roles: ["tenant_admin"] },
   { title: "Exportar Relatórios", href: "/export-reports", icon: Download, roles: ["tenant_admin"] },
   { title: "Transações", href: "/transactions", icon: Receipt, roles: ["tenant_admin"] },
-  { title: "WebChat Setup", href: "/webchat-setup", icon: MessageSquarePlus, roles: ["tenant_admin"] },
 ];
 
-// Painel Super Admin - métricas e gestão global do sistema
+// Painel Super Admin - métricas e gestão global do sistema (EXCLUSIVO super admin)
 const superAdminItems: NavItem[] = [
   { title: "Todas Empresas", href: "/admin/tenants", icon: Building2, roles: ["super_admin"] },
   { title: "Todos Usuários", href: "/admin/users", icon: Users, roles: ["super_admin"] },
@@ -96,10 +93,6 @@ const superAdminItems: NavItem[] = [
   { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
-  { title: "Analytics Avançado", href: "/advanced-analytics", icon: BarChart2, roles: ["super_admin"] },
-  { title: "Chatbot com IA", href: "/chatbot-settings", icon: Bot, roles: ["super_admin"] },
-  { title: "Exportar Relatórios", href: "/export-reports", icon: Download, roles: ["super_admin"] },
-  { title: "WebChat Setup", href: "/webchat-setup", icon: MessageSquarePlus, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {

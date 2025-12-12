@@ -243,15 +243,25 @@ export const ChannelCard = ({ channel, onDelete }: ChannelCardProps) => {
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <Button
             variant="secondary"
             className="flex-1"
             onClick={() => navigate(`/channels/${channel.id}/config`)}
           >
             <Settings className="mr-2 h-4 w-4" />
-            Configurações Avançadas
+            Configurações
           </Button>
+          {channel.type === "webchat" && (
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => navigate("/webchat-setup")}
+            >
+              <Globe className="mr-2 h-4 w-4" />
+              Configurar Widget
+            </Button>
+          )}
           {onDelete && (
             <Button
               variant="destructive"
