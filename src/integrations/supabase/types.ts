@@ -632,6 +632,103 @@ export type Database = {
           },
         ]
       }
+      chatbot_intents: {
+        Row: {
+          action: string | null
+          confidence_threshold: number | null
+          created_at: string | null
+          description: string | null
+          examples: Json | null
+          id: string
+          is_active: boolean | null
+          name: string
+          response: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          action?: string | null
+          confidence_threshold?: number | null
+          created_at?: string | null
+          description?: string | null
+          examples?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          response?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          action?: string | null
+          confidence_threshold?: number | null
+          created_at?: string | null
+          description?: string | null
+          examples?: Json | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          response?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_intents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chatbot_settings: {
+        Row: {
+          created_at: string | null
+          default_confidence_threshold: number | null
+          enabled_channels: Json | null
+          fallback_message: string | null
+          id: string
+          is_active: boolean | null
+          tenant_id: string
+          transfer_message: string | null
+          updated_at: string | null
+          welcome_message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          default_confidence_threshold?: number | null
+          enabled_channels?: Json | null
+          fallback_message?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id: string
+          transfer_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          default_confidence_threshold?: number | null
+          enabled_channels?: Json | null
+          fallback_message?: string | null
+          id?: string
+          is_active?: boolean | null
+          tenant_id?: string
+          transfer_message?: string | null
+          updated_at?: string | null
+          welcome_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chatbot_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       checkout_sessions: {
         Row: {
           created_at: string | null
@@ -2415,6 +2512,93 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_metrics: {
+        Row: {
+          agent_id: string | null
+          agent_message_count: number | null
+          channel: string
+          contact_message_count: number | null
+          created_at: string | null
+          first_response_time_seconds: number | null
+          id: string
+          message_count: number | null
+          resolution_time_seconds: number | null
+          resolved_at: string | null
+          tenant_id: string
+          ticket_id: string
+          transfer_count: number | null
+          wait_time_seconds: number | null
+        }
+        Insert: {
+          agent_id?: string | null
+          agent_message_count?: number | null
+          channel: string
+          contact_message_count?: number | null
+          created_at?: string | null
+          first_response_time_seconds?: number | null
+          id?: string
+          message_count?: number | null
+          resolution_time_seconds?: number | null
+          resolved_at?: string | null
+          tenant_id: string
+          ticket_id: string
+          transfer_count?: number | null
+          wait_time_seconds?: number | null
+        }
+        Update: {
+          agent_id?: string | null
+          agent_message_count?: number | null
+          channel?: string
+          contact_message_count?: number | null
+          created_at?: string | null
+          first_response_time_seconds?: number | null
+          id?: string
+          message_count?: number | null
+          resolution_time_seconds?: number | null
+          resolved_at?: string | null
+          tenant_id?: string
+          ticket_id?: string
+          transfer_count?: number | null
+          wait_time_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_ticket_metrics_ticket"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_metrics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agent_performance"
+            referencedColumns: ["agent_id"]
+          },
+          {
+            foreignKeyName: "ticket_metrics_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_metrics_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_metrics_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
             referencedColumns: ["id"]
           },
         ]

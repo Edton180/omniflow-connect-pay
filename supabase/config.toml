@@ -89,3 +89,6 @@ verify_jwt = false
 
 [functions.webchat-webhook]
 verify_jwt = false
+
+[functions.ai-chatbot]
+verify_jwt = true

@@ -357,10 +357,48 @@ serve(async (req) => {
             await supabaseAdmin.from("messages").insert(messageData);
             console.log(`✅ Message saved for ticket ${ticket.id}`);
 
-            // Send auto message if new ticket
+            // Send auto message if new ticket - try AI chatbot first
             if (isNewTicket) {
-              console.log("🤖 New ticket detected, sending welcome message");
+              console.log("🤖 New ticket detected, trying AI chatbot...");
+              
               try {
+                const chatbotResponse = await supabaseAdmin.functions.invoke("ai-chatbot", {
+                  body: {
+                    message: messageText,
+                    tenantId: tenantId,
+                    contactId: contact.id,
+                    ticketId: ticket.id,
+                    channel: "whatsapp"
+                  }
+                });
+                
+                if (chatbotResponse.data?.shouldRespond && chatbotResponse.data?.response) {
+                  console.log("🤖 AI Chatbot responded:", chatbotResponse.data.intent);
+                  
+                  await supabaseAdmin.functions.invoke("send-waba-message", {
+                    body: {
+                      channelId: channel.id,
+                      phoneNumber: phoneNumber,
+                      message: chatbotResponse.data.response,
+                    },
+                  });
+                  
+                  if (!chatbotResponse.data.transferToAgent) {
+                    console.log("✅ AI handled the message, no agent transfer needed");
+                  }
+                } else {
+                  // Fallback to regular auto message
+                  await supabaseAdmin.functions.invoke("send-auto-message", {
+                    body: {
+                      channelId: channel.id,
+                      contactId: contact.id,
+                      ticketId: ticket.id,
+                      messageType: "greeting",
+                    },
+                  });
+                }
+              } catch (chatbotError) {
+                console.log("⚠️ AI Chatbot not available, using standard flow:", chatbotError);
                 await supabaseAdmin.functions.invoke("send-auto-message", {
                   body: {
                     channelId: channel.id,
@@ -369,8 +407,6 @@ serve(async (req) => {
                     messageType: "greeting",
                   },
                 });
-              } catch (autoError) {
-                console.error("⚠️ Error sending auto message:", autoError);
               }
             }
           }

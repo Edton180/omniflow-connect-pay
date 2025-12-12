@@ -403,9 +403,44 @@ serve(async (req) => {
         .eq("is_active", true)
         .maybeSingle();
 
-      // Novo ticket: enviar saudação + menu
+      // Novo ticket: enviar saudação + menu OU chatbot IA
       if (isNewTicket) {
         console.log("🤖 Novo ticket detectado");
+        
+        // Tentar usar chatbot com IA primeiro
+        try {
+          console.log("🤖 Tentando chatbot IA...");
+          const chatbotResponse = await supabaseAdmin.functions.invoke("ai-chatbot", {
+            body: {
+              message: messageContent,
+              tenantId: tenantId,
+              contactId: contact.id,
+              ticketId: ticket.id,
+              channel: "telegram"
+            }
+          });
+          
+          if (chatbotResponse.data?.shouldRespond && chatbotResponse.data?.response) {
+            console.log("🤖 Chatbot IA respondeu:", chatbotResponse.data.intent);
+            
+            await supabaseAdmin.functions.invoke("send-telegram-media", {
+              body: {
+                chatId: chatId,
+                message: chatbotResponse.data.response,
+              },
+            });
+            
+            // Se não transferir, não mostrar menu
+            if (!chatbotResponse.data.transferToAgent) {
+              return new Response(JSON.stringify({ ok: true }), {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 200,
+              });
+            }
+          }
+        } catch (chatbotError) {
+          console.log("⚠️ Chatbot IA não disponível, usando fluxo padrão:", chatbotError);
+        }
         
         try {
           if (activeMenu) {
