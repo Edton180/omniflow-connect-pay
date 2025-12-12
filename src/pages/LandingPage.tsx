@@ -28,6 +28,21 @@ const Index = () => {
     fetchSettings();
   }, []);
 
+  // Aplicar favicon e meta tags dinamicamente
+  useEffect(() => {
+    if (settings?.favicon_url) {
+      const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+      if (link) link.href = settings.favicon_url;
+    }
+    if (settings?.meta_description) {
+      const meta = document.querySelector("meta[name='description']") as HTMLMetaElement;
+      if (meta) meta.content = settings.meta_description;
+    }
+    if (settings?.hero_title) {
+      document.title = settings.hero_title;
+    }
+  }, [settings]);
+
   const fetchSettings = async () => {
     try {
       const { data, error } = await supabase
@@ -59,21 +74,6 @@ const Index = () => {
   const Feature2Icon = getIcon(settings.feature_2_icon);
   const Feature3Icon = getIcon(settings.feature_3_icon);
   const Feature4Icon = getIcon(settings.feature_4_icon || 'Bot');
-
-  // Aplicar favicon e meta tags dinamicamente
-  useEffect(() => {
-    if (settings?.favicon_url) {
-      const link = document.querySelector("link[rel='icon']") as HTMLLinkElement;
-      if (link) link.href = settings.favicon_url;
-    }
-    if (settings?.meta_description) {
-      const meta = document.querySelector("meta[name='description']") as HTMLMetaElement;
-      if (meta) meta.content = settings.meta_description;
-    }
-    if (settings?.hero_title) {
-      document.title = settings.hero_title;
-    }
-  }, [settings]);
 
   return (
     <div className="min-h-screen bg-background">

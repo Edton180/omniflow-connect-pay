@@ -27,7 +27,12 @@ import {
   Bot,
   Send,
   FileCode,
-  Webhook
+  Webhook,
+  Download,
+  Receipt,
+  User,
+  BarChart2,
+  MessageSquarePlus
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -65,6 +70,11 @@ const adminItems: NavItem[] = [
   { title: "Faturas", href: "/tenant/invoices", icon: FileText, roles: ["tenant_admin"] },
   { title: "Integração N8N", href: "/n8n-integration", icon: Webhook, roles: ["tenant_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["tenant_admin"] },
+  { title: "Analytics Avançado", href: "/advanced-analytics", icon: BarChart2, roles: ["tenant_admin"] },
+  { title: "Chatbot com IA", href: "/chatbot-settings", icon: Bot, roles: ["tenant_admin"] },
+  { title: "Exportar Relatórios", href: "/export-reports", icon: Download, roles: ["tenant_admin"] },
+  { title: "Transações", href: "/transactions", icon: Receipt, roles: ["tenant_admin"] },
+  { title: "WebChat Setup", href: "/webchat-setup", icon: MessageSquarePlus, roles: ["tenant_admin"] },
 ];
 
 // Painel Super Admin - métricas e gestão global do sistema
@@ -86,6 +96,10 @@ const superAdminItems: NavItem[] = [
   { title: "Todas Faturas", href: "/admin/invoices", icon: FileText, roles: ["super_admin"] },
   { title: "Relatórios de Agentes", href: "/agent-reports", icon: Activity, roles: ["super_admin"] },
   { title: "Logs de Auditoria", href: "/audit-logs", icon: Shield, roles: ["super_admin"] },
+  { title: "Analytics Avançado", href: "/advanced-analytics", icon: BarChart2, roles: ["super_admin"] },
+  { title: "Chatbot com IA", href: "/chatbot-settings", icon: Bot, roles: ["super_admin"] },
+  { title: "Exportar Relatórios", href: "/export-reports", icon: Download, roles: ["super_admin"] },
+  { title: "WebChat Setup", href: "/webchat-setup", icon: MessageSquarePlus, roles: ["super_admin"] },
 ];
 
 export function AppSidebar() {
