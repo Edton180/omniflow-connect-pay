@@ -17,7 +17,7 @@
 **Configuração**:
 1. **Token de Acesso**: Obtenha no Meta Business Manager
 2. **Phone Number ID**: ID do número de telefone configurado
-3. **Webhook URL**: `https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/waba-webhook`
+3. **Webhook URL**: Configure nas Edge Functions do projeto
 
 **Verificação do Webhook**:
 ```bash
@@ -49,7 +49,7 @@ Response: CHALLENGE (plain text)
 **Configuração**:
 1. **Page Access Token**: Token da página com permissão `pages_messaging`
 2. **App Secret**: Para validar assinatura do webhook
-3. **Webhook URL**: `https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/facebook-webhook`
+3. **Webhook URL**: Configure nas Edge Functions do projeto
 
 **Validação de Assinatura**:
 ```javascript
@@ -88,7 +88,7 @@ if (signature !== `sha256=${expectedSignature}`) {
 # Configurar webhook
 POST https://api.telegram.org/bot<TOKEN>/setWebhook
 {
-  "url": "https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/telegram-webhook",
+  "url": "https://seu-projeto.supabase.co/functions/v1/telegram-webhook",
   "allowed_updates": ["message", "callback_query"],
   "drop_pending_updates": true
 }
@@ -125,80 +125,6 @@ GET https://api.telegram.org/bot<TOKEN>/getWebhookInfo
 
 ---
 
-### Evolution API (WhatsApp Multi-Device)
-
-**Documentação**: Fornecida pelo seu provedor
-
-**Configuração**:
-1. **API Key**: Chave de autenticação da instância
-2. **Instance Name**: Nome da instância criada
-3. **Webhook URL**: Configure nas settings da instância
-
-**Endpoints Importantes**:
-```bash
-# Criar instância
-POST /instance/create
-{
-  "instanceName": "omniflow-instance",
-  "qrcode": true,
-  "webhook": {
-    "url": "https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/evolution-whatsapp",
-    "events": ["messages.upsert", "connection.update"]
-  }
-}
-
-# Verificar status
-GET /instance/connectionState/{instanceName}
-
-# Enviar mensagem
-POST /message/sendText/{instanceName}
-{
-  "number": "5511999999999",
-  "text": "Olá!"
-}
-```
-
-**Problemas Comuns**:
-- ❌ QR Code não escaneado
-- ❌ Instância desconectada
-- ❌ API Key incorreta
-- ❌ Webhook não configurado corretamente
-
----
-
-### Baileys (Open-Source WhatsApp)
-
-**Documentação**: [Baileys Wiki](https://github.com/WhiskeySockets/Baileys)
-
-**Configuração**:
-1. **Session Storage**: Salvar estado da sessão no banco
-2. **QR Code**: Gerar e escanear para autenticação
-
-**Implementação Crítica**:
-```typescript
-// Salvar estado da sessão
-const saveCreds = async () => {
-  await supabase
-    .from('baileys_sessions')
-    .upsert({
-      channel_id: channelId,
-      session_data: JSON.stringify(state.creds),
-      status: 'connected'
-    });
-};
-
-// Restaurar sessão
-const { auth, saveCreds } = await useMultiFileAuthState('session_id');
-```
-
-**Problemas Comuns**:
-- ❌ Sessão não salva corretamente
-- ❌ Quebra após atualização do WhatsApp
-- ❌ Multi-device não configurado
-- ❌ Falta de tratamento de desconexão
-
----
-
 ## 💳 APIs de Pagamento
 
 ### Stripe
@@ -214,7 +140,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 **Webhook Configuration**:
 ```bash
 # URL do Webhook
-https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/stripe-webhook
+https://seu-projeto.supabase.co/functions/v1/stripe-webhook
 
 # Eventos para assinar:
 - checkout.session.completed
@@ -257,7 +183,7 @@ MERCADOPAGO_WEBHOOK_SECRET=your_secret
 **Webhook Configuration**:
 ```bash
 # URL do Webhook
-https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/mercadopago-webhook
+https://seu-projeto.supabase.co/functions/v1/mercadopago-webhook
 
 # Eventos:
 - payment
@@ -295,7 +221,7 @@ ASAAS_WEBHOOK_TOKEN=unique_token_here
 **Webhook Configuration**:
 ```bash
 # URL do Webhook
-https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/asaas-webhook
+https://seu-projeto.supabase.co/functions/v1/asaas-webhook
 
 # Eventos:
 - PAYMENT_RECEIVED
@@ -339,7 +265,7 @@ INFINITEPAY_WEBHOOK_SECRET=...
 **Webhook Configuration**:
 ```bash
 # URL do Webhook
-https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/infinitepay-webhook
+https://seu-projeto.supabase.co/functions/v1/infinitepay-webhook
 
 # Eventos:
 - charge.paid
@@ -368,7 +294,7 @@ const expectedSignature = crypto
 **1. URL Acessível?**
 ```bash
 # Testar URL externamente
-curl -X POST https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/telegram-webhook \
+curl -X POST https://seu-projeto.supabase.co/functions/v1/telegram-webhook \
   -H "Content-Type: application/json" \
   -d '{"test": true}'
 
@@ -378,10 +304,10 @@ curl -X POST https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/telegram-webh
 **2. HTTPS Válido?**
 ```bash
 # Verificar certificado SSL
-openssl s_client -connect yfseeexwafzmezufwdxq.supabase.co:443 -servername yfseeexwafzmezufwdxq.supabase.co
+openssl s_client -connect seu-projeto.supabase.co:443 -servername seu-projeto.supabase.co
 
 # Verificar cadeia completa
-curl -vI https://yfseeexwafzmezufwdxq.supabase.co/functions/v1/telegram-webhook
+curl -vI https://seu-projeto.supabase.co/functions/v1/telegram-webhook
 ```
 
 **3. Tempo de Resposta < 5s?**
@@ -424,10 +350,6 @@ WHERE tenant_id = 'YOUR_TENANT_ID';
 ```bash
 # Telegram
 curl https://api.telegram.org/bot<TOKEN>/getWebhookInfo
-
-# Evolution API
-curl https://your-evolution.com/instance/webhook/{instanceName} \
-  -H "apikey: YOUR_KEY"
 ```
 
 **3. Contato Criado?**
@@ -493,12 +415,10 @@ ORDER BY created_at DESC;
 
 #### Assinaturas Não Renovam
 
-**1. Cron Job Ativo?**
+**1. Edge Function de Expiração Ativa?**
 ```sql
--- Verificar se cron está configurado
-SELECT * FROM cron.job;
-
--- Deve existir job para check-expired-subscriptions
+-- Verificar se check-expired-subscriptions está sendo chamada
+-- Lovable → Backend → Edge Functions → check-expired-subscriptions
 ```
 
 **2. Fatura Gerada Automaticamente?**
@@ -551,8 +471,8 @@ AND is_active = true;
 
 ### Geral
 
-- [ ] Todos os secrets configurados no Supabase
-- [ ] Cron job para expiração ativo
+- [ ] Todos os secrets configurados
+- [ ] Edge function para expiração ativa
 - [ ] RLS policies permitem operações
 - [ ] Logs não mostram erros 500
 - [ ] Testes manuais passando
@@ -590,4 +510,4 @@ Use o **MessageTester** em `/channel-settings` para:
 
 ---
 
-**Última Atualização**: 2025-10-21
+**Última Atualização**: 2025-12-12

@@ -4,6 +4,7 @@
 [![React](https://img.shields.io/badge/React-18-61DAFB.svg)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6.svg)](https://www.typescriptlang.org/)
 [![Lovable](https://img.shields.io/badge/Built%20with-Lovable-ff69b4.svg)](https://lovable.dev)
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg)](CHANGELOG.md)
 
 Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (WhatsApp, Email, Telegram, Instagram, Facebook) e gestão de tickets.
 
@@ -15,28 +16,26 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Gestão de tenants pelo Super Admin
 
 ### Atendimento Omnichannel
-- ✅ **WhatsApp via Baileys**: Conexão QR Code gratuita
-- ✅ **WhatsApp via Evolution API**: Solução profissional escalável
-- ✅ **WhatsApp Business API**: Integração oficial
-- ✅ **Email**: SMTP configurável
-- ✅ **Telegram**: Bot integration
-- ✅ **Instagram**: Direct Messages
-- ✅ **Facebook**: Messenger
-- ✅ **WebChat**: Widget para seu site
+- ✅ **WhatsApp Business API**: Integração oficial via Cloud API
+- ✅ **Email**: SMTP configurável por tenant
+- ✅ **Telegram**: Bot integration com webhooks
+- ✅ **Instagram**: Direct Messages via Graph API
+- ✅ **Facebook**: Messenger Platform
+- ✅ **WebChat**: Widget personalizável para seu site
 
 ### Sistema de Tickets
 - ✅ Gestão completa de atendimentos
-- ✅ Chat em tempo real (Supabase Realtime)
+- ✅ Chat em tempo real (Realtime WebSocket)
 - ✅ Histórico de mensagens
 - ✅ Status e prioridades
-- ✅ Atribuição de agentes
+- ✅ Atribuição automática de agentes
 - ✅ Encaminhamento para filas/agentes/bot
 
 ### Filas & Distribuição
 - ✅ Filas customizáveis por tenant
 - ✅ SLA configurável
 - ✅ Cores e identificação visual
-- ✅ Distribuição inteligente
+- ✅ Distribuição round-robin inteligente
 
 ### Pagamentos Integrados
 - ✅ **ASAAS**: Gateway brasileiro
@@ -46,7 +45,7 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Sistema de planos e assinaturas
 - ✅ **Sistema de Faturas**: Geração e pagamento automático
 - ✅ **Controle de Vencimentos**: Alertas de faturas vencidas
-- ✅ **Dashboard de Receita**: Gráficos e relatórios financeiros em tempo real
+- ✅ **Dashboard de Receita**: Gráficos e relatórios financeiros
 
 ### Marca Branca (White Label)
 - ✅ Upload de logo personalizado
@@ -55,14 +54,20 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Favicon e meta tags configuráveis
 - ✅ Landing page totalmente editável
 
+### Inteligência Artificial
+- ✅ **Lovable AI**: IA integrada sem necessidade de API key
+- ✅ Sugestões de respostas automáticas
+- ✅ Análise de sentimento
+- ✅ Resumo de conversas
+- ✅ Base de conhecimento inteligente
+
 ### Dashboard & Analytics
 - ✅ Métricas em tempo real
 - ✅ Gráficos de tickets
 - ✅ Status de canais
 - ✅ Estatísticas de performance
 - ✅ **Dashboard de Receita**: Análise financeira completa
-- ✅ **Gráficos de Faturamento**: Visualização de receitas e pagamentos
-- ✅ **Relatórios Financeiros**: Exportação e análise de dados
+- ✅ **Logs de Auditoria**: Rastreamento completo de ações
 
 ## 🛠️ Stack Tecnológico
 
@@ -75,8 +80,8 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - **React Router** - Routing
 
 ### Backend
-- **Lovable Cloud** (Supabase)
-- **PostgreSQL** - Database
+- **Lovable Cloud** (PostgreSQL)
+- **Edge Functions** - Serverless functions
 - **Row Level Security** - Security
 - **Realtime** - WebSocket subscriptions
 - **Storage** - File uploads
@@ -92,7 +97,7 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 ### 📚 Guias Completos de Instalação
 
 - **[INSTALLATION.md](INSTALLATION.md)** - Guia completo passo a passo
-- **[DEPLOY.md](DEPLOY.md)** - Deploy em produção (VPS, Docker, Portainer)
+- **[DEPLOY.md](DEPLOY.md)** - Deploy em produção (VPS, Docker)
 - **[MANUAL_INSTALL_CPANEL.md](MANUAL_INSTALL_CPANEL.md)** - Instalação em cPanel
 - **[MANUAL_INSTALL_VIRTUALBOX.md](MANUAL_INSTALL_VIRTUALBOX.md)** - Instalação em VirtualBox
 
@@ -156,7 +161,7 @@ npm run dev
 ### Variáveis de Ambiente
 
 ```env
-# Supabase (Lovable Cloud) - Estas são configuradas automaticamente pelo Lovable
+# Lovable Cloud - Configuradas automaticamente pelo Lovable
 VITE_SUPABASE_URL=https://seu-projeto.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sua-chave-publica
 VITE_SUPABASE_PROJECT_ID=seu-project-id
@@ -171,14 +176,13 @@ NODE_ENV=production
 2. Clique em **Criar Conta** ou **Começar Agora**
 3. Preencha seus dados (email, senha e nome completo)
 4. O primeiro usuário será automaticamente configurado como **Super Admin**
-5. Você será redirecionado para a página de setup onde poderá configurar seu perfil
+5. Você será redirecionado para a página de setup
 6. Após o setup, acesse o painel Super Admin para:
-   - Configurar Evolution API (se usar WhatsApp)
+   - Configurar canais de atendimento
    - Criar tenants (empresas)
    - Configurar planos e preços
    - Personalizar a landing page
    - Gerenciar gateways de pagamento
-   - Acompanhar receitas e faturamento
 
 ## 🚀 Deploy
 
@@ -224,6 +228,7 @@ docker-compose down
 - **[WEBHOOK_SETUP_GUIDE.md](WEBHOOK_SETUP_GUIDE.md)** - Configuração de Webhooks
 - **[INTEGRATION_GUIDE.md](INTEGRATION_GUIDE.md)** - Guia de Integrações
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Como contribuir
+- **[CHANGELOG.md](CHANGELOG.md)** - Histórico de versões
 
 ---
 
@@ -245,9 +250,9 @@ omniflow/
 │   ├── hooks/              # Custom hooks
 │   ├── integrations/       # Integrações (Supabase)
 │   └── lib/                # Utilitários
-├── scripts/                # Scripts de deploy/manutenção
 ├── supabase/               # Configuração Supabase
 │   └── functions/          # Edge Functions
+├── scripts/                # Scripts de deploy/manutenção
 ├── Dockerfile              # Docker image
 ├── docker-compose.yml      # Orquestração
 ├── nginx.conf              # Nginx config
@@ -258,10 +263,11 @@ omniflow/
 
 - **Row Level Security (RLS)** em todas as tabelas
 - **Isolamento completo** entre tenants
-- **Autenticação** via Supabase Auth
+- **Autenticação** via Auth integrado
 - **Storage seguro** com RLS policies
 - **HTTPS** obrigatório em produção
 - **Rate limiting** configurado no Nginx
+- **Logs de Auditoria** para rastreamento
 
 ## 📈 Performance
 
@@ -303,12 +309,11 @@ Contribuições são bem-vindas! Por favor, leia nosso [Guia de Contribuição](
 
 ## 🗺️ Roadmap
 
-- [ ] **Automações**: Chatbots e respostas automáticas
+- [ ] **Automações Avançadas**: Workflows customizáveis
 - [ ] **CRM Integration**: HubSpot, Salesforce, Pipedrive
 - [ ] **App Mobile**: React Native para iOS e Android
 - [ ] **API Pública**: REST API documentada
-- [ ] **Webhooks**: Webhooks customizáveis
-- [ ] **Templates**: Templates de mensagens
+- [ ] **Templates**: Templates de mensagens avançados
 - [ ] **Reports**: Relatórios avançados e exportação
 - [ ] **ERP Integration**: Integração com ERPs
 
@@ -325,7 +330,6 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 ## 🙏 Agradecimentos
 
 - [Lovable](https://lovable.dev) - Plataforma de desenvolvimento
-- [Supabase](https://supabase.com) - Backend as a Service
 - [shadcn/ui](https://ui.shadcn.com) - Component library
 - [Tailwind CSS](https://tailwindcss.com) - CSS framework
 
@@ -333,7 +337,7 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 **Desenvolvido com ❤️ para revolucionar o atendimento ao cliente**
 
-**Status do Projeto**: ✅ Todas as 6 fases implementadas
+**Status do Projeto**: ✅ Versão 1.0.0 - Pronto para Produção
 
 - ✅ Fase 1: Fundação Multi-tenant
 - ✅ Fase 2: Sistema de Atendimento
