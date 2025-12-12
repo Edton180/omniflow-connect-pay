@@ -7,26 +7,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, Trash2 } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
+import { LanguageSelector } from "@/components/LanguageSelector";
+import { Zap } from "lucide-react";
 import { z } from "zod";
-import { supabase } from "@/integrations/supabase/client";
-
-const authSchema = z.object({
-  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
-  password: z.string().min(6, "Senha deve ter no mínimo 6 caracteres"),
-  fullName: z.string().min(2, "Nome deve ter no mínimo 2 caracteres").optional(),
-});
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const navigate = useNavigate();
   const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
+  const { t } = useLanguage();
+
+  const authSchema = z.object({
+    email: z.string().email(t('auth.invalidEmail')).min(1, t('auth.emailRequired')),
+    password: z.string().min(6, t('auth.passwordMin')),
+    fullName: z.string().min(2, t('auth.nameMin')).optional(),
+  });
 
   useEffect(() => {
     if (user) {
@@ -40,7 +41,6 @@ const Auth = () => {
     setErrors({});
 
     try {
-      // Validate input
       const validatedData = authSchema.parse({ email, password, fullName });
 
       const { error } = await signUp(validatedData.email, validatedData.password, validatedData.fullName || "");
@@ -48,21 +48,20 @@ const Auth = () => {
       if (error) {
         if (error.message.includes("already registered")) {
           toast({
-            title: "Email já cadastrado",
-            description: "Este email já está em uso. Tente fazer login.",
+            title: t('auth.emailAlreadyRegistered'),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Erro ao criar conta",
+            title: t('auth.signupError'),
             description: error.message,
             variant: "destructive",
           });
         }
       } else {
         toast({
-          title: "Conta criada com sucesso!",
-          description: "Você foi autenticado automaticamente.",
+          title: t('auth.accountCreated'),
+          description: t('auth.autoAuthenticated'),
         });
         navigate("/dashboard");
       }
@@ -87,7 +86,6 @@ const Auth = () => {
     setErrors({});
 
     try {
-      // Validate input
       const validatedData = authSchema.omit({ fullName: true }).parse({ email, password });
 
       const { error } = await signIn(validatedData.email, validatedData.password);
@@ -95,21 +93,19 @@ const Auth = () => {
       if (error) {
         if (error.message.includes("Invalid login credentials")) {
           toast({
-            title: "Credenciais inválidas",
-            description: "Email ou senha incorretos.",
+            title: t('auth.invalidCredentials'),
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Erro ao fazer login",
+            title: t('auth.loginError'),
             description: error.message,
             variant: "destructive",
           });
         }
       } else {
         toast({
-          title: "Login realizado!",
-          description: "Bem-vindo de volta.",
+          title: t('auth.welcomeBack'),
         });
         navigate("/dashboard");
       }
@@ -128,11 +124,13 @@ const Auth = () => {
     }
   };
 
-  // Função de deletar usuários removida por segurança
-  // Use o painel de administração do backend para operações sensíveis
-
   return (
     <div className="min-h-screen gradient-hero flex items-center justify-center p-4">
+      {/* Language Selector - Fixed Position */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector variant="outline" />
+      </div>
+
       <div className="w-full max-w-md space-y-4">
         <div className="text-center">
           <div className="inline-flex items-center gap-2 mb-4">
@@ -149,32 +147,32 @@ const Auth = () => {
             variant="outline"
             className="w-full"
           >
-            🔄 Limpar Sessão e Fazer Logout
+            🔄 {t('auth.clearSession')}
           </Button>
         </div>
 
         <Card className="border-border/50 shadow-xl">
           <CardHeader>
-            <CardTitle>Bem-vindo</CardTitle>
+            <CardTitle>{t('auth.welcome')}</CardTitle>
             <CardDescription>
-              Entre ou crie sua conta para começar
+              {t('auth.loginSubtitle')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="signin">Login</TabsTrigger>
-                <TabsTrigger value="signup">Criar Conta</TabsTrigger>
+                <TabsTrigger value="signin">{t('auth.login')}</TabsTrigger>
+                <TabsTrigger value="signup">{t('auth.createAccount')}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">Email</Label>
+                    <Label htmlFor="signin-email">{t('auth.email')}</Label>
                     <Input
                       id="signin-email"
                       type="email"
-                      placeholder="seu@email.com"
+                      placeholder={t('auth.emailPlaceholder')}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -184,11 +182,11 @@ const Auth = () => {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Senha</Label>
+                    <Label htmlFor="signin-password">{t('auth.password')}</Label>
                     <Input
                       id="signin-password"
                       type="password"
-                      placeholder="••••••••"
+                      placeholder={t('auth.passwordPlaceholder')}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -202,7 +200,7 @@ const Auth = () => {
                     className="w-full gradient-primary"
                     disabled={loading}
                   >
-                    {loading ? "Entrando..." : "Entrar"}
+                    {loading ? t('auth.signingIn') : t('auth.signIn')}
                   </Button>
                 </form>
               </TabsContent>
@@ -210,29 +208,29 @@ const Auth = () => {
               <TabsContent value="signup">
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Para criar uma nova conta com dados completos da empresa:
+                    {t('auth.fullSignup')}:
                   </p>
                   <Button
                     className="w-full gradient-primary"
                     onClick={() => navigate("/signup")}
                   >
-                    Cadastro Completo
+                    {t('auth.fullSignup')}
                   </Button>
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <span className="w-full border-t" />
                     </div>
                     <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-card px-2 text-muted-foreground">ou cadastro rápido</span>
+                      <span className="bg-card px-2 text-muted-foreground">{t('auth.quickSignup')}</span>
                     </div>
                   </div>
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nome Completo</Label>
+                      <Label htmlFor="signup-name">{t('auth.fullName')}</Label>
                       <Input
                         id="signup-name"
                         type="text"
-                        placeholder="Seu nome"
+                        placeholder={t('auth.fullNamePlaceholder')}
                         value={fullName}
                         onChange={(e) => setFullName(e.target.value)}
                         required
@@ -242,11 +240,11 @@ const Auth = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">Email</Label>
+                      <Label htmlFor="signup-email">{t('auth.email')}</Label>
                       <Input
                         id="signup-email"
                         type="email"
-                        placeholder="seu@email.com"
+                        placeholder={t('auth.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -256,11 +254,11 @@ const Auth = () => {
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Senha</Label>
+                      <Label htmlFor="signup-password">{t('auth.password')}</Label>
                       <Input
                         id="signup-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t('auth.passwordPlaceholder')}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -276,7 +274,7 @@ const Auth = () => {
                       variant="outline"
                       disabled={loading}
                     >
-                      {loading ? "Criando..." : "Criar Conta Simples"}
+                      {loading ? t('auth.creatingAccount') : t('auth.createAccount')}
                     </Button>
                   </form>
                 </div>
