@@ -15,9 +15,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, Brain, Save, Key, CheckCircle2, XCircle, Loader2, Wifi, BookOpen, Wand2 } from "lucide-react";
+import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, Brain, Save, Key, CheckCircle2, XCircle, Loader2, Wifi, BookOpen, Wand2, FileDown, AlertCircle } from "lucide-react";
 import { KnowledgeBaseTab } from "@/components/chatbot/KnowledgeBaseTab";
 import { MessageAssistantTab } from "@/components/chatbot/MessageAssistantTab";
+import { IntentTemplates, INTENT_TEMPLATES, IntentTemplate } from "@/components/chatbot/IntentTemplates";
+import { LovableAICard } from "@/components/chatbot/LovableAICard";
 
 interface ChatbotIntent {
   id: string;
@@ -80,6 +82,7 @@ export default function ChatbotSettings() {
   });
   
   const [intentDialogOpen, setIntentDialogOpen] = useState(false);
+  const [templatesDialogOpen, setTemplatesDialogOpen] = useState(false);
   const [editingIntent, setEditingIntent] = useState<ChatbotIntent | null>(null);
   const [intentForm, setIntentForm] = useState({
     name: "",
@@ -354,6 +357,35 @@ export default function ChatbotSettings() {
     }
   };
 
+  const importIntentTemplates = async (templates: IntentTemplate[]) => {
+    if (!tenantId) return;
+    
+    try {
+      const intentsToInsert = templates.map(template => ({
+        tenant_id: tenantId,
+        name: template.name,
+        description: template.description,
+        examples: template.examples,
+        response: template.response,
+        action: template.action,
+        confidence_threshold: 0.8,
+        is_active: true
+      }));
+
+      const { error } = await supabase
+        .from("chatbot_intents")
+        .insert(intentsToInsert);
+
+      if (error) throw error;
+
+      toast.success(`${templates.length} intenção(ões) importada(s) com sucesso!`);
+      loadData();
+    } catch (error) {
+      toast.error("Erro ao importar templates");
+      console.error(error);
+    }
+  };
+
   const toggleChannel = (channel: string) => {
     setSettings(prev => ({
       ...prev,
@@ -581,20 +613,43 @@ export default function ChatbotSettings() {
                   </CardTitle>
                   <CardDescription>Configure as respostas automáticas por intenção</CardDescription>
                 </div>
-                <Button onClick={() => openIntentDialog()}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Intenção
-                </Button>
+                <div className="flex gap-2">
+                  <Button variant="outline" onClick={() => setTemplatesDialogOpen(true)}>
+                    <FileDown className="h-4 w-4 mr-2" />
+                    Templates
+                  </Button>
+                  <Button onClick={() => openIntentDialog()}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Nova Intenção
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {intents.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <Bot className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p>Nenhuma intenção configurada.</p>
-                    <p className="text-sm">Adicione intenções para o chatbot responder automaticamente.</p>
+                    <p className="text-sm">Adicione intenções ou importe templates prontos.</p>
+                    <Button 
+                      variant="outline" 
+                      className="mt-4"
+                      onClick={() => setTemplatesDialogOpen(true)}
+                    >
+                      <FileDown className="h-4 w-4 mr-2" />
+                      Importar Templates
+                    </Button>
                   </div>
                 ) : (
-                  <Table>
+                  <>
+                    {intents.some(i => i.examples.length < 3) && (
+                      <div className="flex items-center gap-2 p-3 mb-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400">
+                        <AlertCircle className="h-5 w-5" />
+                        <span className="text-sm">
+                          Algumas intenções têm poucos exemplos. Adicione mais exemplos para melhorar a precisão.
+                        </span>
+                      </div>
+                    )}
+                    <Table>
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nome</TableHead>
@@ -636,6 +691,7 @@ export default function ChatbotSettings() {
                       ))}
                     </TableBody>
                   </Table>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -656,6 +712,9 @@ export default function ChatbotSettings() {
 
           {/* Tab Provedores de IA */}
           <TabsContent value="ai-providers" className="space-y-6">
+            {/* Lovable AI Card - Recomendado */}
+            <LovableAICard />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -1001,6 +1060,14 @@ export default function ChatbotSettings() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Intent Templates Dialog */}
+        <IntentTemplates
+          open={templatesDialogOpen}
+          onOpenChange={setTemplatesDialogOpen}
+          onImport={importIntentTemplates}
+          existingIntents={intents.map(i => i.name)}
+        />
       </div>
     </AppLayout>
   );

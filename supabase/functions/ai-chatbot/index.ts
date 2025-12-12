@@ -113,7 +113,6 @@ async function callLovableAI(apiKey: string, systemPrompt: string, userMessage: 
         { role: "system", content: systemPrompt },
         { role: "user", content: userMessage }
       ],
-      max_tokens: 200,
     }),
   });
 
@@ -121,11 +120,36 @@ async function callLovableAI(apiKey: string, systemPrompt: string, userMessage: 
     if (response.status === 429) {
       throw new Error("Rate limit exceeded");
     }
+    if (response.status === 402) {
+      throw new Error("Payment required - add credits to Lovable workspace");
+    }
     throw new Error(`Lovable AI error: ${response.status}`);
   }
 
   const data = await response.json();
   return data.choices?.[0]?.message?.content || "";
+}
+
+// Get knowledge base for context
+async function getKnowledgeBase(supabaseAdmin: any, tenantId: string): Promise<string> {
+  const { data: knowledge } = await supabaseAdmin
+    .from("ai_knowledge_base")
+    .select("title, question, answer, content, type")
+    .eq("tenant_id", tenantId)
+    .eq("is_active", true)
+    .order("priority", { ascending: false })
+    .limit(10);
+
+  if (!knowledge || knowledge.length === 0) return "";
+
+  const formattedKnowledge = knowledge.map((item: any) => {
+    if (item.type === "faq") {
+      return `Q: ${item.question}\nA: ${item.answer}`;
+    }
+    return `${item.title || ""}: ${item.content || ""}`;
+  }).join("\n\n");
+
+  return `\n\nBase de Conhecimento:\n${formattedKnowledge}`;
 }
 
 serve(async (req) => {
