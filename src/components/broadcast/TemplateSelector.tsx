@@ -52,6 +52,7 @@ export function TemplateSelector({ channelId, onSelect, onCancel }: TemplateSele
 
       if (error) throw error;
       return data as unknown as WABATemplate[];
+    },
     enabled: !!channelId,
   });
 
