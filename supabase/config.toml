@@ -92,3 +92,6 @@ verify_jwt = false
 
 [functions.ai-chatbot]
 verify_jwt = true
+
+[functions.test-ai-provider]
+verify_jwt = true

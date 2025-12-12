@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, ArrowRightLeft, Brain, Save, Key } from "lucide-react";
+import { Bot, Plus, Pencil, Trash2, Sparkles, MessageSquare, Zap, ArrowRightLeft, Brain, Save, Key, CheckCircle2, XCircle, Loader2, Wifi } from "lucide-react";
 
 interface ChatbotIntent {
   id: string;
@@ -46,11 +46,20 @@ interface AIConfig {
   is_active: boolean;
 }
 
+interface TestResult {
+  success: boolean;
+  message: string;
+  models?: string[];
+  total_models?: number;
+}
+
 export default function ChatbotSettings() {
   const { roles } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingAI, setSavingAI] = useState(false);
+  const [testingProvider, setTestingProvider] = useState<string | null>(null);
+  const [testResults, setTestResults] = useState<Record<string, TestResult | null>>({});
   const [intents, setIntents] = useState<ChatbotIntent[]>([]);
   const [settings, setSettings] = useState<ChatbotSettingsData>({
     is_active: false,
@@ -214,12 +223,49 @@ export default function ChatbotSettings() {
         if (error) throw error;
       }
 
-      toast.success('Configuração de IA salva com sucesso!');
+    toast.success('Configuração de IA salva com sucesso!');
       await loadData();
-    } catch (error: any) {
-      toast.error('Erro ao salvar: ' + error.message);
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+      toast.error('Erro ao salvar: ' + errMsg);
     } finally {
       setSavingAI(false);
+    }
+  };
+
+  const testAIConnection = async (provider: 'openai' | 'google' | 'xai') => {
+    const config = aiConfigs[provider];
+    if (!config.api_key_encrypted.trim()) {
+      toast.error('Por favor, insira a API Key primeiro');
+      return;
+    }
+
+    setTestingProvider(provider);
+    setTestResults(prev => ({ ...prev, [provider]: null }));
+
+    try {
+      const { data, error } = await supabase.functions.invoke('test-ai-provider', {
+        body: { provider, api_key: config.api_key_encrypted }
+      });
+
+      if (error) throw error;
+
+      setTestResults(prev => ({ ...prev, [provider]: data }));
+
+      if (data?.success) {
+        toast.success(`✅ ${data.message}`);
+      } else {
+        toast.error(`❌ ${data?.message || 'Falha na conexão'}`);
+      }
+    } catch (error: unknown) {
+      const errMsg = error instanceof Error ? error.message : 'Erro ao testar conexão';
+      setTestResults(prev => ({ 
+        ...prev, 
+        [provider]: { success: false, message: errMsg } 
+      }));
+      toast.error(`❌ ${errMsg}`);
+    } finally {
+      setTestingProvider(null);
     }
   };
 
@@ -610,6 +656,31 @@ export default function ChatbotSettings() {
                     }
                   />
                 </div>
+                
+                {testResults.openai && (
+                  <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                    testResults.openai.success 
+                      ? 'bg-green-500/10 border border-green-500/20' 
+                      : 'bg-destructive/10 border border-destructive/20'
+                  }`}>
+                    {testResults.openai.success ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    )}
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${testResults.openai.success ? 'text-green-500' : 'text-destructive'}`}>
+                        {testResults.openai.message}
+                      </p>
+                      {testResults.openai.models && testResults.openai.models.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Modelos: {testResults.openai.models.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -621,10 +692,24 @@ export default function ChatbotSettings() {
                     />
                     <Label htmlFor="openai-active">Ativar OpenAI</Label>
                   </div>
-                  <Button onClick={() => saveAIConfig('openai')} disabled={savingAI}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => testAIConnection('openai')} 
+                      disabled={testingProvider === 'openai' || !aiConfigs.openai.api_key_encrypted.trim()}
+                    >
+                      {testingProvider === 'openai' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wifi className="mr-2 h-4 w-4" />
+                      )}
+                      Testar
+                    </Button>
+                    <Button onClick={() => saveAIConfig('openai')} disabled={savingAI}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -653,6 +738,31 @@ export default function ChatbotSettings() {
                     }
                   />
                 </div>
+                
+                {testResults.google && (
+                  <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                    testResults.google.success 
+                      ? 'bg-green-500/10 border border-green-500/20' 
+                      : 'bg-destructive/10 border border-destructive/20'
+                  }`}>
+                    {testResults.google.success ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    )}
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${testResults.google.success ? 'text-green-500' : 'text-destructive'}`}>
+                        {testResults.google.message}
+                      </p>
+                      {testResults.google.models && testResults.google.models.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Modelos: {testResults.google.models.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -664,10 +774,24 @@ export default function ChatbotSettings() {
                     />
                     <Label htmlFor="google-active">Ativar Gemini</Label>
                   </div>
-                  <Button onClick={() => saveAIConfig('google')} disabled={savingAI}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => testAIConnection('google')} 
+                      disabled={testingProvider === 'google' || !aiConfigs.google.api_key_encrypted.trim()}
+                    >
+                      {testingProvider === 'google' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wifi className="mr-2 h-4 w-4" />
+                      )}
+                      Testar
+                    </Button>
+                    <Button onClick={() => saveAIConfig('google')} disabled={savingAI}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -696,6 +820,31 @@ export default function ChatbotSettings() {
                     }
                   />
                 </div>
+                
+                {testResults.xai && (
+                  <div className={`flex items-center gap-2 p-3 rounded-lg ${
+                    testResults.xai.success 
+                      ? 'bg-green-500/10 border border-green-500/20' 
+                      : 'bg-destructive/10 border border-destructive/20'
+                  }`}>
+                    {testResults.xai.success ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    )}
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${testResults.xai.success ? 'text-green-500' : 'text-destructive'}`}>
+                        {testResults.xai.message}
+                      </p>
+                      {testResults.xai.models && testResults.xai.models.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Modelos: {testResults.xai.models.join(', ')}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -707,10 +856,24 @@ export default function ChatbotSettings() {
                     />
                     <Label htmlFor="xai-active">Ativar Grok</Label>
                   </div>
-                  <Button onClick={() => saveAIConfig('xai')} disabled={savingAI}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => testAIConnection('xai')} 
+                      disabled={testingProvider === 'xai' || !aiConfigs.xai.api_key_encrypted.trim()}
+                    >
+                      {testingProvider === 'xai' ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <Wifi className="mr-2 h-4 w-4" />
+                      )}
+                      Testar
+                    </Button>
+                    <Button onClick={() => saveAIConfig('xai')} disabled={savingAI}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
