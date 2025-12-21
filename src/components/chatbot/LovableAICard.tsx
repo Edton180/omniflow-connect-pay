@@ -1,13 +1,16 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Check, Zap, Globe } from "lucide-react";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function LovableAICard() {
+  const { t } = useLanguage();
+
   const models = [
-    { name: "Gemini 2.5 Flash", description: "Rápido e eficiente", recommended: true },
-    { name: "Gemini 2.5 Pro", description: "Alta qualidade" },
-    { name: "GPT-5", description: "Poderoso e versátil" },
-    { name: "GPT-5 Mini", description: "Custo-benefício" },
+    { name: "Gemini 2.5 Flash", description: t('chatbot.modelBalanced'), recommended: true },
+    { name: "Gemini 2.5 Pro", description: t('chatbot.modelQuality') },
+    { name: "GPT-5", description: t('chatbot.modelPowerful') },
+    { name: "GPT-5 Mini", description: t('chatbot.modelCostEffective') },
   ];
 
   return (
@@ -16,10 +19,10 @@ export function LovableAICard() {
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           Lovable AI
-          <Badge className="ml-2 bg-primary">Recomendado</Badge>
+          <Badge className="ml-2 bg-primary">{t('chatbot.recommended')}</Badge>
         </CardTitle>
         <CardDescription>
-          IA integrada e pré-configurada - Não requer API Key
+          {t('chatbot.lovableAIDesc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -27,10 +30,10 @@ export function LovableAICard() {
           <Check className="h-5 w-5 text-green-500" />
           <div>
             <p className="text-sm font-medium text-green-600 dark:text-green-400">
-              Configurado Automaticamente
+              {t('chatbot.autoConfigured')}
             </p>
             <p className="text-xs text-muted-foreground">
-              Pronto para usar, sem configuração adicional
+              {t('chatbot.readyToUse')}
             </p>
           </div>
         </div>
@@ -38,7 +41,7 @@ export function LovableAICard() {
         <div className="space-y-2">
           <h4 className="text-sm font-medium flex items-center gap-2">
             <Globe className="h-4 w-4" />
-            Modelos Disponíveis
+            {t('chatbot.availableModels')}
           </h4>
           <div className="grid grid-cols-2 gap-2">
             {models.map((model) => (
@@ -54,7 +57,7 @@ export function LovableAICard() {
                   <span className="text-sm font-medium">{model.name}</span>
                   {model.recommended && (
                     <Badge variant="outline" className="text-[10px] px-1 py-0">
-                      Padrão
+                      {t('chatbot.default')}
                     </Badge>
                   )}
                 </div>
@@ -67,12 +70,12 @@ export function LovableAICard() {
         <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
           <Zap className="h-4 w-4 text-primary mt-0.5" />
           <div className="text-xs text-muted-foreground">
-            <p className="font-medium text-foreground mb-1">Vantagens:</p>
+            <p className="font-medium text-foreground mb-1">{t('chatbot.advantages')}:</p>
             <ul className="list-disc list-inside space-y-0.5">
-              <li>Sem custo de API externa</li>
-              <li>Latência otimizada</li>
-              <li>Modelos sempre atualizados</li>
-              <li>Fallback automático entre modelos</li>
+              <li>{t('chatbot.noExternalCost')}</li>
+              <li>{t('chatbot.optimizedLatency')}</li>
+              <li>{t('chatbot.alwaysUpdated')}</li>
+              <li>{t('chatbot.autoFallback')}</li>
             </ul>
           </div>
         </div>

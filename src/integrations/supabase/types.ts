@@ -752,14 +752,20 @@ export type Database = {
           auto_translate_enabled: boolean | null
           created_at: string | null
           default_confidence_threshold: number | null
+          default_model: string | null
           enabled_channels: Json | null
           fallback_message: string | null
           id: string
           is_active: boolean | null
+          max_tokens: number | null
+          personality_prompt: string | null
+          rate_limit: number | null
           suggestions_count: number | null
           suggestions_enabled: boolean | null
           suggestions_tone: string | null
+          temperature: number | null
           tenant_id: string
+          tone: string | null
           transfer_message: string | null
           updated_at: string | null
           welcome_message: string | null
@@ -771,14 +777,20 @@ export type Database = {
           auto_translate_enabled?: boolean | null
           created_at?: string | null
           default_confidence_threshold?: number | null
+          default_model?: string | null
           enabled_channels?: Json | null
           fallback_message?: string | null
           id?: string
           is_active?: boolean | null
+          max_tokens?: number | null
+          personality_prompt?: string | null
+          rate_limit?: number | null
           suggestions_count?: number | null
           suggestions_enabled?: boolean | null
           suggestions_tone?: string | null
+          temperature?: number | null
           tenant_id: string
+          tone?: string | null
           transfer_message?: string | null
           updated_at?: string | null
           welcome_message?: string | null
@@ -790,14 +802,20 @@ export type Database = {
           auto_translate_enabled?: boolean | null
           created_at?: string | null
           default_confidence_threshold?: number | null
+          default_model?: string | null
           enabled_channels?: Json | null
           fallback_message?: string | null
           id?: string
           is_active?: boolean | null
+          max_tokens?: number | null
+          personality_prompt?: string | null
+          rate_limit?: number | null
           suggestions_count?: number | null
           suggestions_enabled?: boolean | null
           suggestions_tone?: string | null
+          temperature?: number | null
           tenant_id?: string
+          tone?: string | null
           transfer_message?: string | null
           updated_at?: string | null
           welcome_message?: string | null
