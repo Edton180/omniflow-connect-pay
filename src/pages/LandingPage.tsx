@@ -68,7 +68,7 @@ const Index = () => {
   if (!settings) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Carregando...</div>
+        <div className="animate-pulse">{t('common.loading')}</div>
       </div>
     );
   }
@@ -199,12 +199,12 @@ const Index = () => {
       <section id="features" className="py-24 relative">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 animate-fade-in">
-            <Badge className="mb-4 text-sm px-4 py-2">Recursos</Badge>
+            <Badge className="mb-4 text-sm px-4 py-2">{t('landing.features')}</Badge>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-              Tudo que você precisa em um só lugar
+              {t('landing.featuresTitle')}
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Plataforma completa para gerenciar seu atendimento multicanal com eficiência
+              {t('landing.featuresSubtitle')}
             </p>
           </div>
 
@@ -279,9 +279,9 @@ const Index = () => {
                   style={{ color: settings.secondary_color }}
                 />
               </div>
-              <h3 className="text-2xl font-bold mb-3">{settings.feature_4_title || 'Automações Inteligentes'}</h3>
+              <h3 className="text-2xl font-bold mb-3">{settings.feature_4_title || t('landing.smartAutomations')}</h3>
               <p className="text-muted-foreground leading-relaxed">
-                {settings.feature_4_description || 'Fluxos automatizados com IA para respostas rápidas'}
+                {settings.feature_4_description || t('landing.smartAutomationsDesc')}
               </p>
             </Card>
           </div>
@@ -295,12 +295,12 @@ const Index = () => {
             <div className="text-center mb-16 space-y-4">
               <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-secondary/20">
                 <Shield className="w-3 h-3 mr-2 inline" />
-                Por que escolher
+                {t('landing.whyChoose')}
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold">
-                Sua melhor escolha para
+                {t('landing.whyChooseExcellence')}
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-secondary to-accent">
-                  atendimento de excelência
+                  {t('landing.excellenceService')}
                 </span>
               </h2>
             </div>
@@ -364,12 +364,12 @@ const Index = () => {
             <div className="text-center mb-16 space-y-4">
               <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-accent/20">
                 <Quote className="w-3 h-3 mr-2 inline" />
-                Depoimentos
+                {t('landing.testimonials')}
               </Badge>
               <h2 className="text-4xl md:text-5xl font-bold">
-                O que nossos clientes
+                {t('landing.testimonialsTitle')}
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-accent to-primary">
-                  dizem sobre nós
+                  {t('landing.testimonialsTitleHighlight')}
                 </span>
               </h2>
             </div>
@@ -458,7 +458,7 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-8">
             <Badge variant="outline" className="px-4 py-2 text-sm font-medium border-primary/20">
               <Zap className="w-3 h-3 mr-2 inline" />
-              Comece Agora
+              {t('landing.startNow')}
             </Badge>
             
             <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
@@ -486,7 +486,7 @@ const Index = () => {
                 className="text-lg px-10 py-7 rounded-full hover-scale border-2"
                 onClick={() => navigate('/auth')}
               >
-                Ver Demonstração
+                {t('landing.viewDemo')}
               </Button>
             </div>
 
@@ -494,15 +494,15 @@ const Index = () => {
             <div className="flex flex-wrap items-center justify-center gap-8 pt-8 text-sm text-muted-foreground">
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-primary" />
-                <span>14 dias grátis</span>
+                <span>{t('landing.freeTrial')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-primary" />
-                <span>Cancele quando quiser</span>
+                <span>{t('landing.cancelAnytime')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Check className="w-4 h-4 text-primary" />
-                <span>Sem taxas escondidas</span>
+                <span>{t('landing.noHiddenFees')}</span>
               </div>
             </div>
           </div>
@@ -561,7 +561,7 @@ const Index = () => {
 
             {/* Links Úteis */}
             <div>
-              <h3 className="font-semibold mb-4 text-lg">Links Úteis</h3>
+              <h3 className="font-semibold mb-4 text-lg">{t('landing.footer.usefulLinks')}</h3>
               <ul className="space-y-3">
                 <li>
                   <a 
@@ -600,14 +600,14 @@ const Index = () => {
 
             {/* Suporte */}
             <div>
-              <h3 className="font-semibold mb-4 text-lg">Suporte</h3>
+              <h3 className="font-semibold mb-4 text-lg">{t('landing.footer.support')}</h3>
               <ul className="space-y-3 text-muted-foreground">
                 <li>
                   <a 
                     href={settings.support_help_url || '#'} 
                     className={`hover:text-primary transition-colors ${!settings.support_help_url || settings.support_help_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
                   >
-                    Central de Ajuda
+                    {t('landing.footer.helpCenter')}
                   </a>
                 </li>
                 <li>
@@ -615,7 +615,7 @@ const Index = () => {
                     href={settings.support_docs_url || '#'} 
                     className={`hover:text-primary transition-colors ${!settings.support_docs_url || settings.support_docs_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
                   >
-                    Documentação
+                    {t('landing.footer.documentation')}
                   </a>
                 </li>
                 <li>
@@ -623,7 +623,7 @@ const Index = () => {
                     href={settings.support_status_url || '#'} 
                     className={`hover:text-primary transition-colors ${!settings.support_status_url || settings.support_status_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
                   >
-                    Status do Sistema
+                    {t('landing.footer.systemStatus')}
                   </a>
                 </li>
                 <li>
@@ -631,7 +631,7 @@ const Index = () => {
                     href={settings.support_contact_url || '#'} 
                     className={`hover:text-primary transition-colors ${!settings.support_contact_url || settings.support_contact_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
                   >
-                    Contato
+                    {t('landing.footer.contact')}
                   </a>
                 </li>
               </ul>
@@ -646,19 +646,19 @@ const Index = () => {
                 href={settings.legal_terms_url || '#'} 
                 className={`hover:text-primary transition-colors ${!settings.legal_terms_url || settings.legal_terms_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
               >
-                Termos de Uso
+                {t('landing.footer.termsOfUse')}
               </a>
               <a 
                 href={settings.legal_privacy_url || '#'} 
                 className={`hover:text-primary transition-colors ${!settings.legal_privacy_url || settings.legal_privacy_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
               >
-                Privacidade
+                {t('landing.footer.privacy')}
               </a>
               <a 
                 href={settings.legal_cookies_url || '#'} 
                 className={`hover:text-primary transition-colors ${!settings.legal_cookies_url || settings.legal_cookies_url === '#' ? 'pointer-events-none opacity-50' : ''}`}
               >
-                Cookies
+                {t('landing.footer.cookies')}
               </a>
             </div>
           </div>
