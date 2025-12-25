@@ -6,8 +6,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { PlanDialog } from "./PlanDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useLanguage } from "@/hooks/useLanguage";
 
 export function PlansList() {
+  const { t } = useLanguage();
   const [plans, setPlans] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,7 +32,7 @@ export function PlansList() {
       setPlans(data || []);
     } catch (error: any) {
       console.error("Error fetching plans:", error);
-      toast.error("Erro ao carregar planos");
+      toast.error(t('errors.loadError'));
     } finally {
       setLoading(false);
     }
@@ -61,11 +63,11 @@ export function PlansList() {
         .eq("id", planToDelete.id);
 
       if (error) throw error;
-      toast.success("Plano excluído com sucesso!");
+      toast.success(t('plans.planDeleted'));
       fetchPlans();
     } catch (error: any) {
       console.error("Error deleting plan:", error);
-      toast.error("Erro ao excluir plano");
+      toast.error(t('errors.deleteError'));
     } finally {
       setDeleteDialogOpen(false);
       setPlanToDelete(null);
@@ -76,7 +78,7 @@ export function PlansList() {
     return (
       <Card className="gradient-card">
         <CardContent className="py-12">
-          <div className="text-center">Carregando...</div>
+          <div className="text-center">{t('common.loading')}</div>
         </CardContent>
       </Card>
     );
@@ -87,21 +89,21 @@ export function PlansList() {
       <>
         <Card className="gradient-card">
           <CardHeader>
-            <CardTitle>Planos e Assinaturas</CardTitle>
+            <CardTitle>{t('plans.subscriptions')}</CardTitle>
             <CardDescription>
-              Crie e gerencie planos de assinatura para seus clientes
+              {t('plans.createManage')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="text-center py-12">
               <Package className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Nenhum plano criado</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('plans.noPlans')}</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                Crie seu primeiro plano de assinatura
+                {t('plans.createFirst')}
               </p>
               <Button onClick={handleCreate}>
                 <Plus className="w-4 h-4 mr-2" />
-                Criar Primeiro Plano
+                {t('plans.createFirstPlan')}
               </Button>
             </div>
           </CardContent>
@@ -120,12 +122,12 @@ export function PlansList() {
     <>
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Planos</h2>
-          <p className="text-sm text-muted-foreground">Gerencie os planos de assinatura</p>
+          <h2 className="text-2xl font-bold">{t('plans.title')}</h2>
+          <p className="text-sm text-muted-foreground">{t('plans.subtitle')}</p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="w-4 h-4 mr-2" />
-          Adicionar
+          {t('common.add')}
         </Button>
       </div>
 
@@ -147,19 +149,19 @@ export function PlansList() {
                 <div className="text-3xl font-bold text-primary">
                   R$ {plan.price?.toFixed(2) || "0.00"}
                 </div>
-                <div className="text-sm text-muted-foreground">por mês</div>
+                <div className="text-sm text-muted-foreground">{t('common.perMonth')}</div>
               </div>
 
               <div className="space-y-2 text-sm">
                 {plan.max_users && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Usuários:</span>
+                    <span className="text-muted-foreground">{t('common.users')}:</span>
                     <span className="font-medium">{plan.max_users}</span>
                   </div>
                 )}
                 {plan.max_tickets && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Conexões:</span>
+                    <span className="text-muted-foreground">{t('common.connections')}:</span>
                     <span className="font-medium">{plan.max_tickets}</span>
                   </div>
                 )}
@@ -167,7 +169,7 @@ export function PlansList() {
 
               {plan.features && typeof plan.features === 'object' && (
                 <div className="space-y-1">
-                  <div className="text-sm font-medium">Recursos:</div>
+                  <div className="text-sm font-medium">{t('common.resources')}:</div>
                   <div className="flex flex-wrap gap-1">
                     {Object.entries(plan.features).map(([key, value]) => 
                       value ? (
@@ -188,7 +190,7 @@ export function PlansList() {
                   onClick={() => handleEdit(plan)}
                 >
                   <Edit className="w-4 h-4 mr-1" />
-                  Editar
+                  {t('common.edit')}
                 </Button>
                 <Button
                   variant="destructive"
@@ -213,15 +215,15 @@ export function PlansList() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDelete')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir o plano "{planToDelete?.name}"? Esta ação não pode ser desfeita.
+              {t('plans.deleteConfirm')} "{planToDelete?.name}"? {t('plans.deleteWarning')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-              Excluir
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
