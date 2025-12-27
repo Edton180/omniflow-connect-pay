@@ -137,14 +137,12 @@ configure_firewall() {
         ufw allow 22/tcp  # SSH
         ufw allow 80/tcp  # HTTP
         ufw allow 443/tcp # HTTPS
-        ufw allow 8080/tcp # Evolution API
         ufw --force enable
         print_success "UFW configurado"
     elif command -v firewall-cmd &> /dev/null; then
         firewall-cmd --permanent --add-port=22/tcp
         firewall-cmd --permanent --add-port=80/tcp
         firewall-cmd --permanent --add-port=443/tcp
-        firewall-cmd --permanent --add-port=8080/tcp
         firewall-cmd --reload
         print_success "Firewalld configurado"
     fi
@@ -239,68 +237,11 @@ EOF
     # Configurar firewall
     configure_firewall
     
-    # Instalar Evolution API
-    setup_evolution_api
+    # Configurar backup automático
+    create_backup_script
     
     print_success "Instalação em VPS concluída!"
     print_info "Acesse: https://$DOMAIN"
-}
-
-# Setup Evolution API
-setup_evolution_api() {
-    print_info "Instalando Evolution API..."
-    
-    EVOLUTION_DIR="/opt/evolution-api"
-    mkdir -p $EVOLUTION_DIR
-    cd $EVOLUTION_DIR
-    
-    read -p "Digite uma chave API segura para Evolution API (min. 32 caracteres): " EVOLUTION_API_KEY
-    
-    cat > docker-compose.yml << EOF
-version: '3.8'
-
-services:
-  evolution-api:
-    image: atendai/evolution-api:v2.1.1
-    container_name: evolution-api
-    restart: always
-    ports:
-      - "8080:8080"
-    environment:
-      - SERVER_URL=https://api.\${DOMAIN}
-      - AUTHENTICATION_API_KEY=$EVOLUTION_API_KEY
-      - DATABASE_ENABLED=true
-      - DATABASE_PROVIDER=postgresql
-      - DATABASE_CONNECTION_URI=\${DATABASE_URI}
-      - CACHE_REDIS_ENABLED=true
-      - CACHE_REDIS_URI=redis://redis:6379
-      - LOG_LEVEL=ERROR
-    volumes:
-      - evolution_data:/evolution/instances
-    networks:
-      - evolution
-
-  redis:
-    image: redis:alpine
-    container_name: evolution-redis
-    restart: always
-    volumes:
-      - redis_data:/data
-    networks:
-      - evolution
-
-volumes:
-  evolution_data:
-  redis_data:
-
-networks:
-  evolution:
-    driver: bridge
-EOF
-    
-    docker-compose up -d
-    
-    print_success "Evolution API instalada e rodando na porta 8080"
 }
 
 # Instalação em cPanel
@@ -403,15 +344,9 @@ DATE=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p $BACKUP_DIR
 
-# Backup Evolution API data
-if [ -d "/opt/evolution-api" ]; then
-    cd /opt/evolution-api
-    docker exec evolution-api tar czf - /evolution/instances > "$BACKUP_DIR/evolution_$DATE.tar.gz"
-fi
-
 # Backup OmniFlow
 if [ -d "/opt/omniflow" ]; then
-    tar czf "$BACKUP_DIR/omniflow_$DATE.tar.gz" /opt/omniflow
+    tar czf "$BACKUP_DIR/omniflow_$DATE.tar.gz" /opt/omniflow --exclude='node_modules'
 fi
 
 # Manter apenas últimos 7 dias
@@ -463,13 +398,13 @@ main() {
     print_success "═══════════════════════════════════════════════"
     echo ""
     print_info "Próximos passos:"
-    echo "  1. Acesse o sistema e faça o primeiro login"
-    echo "  2. Complete o setup do Super Admin"
-    echo "  3. Configure os canais e gateways de pagamento"
-    echo "  4. Customize a marca branca"
+    echo "  1. Acesse o sistema e crie sua conta"
+    echo "  2. O primeiro usuário será Super Admin"
+    echo "  3. Configure a landing page e branding"
+    echo "  4. Crie planos e configure gateways de pagamento"
+    echo "  5. Crie tenants e configure canais"
     echo ""
-    print_info "Documentação: https://docs.omniflow.com.br"
-    print_info "Suporte: support@omniflow.com.br"
+    print_info "Documentação: https://github.com/Edton180/omniflow-connect-pay"
     echo ""
 }
 

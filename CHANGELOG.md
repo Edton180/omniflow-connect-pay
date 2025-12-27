@@ -48,10 +48,11 @@ Primeira versão estável do OmniFlow - Plataforma Multi-Tenant de Atendimento.
 
 #### Pagamentos Integrados
 - Gateway ASAAS (boleto, PIX, cartão)
-- Gateway Mercado Pago
+- Gateway Mercado Pago (PIX, cartão, boleto)
 - Gateway Stripe (internacional)
-- Gateway InfinitePay
-- Sistema de planos e assinaturas
+- Gateway PayPal (global)
+- Pagamento Manual com comprovantes
+- Sistema de planos e assinaturas recorrentes
 - Geração automática de faturas
 - Controle de vencimentos com alertas
 - Dashboard de receita em tempo real

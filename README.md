@@ -38,13 +38,14 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 - ✅ Distribuição round-robin inteligente
 
 ### Pagamentos Integrados
-- ✅ **ASAAS**: Gateway brasileiro
-- ✅ **Mercado Pago**: Pagamentos e cobranças
+- ✅ **ASAAS**: Gateway brasileiro completo
+- ✅ **Mercado Pago**: Pagamentos e cobranças (PIX, Cartão, Boleto)
 - ✅ **Stripe**: Pagamentos internacionais
-- ✅ **InfinitePay**: Gateway moderno
-- ✅ Sistema de planos e assinaturas
-- ✅ **Sistema de Faturas**: Geração e pagamento automático
-- ✅ **Controle de Vencimentos**: Alertas de faturas vencidas
+- ✅ **PayPal**: Pagamentos globais
+- ✅ **Pagamento Manual**: Comprovantes e aprovação manual
+- ✅ Sistema de planos e assinaturas recorrentes
+- ✅ **Sistema de Faturas**: Geração automática e manual
+- ✅ **Controle de Vencimentos**: Alertas e bloqueio automático
 - ✅ **Dashboard de Receita**: Gráficos e relatórios financeiros
 
 ### Marca Branca (White Label)
@@ -103,16 +104,13 @@ Sistema completo de atendimento multi-tenant com suporte a múltiplos canais (Wh
 
 ### Opção 1: Lovable (Recomendado para Desenvolvimento)
 
-Acesse o projeto diretamente no Lovable:
-```
-https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56
-```
+O OmniFlow usa Lovable Cloud como backend, que já inclui banco de dados, autenticação, storage e edge functions.
 
 ### Opção 2: Script Automático (Produção VPS)
 
 ```bash
 # Download e execute o script de instalação
-curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/auto-install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Edton180/omniflow-connect-pay/main/scripts/auto-install.sh | sudo bash
 ```
 
 O script irá:
@@ -125,8 +123,8 @@ O script irá:
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # 2. Configure as variáveis de ambiente
 cp .env.example .env
@@ -143,8 +141,8 @@ docker-compose ps
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # 2. Instale as dependências
 npm install
@@ -320,8 +318,8 @@ Contribuições são bem-vindas! Por favor, leia nosso [Guia de Contribuição](
 ## 🆘 Suporte
 
 - 📚 [Documentação Completa](INSTALLATION.md)
-- 🐛 [Reportar Bug](https://github.com/omniflow-app/omniflow/issues)
-- 💡 [Solicitar Feature](https://github.com/omniflow-app/omniflow/issues)
+- 🐛 [Reportar Bug](https://github.com/Edton180/omniflow-connect-pay/issues)
+- 💡 [Solicitar Feature](https://github.com/Edton180/omniflow-connect-pay/issues)
 
 ## 📄 Licença
 
