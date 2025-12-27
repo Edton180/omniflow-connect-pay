@@ -53,8 +53,8 @@ Se você está usando o Lovable, o backend já está configurado automaticamente
 
 ```bash
 # No seu terminal local
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 ```
 
 Copie todo o conteúdo de cada arquivo em `supabase/migrations/` e execute no SQL Editor.
@@ -67,8 +67,8 @@ Copie todo o conteúdo de cada arquivo em `supabase/migrations/` e execute no SQ
 
 ```bash
 # Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # Instale dependências
 npm install
@@ -106,7 +106,7 @@ sudo apt install nginx nodejs npm -y
 
 # Clone o repositório
 cd /var/www/
-git clone https://github.com/omniflow-app/omniflow.git
+git clone https://github.com/Edton180/omniflow-connect-pay.git omniflow
 cd omniflow
 
 # Instale e build
@@ -305,7 +305,7 @@ sudo systemctl reload nginx
 ## 📧 Suporte
 
 Para dúvidas ou problemas:
-- GitHub Issues: https://github.com/omniflow-app/omniflow/issues
+- GitHub Issues: https://github.com/Edton180/omniflow-connect-pay/issues
 
 ---
 

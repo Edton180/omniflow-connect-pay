@@ -31,7 +31,7 @@ O OmniFlow possui um instalador automático que facilita a instalação em difer
 
 ```bash
 # Download e execute o instalador
-curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/auto-install.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/Edton180/omniflow-connect-pay/main/scripts/auto-install.sh | sudo bash
 ```
 
 **O instalador oferece 4 opções:**
@@ -70,8 +70,8 @@ curl -sSL https://raw.githubusercontent.com/omniflow-app/omniflow/main/scripts/a
 
 ```bash
 # Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # Instale dependências
 npm install
@@ -101,8 +101,8 @@ bun dev
 
 ```bash
 # No seu computador local
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # Instale dependências e faça o build
 npm install
@@ -174,8 +174,8 @@ https://lovable.dev/projects/bdc96e6e-0aab-497c-8a71-bacaedb7aa56
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # 2. Instale dependências
 npm install
@@ -190,8 +190,8 @@ npm run dev
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/omniflow-app/omniflow.git
-cd omniflow
+git clone https://github.com/Edton180/omniflow-connect-pay.git
+cd omniflow-connect-pay
 
 # 2. Inicie com Docker Compose
 docker-compose up -d
@@ -266,7 +266,7 @@ apt install -y nodejs
 
 ```bash
 cd /var/www
-git clone https://github.com/omniflow-app/omniflow.git
+git clone https://github.com/Edton180/omniflow-connect-pay.git omniflow
 cd omniflow
 
 # Instale dependências
